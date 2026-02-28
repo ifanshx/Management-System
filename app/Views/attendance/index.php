@@ -5,20 +5,28 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         <?php if(session()->getFlashdata('success')): ?>
-            Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>' });
+            const isDark = document.documentElement.classList.contains('dark');
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Berhasil!', 
+                html: '<?= session()->getFlashdata('success') ?>',
+                confirmButtonColor: '#38bdf8',
+                background: isDark ? '#18181b' : '#ffffff', 
+                color: isDark ? '#f4f4f5' : '#09090b',
+            });
         <?php endif; ?>
     });
 </script>
 
 <style>
-    /* CSS Base Sebelumnya */
+    /* CSS Base */
     .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; gap: 20px;}
     .page-title h1 { font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 5px; letter-spacing: -1px;}
     .page-title p { font-size: 13px; color: var(--text-muted); }
 
     .filter-box { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; box-shadow: var(--shadow-card); }
     .filter-group { display: flex; gap: 15px; align-items: center; }
-    .form-control { background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 15px; border-radius: 10px; font-size: 13px; outline: none; }
+    .form-control { background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 15px; border-radius: 10px; font-size: 13px; outline: none; font-family: inherit;}
     .btn-filter, .btn-sync { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 13px;}
     .btn-sync { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); }
     .btn-sync:hover { background: #38bdf8; color: #fff; }
@@ -39,6 +47,8 @@
     .status-badge { padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
     .status-badge.hadir { background: rgba(16, 185, 129, 0.1); color: #10b981; }
     .status-badge.terlambat { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .status-badge.sakit, .status-badge.izin { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .status-badge.alpha { background: rgba(0, 0, 0, 0.1); color: var(--text-muted); }
 
     .highlight-blue { color: #38bdf8; font-weight: 800; }
     .highlight-purple { color: #a855f7; font-weight: 800; background: rgba(168,85,247,0.1); padding: 2px 6px; border-radius: 4px; }
@@ -58,9 +68,15 @@
         <button type="submit" class="btn-filter"><i class="ph ph-magnifying-glass"></i> Filter Data</button>
     </form>
 
-    <a href="<?= base_url('/attendance/sync?date=' . $dateFilter) ?>" class="btn-sync" title="Tarik data jika internet pabrik sempat mati">
-        <i class="ph ph-cloud-arrow-down" style="font-size: 18px;"></i> Tarik Manual IoT
-    </a>
+    <div style="display: flex; gap: 10px;">
+        <a href="<?= base_url('/attendance/manual') ?>" class="btn-sync" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);">
+            <i class="ph ph-pencil-simple-line" style="font-size: 18px;"></i> Koreksi Manual
+        </a>
+
+        <a href="<?= base_url('/attendance/sync?date=' . $dateFilter) ?>" class="btn-sync" title="Tarik data IoT">
+            <i class="ph ph-cloud-arrow-down" style="font-size: 18px;"></i> Tarik Manual IoT
+        </a>
+    </div>
 </div>
 
 <div class="table-card">
@@ -72,6 +88,7 @@
                     <th rowspan="2">Status</th>
                     <th colspan="4" style="background: rgba(37,99,235,0.05); color: #2563eb;">Catatan Waktu Scan Mesin</th>
                     <th colspan="2" style="background: rgba(168,85,247,0.05); color: #a855f7;">Kalkulasi Sistem</th>
+                    <th rowspan="2" style="background: rgba(239,68,68,0.05); color: #ef4444;">Aksi</th>
                 </tr>
                 <tr>
                     <th style="background: rgba(37,99,235,0.05);">Masuk</th>
@@ -85,9 +102,9 @@
             <tbody>
                 <?php if(empty($attendances)): ?>
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 60px 20px;">
+                        <td colspan="9" style="text-align: center; padding: 60px 20px;">
                             <i class="ph ph-calendar-x" style="font-size: 48px; color: var(--border-subtle); margin-bottom: 10px; display: block;"></i>
-                            <div style="color: var(--text-muted); font-weight: 600;">Tidak ada aktivitas mesin pada tanggal ini.</div>
+                            <div style="color: var(--text-muted); font-weight: 600;">Tidak ada aktivitas kehadiran pada tanggal ini.</div>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -111,7 +128,10 @@
                         <td>
                             <?php 
                                 $badgeClass = strtolower($row['status']);
-                                $icon = ($row['status'] == 'Hadir') ? 'ph-check-circle' : 'ph-warning';
+                                $icon = 'ph-check-circle';
+                                if($row['status'] == 'Terlambat') $icon = 'ph-warning';
+                                if($row['status'] == 'Sakit' || $row['status'] == 'Izin') $icon = 'ph-envelope';
+                                if($row['status'] == 'Alpha') $icon = 'ph-x-circle';
                             ?>
                             <span class="status-badge <?= $badgeClass ?>" style="display: block; text-align: center;">
                                 <i class="ph <?= $icon ?>"></i> <?= esc($row['status']) ?>
@@ -130,7 +150,7 @@
                             <?php if($row['work_duration_minutes'] > 0): ?>
                                 <span class="highlight-blue"><?= formatJamMnt($row['work_duration_minutes']) ?></span>
                             <?php else: ?>
-                                <span class="time-empty">Proses...</span>
+                                <span class="time-empty"><?= in_array($row['status'], ['Sakit', 'Izin', 'Alpha']) ? '-' : 'Proses...' ?></span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -139,6 +159,12 @@
                             <?php else: ?>
                                 <span class="time-empty">-</span>
                             <?php endif; ?>
+                        </td>
+
+                        <td>
+                            <a href="<?= base_url('/attendance/delete/' . $row['id']) ?>" onclick="return confirm('Hapus riwayat absen ini? Data tidak dapat dikembalikan.')" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; transition: 0.3s;" title="Hapus Data">
+                                <i class="ph ph-trash" style="font-size: 18px;"></i>
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

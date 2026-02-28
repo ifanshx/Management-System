@@ -44,7 +44,7 @@ class Portal extends BaseController
         }
 
         $data = [
-            'title'             => 'Portal Karyawan | Noric Workspace',
+            'title'             => 'Portal Karyawan',
             'employee'          => $employee,
             'recentAttendances' => $recentAttendances,
             'totalPresent'      => $totalPresent,
@@ -72,7 +72,7 @@ class Portal extends BaseController
                       ->get()->getResultArray();
 
         $data = [
-            'title'   => 'Slip Gaji Saya | Noric Workspace',
+            'title'   => 'Slip Gaji Saya',
             'mySlips' => $mySlips
         ];
 

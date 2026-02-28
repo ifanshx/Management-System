@@ -22,7 +22,7 @@ class Profile extends BaseController
         }
 
         $data = [
-            'title'    => 'Akun & Pengaturan | Noric Workspace',
+            'title'    => 'Akun & Pengaturan',
             'user'     => $user,
             'employee' => $employeeData
         ];

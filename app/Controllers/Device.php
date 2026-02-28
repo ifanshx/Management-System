@@ -18,7 +18,7 @@ class Device extends BaseController
         $deviceInfo = $fingerspot->getDeviceInfo();
 
         $data = [
-            'title'      => 'Control Panel Mesin IoT | Noric System',
+            'title'      => 'Control Panel Mesin',
             'cloud_id'   => getenv('FINGERSPOT_CLOUD_ID'),
             // Jika sukses, kirim datanya. Jika gagal (offline), kirim null
             'device'     => (isset($deviceInfo['success']) && $deviceInfo['success']) ? $deviceInfo['data'] : null

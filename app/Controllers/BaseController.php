@@ -30,16 +30,30 @@ abstract class BaseController extends Controller
     /**
      * @return void
      */
-    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
+    public function initController(\CodeIgniter\HTTP\RequestInterface $request, \CodeIgniter\HTTP\ResponseInterface $response, \Psr\Log\LoggerInterface $logger)
     {
-        // Load here all helpers you want to be available in your controllers that extend BaseController.
-        // Caution: Do not put the this below the parent::initController() call below.
-        // $this->helpers = ['form', 'url'];
-
-        // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
+        $this->session = \Config\Services::session();
 
-        // Preload any models, libraries, etc, here.
-        // $this->session = service('session');
+        // -------------------------------------------------------------------
+        // ENGINE WHITE-LABEL: Ambil identitas perusahaan dari Database
+        // -------------------------------------------------------------------
+        $db = \Config\Database::connect();
+        // Asumsi Anda sudah membuat tabel 'company_settings'
+        $company = $db->table('company_settings')->get()->getRowArray();
+
+        // Jika tabel masih kosong (baru diinstal di klien baru), gunakan default
+        if (!$company) {
+            $company = [
+                'app_name'     => 'ERP System',
+                'company_name' => 'Nama Perusahaan Anda',
+                'address'      => 'Alamat Perusahaan',
+                'phone'        => '080000000',
+                'logo_path'    => 'default-logo.png' // Pastikan ada gambar ini di public/assets/img/
+            ];
+        }
+
+        // Sebarkan variabel $company ke SELURUH file View (.php)
+        \Config\Services::renderer()->setVar('company', $company);
     }
 }

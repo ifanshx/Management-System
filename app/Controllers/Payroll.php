@@ -17,7 +17,7 @@ class Payroll extends BaseController
         $payrollModel = new PayrollModel();
         
         $data = [
-            'title'    => 'Kelola Penggajian | Noric Workspace',
+            'title'    => 'Kelola Penggajian', // Hapus hardcode Noric
             'payrolls' => $payrollModel->orderBy('created_at', 'DESC')->findAll()
         ];
 
@@ -36,11 +36,22 @@ class Payroll extends BaseController
         $attModel           = new AttendanceModel();
         $shiftModel         = new WorkShiftModel();
 
-        $salaryType = $this->request->getPost('salary_type');
+        $salaryType  = $this->request->getPost('salary_type');
         $periodStart = $this->request->getPost('period_start');
         $periodEnd   = $this->request->getPost('period_end');
 
-        // Cari karyawan yang aktif dan sesuai tipe gaji (Harian/Mingguan/Bulanan)
+        // SECURITY PATCH 1: Blokir Duplikasi Dokumen Penggajian
+        $existingPayroll = $payrollModel->where([
+            'salary_type'  => $salaryType,
+            'period_start' => $periodStart,
+            'period_end'   => $periodEnd
+        ])->first();
+
+        if ($existingPayroll) {
+            return redirect()->back()->with('error', 'Dokumen penggajian untuk Tipe dan Periode Tanggal tersebut sudah pernah dibuat! Silakan hapus dokumen sebelumnya jika ingin mengkalkulasi ulang.');
+        }
+
+        // Cari karyawan yang aktif
         $employees = $empModel->where('is_active', 1)->where('salary_type', $salaryType)->findAll();
 
         if (empty($employees)) {
@@ -58,18 +69,16 @@ class Payroll extends BaseController
                 'period_end'      => $periodEnd,
                 'status'          => 'Draft',
                 'total_employees' => count($employees),
-                'total_amount'    => 0 // Akan diupdate nanti
+                'total_amount'    => 0 
             ]);
 
             $grandTotal = 0;
 
-            // 2. Looping Perhitungan Tiap Karyawan
+            // 2. Looping Perhitungan
             foreach ($employees as $emp) {
-                // Ambil data shift untuk denda
                 $shift = $shiftModel->find($emp['shift_id']);
                 $penaltyRate = $shift ? $shift['late_penalty_rate'] : 0;
 
-                // Ambil Absensi di rentang tanggal
                 $attendances = $attModel->where('employee_id', $emp['employee_id'])
                                         ->where('date >=', $periodStart)
                                         ->where('date <=', $periodEnd)
@@ -85,31 +94,26 @@ class Payroll extends BaseController
                     $totalOvertime += $att['overtime_minutes'];
                 }
 
-                // --- KALKULASI PEMASUKAN ---
-                // Jika Harian, gaji pokok dikali jumlah hadir. Jika bukan, full rate.
+                // Kalkulasi
                 $basicSalary = ($salaryType === 'Harian') ? ($emp['basic_salary'] * $totalPresent) : $emp['basic_salary'];
                 $position    = $emp['position_allowance'];
-                $meal        = $emp['meal_allowance'] * $totalPresent; // Uang makan berdasarkan kehadiran
+                $meal        = $emp['meal_allowance'] * $totalPresent; 
                 $transport   = $emp['transport_allowance'] * $totalPresent;
-                
-                // Lembur (Tarif per jam. Total menit / 60)
                 $overtimePay = $emp['overtime_rate'] * floor($totalOvertime / 60);
 
                 $grossSalary = $basicSalary + $position + $meal + $transport + $overtimePay;
 
-                // --- KALKULASI POTONGAN ---
+                // Potongan
                 $latePenalty = $totalLate * $penaltyRate;
                 $bpjs = 0;
                 if ($emp['bpjs_kesehatan'] == 1) $bpjs += ($basicSalary * 0.01);
                 if ($emp['bpjs_ketenagakerjaan'] == 1) $bpjs += ($basicSalary * 0.02);
 
                 $totalDeduction = $latePenalty + $bpjs;
-
-                // --- GAJI BERSIH ---
                 $netSalary = $grossSalary - $totalDeduction;
-                if ($netSalary < 0) $netSalary = 0; // Cegah gaji minus
+                if ($netSalary < 0) $netSalary = 0; 
 
-                // Simpan Detail Slip
+                // Simpan Rincian
                 $detailModel->insert([
                     'payroll_id'            => $payrollId,
                     'employee_id'           => $emp['employee_id'],
@@ -129,7 +133,7 @@ class Payroll extends BaseController
                 $grandTotal += $netSalary;
             }
 
-            // 3. Update Total di Header
+            // 3. Update Total Akhir
             $payrollModel->update($payrollId, ['total_amount' => $grandTotal]);
 
             $db->transComplete();
@@ -138,7 +142,7 @@ class Payroll extends BaseController
                 return redirect()->back()->with('error', 'Gagal memproses penggajian.');
             }
 
-            return redirect()->to('/payroll/detail/' . $payrollId)->with('success', 'Payroll berhasil di-generate secara otomatis!');
+            return redirect()->to('/payroll/detail/' . $payrollId)->with('success', 'Payroll berhasil di-kalkulasi secara otomatis!');
 
         } catch (\Exception $e) {
             $db->transRollback();
@@ -146,7 +150,7 @@ class Payroll extends BaseController
         }
     }
 
-    // --- LIHAT DETAIL KARYAWAN PER PERIODE ---
+    // --- LIHAT DETAIL KARYAWAN ---
     public function detail($id)
     {
         if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') return redirect()->to('/portal');
@@ -157,7 +161,6 @@ class Payroll extends BaseController
         $payroll = $payrollModel->find($id);
         if (!$payroll) return redirect()->to('/payroll');
 
-        // Join untuk ambil nama karyawan
         $details = $db->table('payroll_details')
                       ->select('payroll_details.*, employees.name, employees.department, employees.bank_name, employees.bank_account')
                       ->join('employees', 'employees.employee_id = payroll_details.employee_id')
@@ -165,7 +168,7 @@ class Payroll extends BaseController
                       ->get()->getResultArray();
 
         $data = [
-            'title'   => 'Detail Payroll | Noric Workspace',
+            'title'   => 'Rincian Penggajian',
             'payroll' => $payroll,
             'details' => $details
         ];
@@ -191,5 +194,82 @@ class Payroll extends BaseController
 
         $data = ['slip' => $slip];
         return view('payroll/payslip', $data);
+    }
+
+    // --- FITUR HAPUS DOKUMEN PAYROLL (JIKA SALAH TANGGAL) ---
+    public function delete($id)
+    {
+        if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') return redirect()->to('/portal');
+
+        $payrollModel = new PayrollModel();
+        $detailModel  = new PayrollDetailModel();
+
+        // Hapus rincian gajinya dulu (Foreign Key)
+        $detailModel->where('payroll_id', $id)->delete();
+        // Baru hapus dokumen headernya
+        $payrollModel->delete($id);
+
+        return redirect()->to('/payroll')->with('success', 'Dokumen penggajian beserta seluruh rinciannya berhasil dihapus.');
+    }
+
+    // --- FITUR BARU: PENCAIRAN KE BUKU KAS (FINANCE) ---
+    public function push_to_finance()
+    {
+        if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') return redirect()->to('/portal');
+
+        $db = \Config\Database::connect();
+        $payrollModel = new PayrollModel();
+        
+        // Load model Finance kita
+        $cashModel = new \App\Models\OperationalCashModel();
+
+        $payroll_id  = $this->request->getPost('payroll_id');
+        $metode      = $this->request->getPost('metode'); // Cash / ATM
+        $total_dana  = $this->request->getPost('total_amount');
+        $payrollCode = $this->request->getPost('payroll_code');
+        $pic_name    = session()->get('name');
+
+        $payroll = $payrollModel->find($payroll_id);
+        
+        // Keamanan: Cegah pencairan ganda
+        if (!$payroll || $payroll['status'] === 'Paid (Dicairkan)') {
+            return redirect()->back()->with('error', 'Dokumen ini tidak valid atau sudah pernah dicairkan sebelumnya!');
+        }
+
+        // Helper untuk Auto-Generate Kode TRX Keuangan
+        $dateCode = date('Ymd');
+        $lastTrx = $cashModel->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->first();
+        $newNumber = $lastTrx ? str_pad((int) substr($lastTrx['transaction_code'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
+        $trxCode = "TRX-$dateCode-$newNumber";
+
+        $db->transStart();
+        try {
+            // 1. Potong saldo di Buku Kas Operasional
+            $cashModel->insert([
+                'transaction_code' => $trxCode,
+                'transaction_date' => date('Y-m-d'),
+                'type'             => 'Cash Out',
+                'metode'           => $metode,
+                'category'         => 'Pembayaran Gaji',
+                'amount'           => $total_dana,
+                'description'      => "PENCAIRAN GAJI KARYAWAN (Ref: $payrollCode)",
+                'pic_name'         => $pic_name
+            ]);
+
+            // 2. Kunci dokumen Payroll menjadi 'Paid'
+            $payrollModel->update($payroll_id, ['status' => 'Paid (Dicairkan)']);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return redirect()->back()->with('error', 'Gagal memproses pengiriman dana ke buku kas.');
+            }
+
+            return redirect()->back()->with('success', 'Dana berhasil dicairkan! Saldo Buku Kas (Finance) telah otomatis terpotong.');
+
+        } catch (\Exception $e) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Sistem Error: ' . $e->getMessage());
+        }
     }
 }

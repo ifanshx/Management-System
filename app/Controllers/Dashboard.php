@@ -68,7 +68,7 @@ class Dashboard extends BaseController
         ];
 
         $data = [
-            'title'            => 'Command Center | Noric Management',
+            'title'            => 'Dashboard',
             'currentMonthName' => date('F Y'),
             'totalEmployees'   => $totalEmployees,
             'totalPayrollCost' => $totalPayrollCost,

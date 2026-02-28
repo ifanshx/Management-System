@@ -20,7 +20,7 @@ class Finance extends BaseController
                                   ->orderBy('created_at', 'ASC')
                                   ->findAll();
 
-        // LOGIKA PERHITUNGAN SALDO (Diadaptasi dari kode Native Anda)
+        // LOGIKA PERHITUNGAN SALDO
         $db = \Config\Database::connect();
         
         // A. Saldo Awal Global (Sebelum tanggal filter)
@@ -53,7 +53,7 @@ class Finance extends BaseController
         $sisa_atm = $qRincian['sisa_atm'] ?? 0;
 
         $data = [
-            'title'           => 'Buku Kas Harian | Noric Workspace',
+            'title'           => 'Buku Kas Harian',
             'tgl_filter'      => $tgl_filter,
             'transactions'    => $transactions,
             'saldo_awal'      => $saldo_awal,
@@ -89,6 +89,31 @@ class Finance extends BaseController
             return "TRX-$dateCode-$newNumber";
         };
 
+        // --- SECURITY PATCH: Validasi Upload File ---
+        $receiptFile = null;
+        $file = $this->request->getFile('receipt_file');
+        
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $validationRule = [
+                'receipt_file' => [
+                    'rules' => 'max_size[receipt_file,2048]|is_image[receipt_file]|mime_in[receipt_file,image/jpg,image/jpeg,image/png,image/webp]',
+                    'errors' => [
+                        'max_size' => 'Ukuran foto struk maksimal 2MB.',
+                        'is_image' => 'File yang diunggah harus berupa gambar valid.',
+                        'mime_in'  => 'Format tidak didukung. Gunakan JPG, JPEG, atau PNG.'
+                    ]
+                ]
+            ];
+
+            if (!$this->validate($validationRule)) {
+                return redirect()->back()->withInput()->with('error', $this->validator->getError('receipt_file'));
+            }
+
+            $newName = $file->getRandomName(); // Enkripsi nama file
+            $file->move(ROOTPATH . 'public/uploads/receipts/', $newName);
+            $receiptFile = $newName;
+        }
+
         if ($nominal > 0) {
             $db->transStart();
             
@@ -98,12 +123,13 @@ class Finance extends BaseController
                     $dataToSave = [
                         'transaction_code' => $generateTrxCode(),
                         'transaction_date' => $tgl,
-                        'type'             => $this->request->getPost('type'), 
+                        'type'             => $this->request->getPost('type'),
                         'metode'           => $this->request->getPost('metode'),
-                        'category'         => 'Operasional', // <-- Kategori Otomatis Default
+                        'category'         => 'Operasional', // Kategori default
                         'amount'           => $nominal,
                         'description'      => strtoupper($this->request->getPost('description')),
-                        'pic_name'         => $pic_name
+                        'pic_name'         => $pic_name,
+                        'receipt_file'     => $receiptFile
                     ];
                     $cashModel->insert($dataToSave);
                     $msg = "Transaksi berhasil dicatat.";
@@ -113,31 +139,27 @@ class Finance extends BaseController
                     $arah = $this->request->getPost('arah_mutasi');
                     
                     if ($arah === 'atm_to_cash') {
-                        // 1. Tarik dari ATM
                         $cashModel->insert([
                             'transaction_code' => $generateTrxCode(), 'transaction_date' => $tgl,
                             'type' => 'Cash Out', 'metode' => 'ATM', 'category' => 'Mutasi Dana',
-                            'amount' => $nominal, 'description' => 'TARIK TUNAI (DARI ATM KE CASH)', 'pic_name' => $pic_name
+                            'amount' => $nominal, 'description' => 'TARIK TUNAI (DARI ATM KE CASH)', 'pic_name' => $pic_name, 'receipt_file' => $receiptFile
                         ]);
-                        // 2. Masuk ke Cash
                         $cashModel->insert([
                             'transaction_code' => $generateTrxCode(), 'transaction_date' => $tgl,
                             'type' => 'Cash In', 'metode' => 'Cash', 'category' => 'Mutasi Dana',
-                            'amount' => $nominal, 'description' => 'TERIMA TUNAI (DARI ATM)', 'pic_name' => $pic_name
+                            'amount' => $nominal, 'description' => 'TERIMA TUNAI (DARI ATM)', 'pic_name' => $pic_name, 'receipt_file' => $receiptFile
                         ]);
                         $msg = "Tarik Tunai berhasil (Dana pindah ke Dompet Cash).";
                     } else {
-                        // 1. Setor dari Cash
                         $cashModel->insert([
                             'transaction_code' => $generateTrxCode(), 'transaction_date' => $tgl,
                             'type' => 'Cash Out', 'metode' => 'Cash', 'category' => 'Mutasi Dana',
-                            'amount' => $nominal, 'description' => 'SETOR TUNAI (DARI CASH KE ATM)', 'pic_name' => $pic_name
+                            'amount' => $nominal, 'description' => 'SETOR TUNAI (DARI CASH KE ATM)', 'pic_name' => $pic_name, 'receipt_file' => $receiptFile
                         ]);
-                        // 2. Masuk ke ATM
                         $cashModel->insert([
                             'transaction_code' => $generateTrxCode(), 'transaction_date' => $tgl,
                             'type' => 'Cash In', 'metode' => 'ATM', 'category' => 'Mutasi Dana',
-                            'amount' => $nominal, 'description' => 'DANA MASUK (SETORAN CASH)', 'pic_name' => $pic_name
+                            'amount' => $nominal, 'description' => 'DANA MASUK (SETORAN CASH)', 'pic_name' => $pic_name, 'receipt_file' => $receiptFile
                         ]);
                         $msg = "Setor Tunai berhasil (Dana pindah ke Rekening ATM).";
                     }
@@ -167,6 +189,10 @@ class Finance extends BaseController
         
         if ($trx) {
             $tgl = $trx['transaction_date'];
+            // Hapus file gambar jika ada
+            if ($trx['receipt_file'] && file_exists(ROOTPATH . 'public/uploads/receipts/' . $trx['receipt_file'])) {
+                unlink(ROOTPATH . 'public/uploads/receipts/' . $trx['receipt_file']);
+            }
             $cashModel->delete($id);
             return redirect()->to("/finance/cash_index?tgl=$tgl")->with('success', 'Transaksi berhasil dihapus. Saldo telah disesuaikan.');
         }

@@ -24,7 +24,7 @@ class Leave extends BaseController
         $myLeaves = $leaveModel->where('employee_id', $employeeId)->orderBy('created_at', 'DESC')->findAll();
 
         $data = [
-            'title'    => 'Pengajuan Cuti & Izin | Noric ESS',
+            'title'    => 'Pengajuan Cuti & Izin',
             'employee' => $employee,
             'myLeaves' => $myLeaves
         ];
@@ -77,7 +77,7 @@ class Leave extends BaseController
 
         $leaveModel = new LeaveModel();
         $data = [
-            'title'   => 'Approval Cuti & Izin | Noric HR',
+            'title'   => 'Approval Cuti & Izin',
             'leaves'  => $leaveModel->getAllWithEmployee()
         ];
 
