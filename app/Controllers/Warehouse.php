@@ -77,6 +77,10 @@ class Warehouse extends BaseController
                 throw new \Exception("Kurir pesanan ini tidak mendukung penjemputan (Pickup). Anda harus melakukan Drop-off manual.");
             }
 
+            if ($order['order_status'] === 'PACKED' || $order['order_status'] === 'SHIPPED') {
+                throw new \Exception("Pesanan ini telah diproses sebentar tadi oleh admin lain!");
+            }
+
             $this->db->transStart();
 
             // 3. EKSEKUSI PENGIRIMAN (SHIP ORDER) KE SHOPEE
@@ -218,6 +222,12 @@ class Warehouse extends BaseController
                 $this->db->transStart(); // Mulai Transaksi Massal Lokal
 
                 foreach ($orderSns as $sn) {
+                    // PENYEMPURNAAN KESELAMATAN: Abaikan pesanan jika telah siap diproses
+                    $orderData = $this->db->table('sales_orders')->where('order_sn', $sn)->get()->getRowArray();
+                    if (!$orderData || $orderData['order_status'] !== 'READY_TO_SHIP') {
+                        continue; 
+                    }
+
                     $paramResp = $shopeeApi->getShippingParameter($sn, $shopId);
                     $pickupData = [];
                     if (isset($paramResp['response']['info_needed']['pickup']['address_list'][0])) {

@@ -46,15 +46,26 @@ class Wholesale extends BaseController
             $dpAmount   = (float)$this->request->getPost('dp_amount');
             $dueDate    = $this->request->getPost('due_date');
 
+            if ($qty <= 0 || $unitPrice <= 0) {
+                throw new \Exception("Kuantiti dan Harga mesti melebihi 0.");
+            }
+
             $totalAmount = $qty * $unitPrice;
+
+            // PENYEMPURNAAN KESELAMATAN: DP tidak boleh melebihi Total
+            if ($dpAmount > $totalAmount) {
+                throw new \Exception("Ralat! Wang Pendahuluan (DP) sebesar Rp " . number_format($dpAmount,0,',','.') . " tidak boleh melebihi Total Pesanan (Rp " . number_format($totalAmount,0,',','.') . ").");
+            }
+
             $status = ($dpAmount >= $totalAmount) ? 'PAID' : ($dpAmount > 0 ? 'PARTIAL' : 'PENDING');
 
-            // 1. Cek & Potong Stok Gudang
+            // 1. Semak & Potong Stok Gudang
             $stock = $this->db->table('warehouse_inventory')->where('sku', $fgSku)->get()->getRowArray();
-            if(!$stock || $stock['physical_stock'] < $qty) throw new \Exception("Stok {$fgSku} tidak mencukupi!");
+            if(!$stock || $stock['physical_stock'] < $qty) throw new \Exception("Stok {$fgSku} tidak mencukupi untuk pesanan ini!");
+            
             $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$qty, $fgSku]);
 
-            // 2. Generate SO Number & Insert
+            // 2. Jana Nombor SO & Masukkan Data
             $soNumber = "SO-" . date('Ymd') . "-" . rand(100,999);
             $this->db->table('b2b_sales_orders')->insert([
                 'so_number'    => $soNumber,
@@ -66,27 +77,24 @@ class Wholesale extends BaseController
                 'status'       => $status
             ]);
 
-            // 3. PERBAIKAN INTEGRASI AKUNTANSI (Jika ada DP)
+            // 3. Catatan Akuntansi Automatik
             if ($dpAmount > 0) {
                 $this->db->table('journals')->insert([
                     'journal_number'   => 'JRN-B2B-'.time(),
                     'transaction_date' => date('Y-m-d'),
-                    'description'      => "Uang Muka (DP) SO B2B: $soNumber",
+                    'description'      => "Wang Pendahuluan (DP) SO B2B: $soNumber",
                     'total_amount'     => $dpAmount,
-                    'created_by'       => 'Sistem Auto-B2B'
+                    'created_by'       => session()->get('name') ?? 'Sistem Auto-B2B'
                 ]);
                 $journalId = $this->db->insertID();
 
-                // Ambil ID Akun: 1-1000 (Kas) dan 4-1000 (Pendapatan Jualan)
                 $kas = $this->db->table('chart_of_accounts')->where('account_code', '1-1000')->get()->getRowArray();
                 $rev = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
 
                 if($kas && $rev) {
-                    // Masukkan ke Detail Jurnal
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $kas['id'], 'debit' => $dpAmount, 'credit' => 0]);
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $rev['id'], 'debit' => 0, 'credit' => $dpAmount]);
                     
-                    // Tambah Saldo Buku Besar
                     $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$dpAmount, $kas['id']]);
                     $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$dpAmount, $rev['id']]);
                 }
@@ -95,7 +103,7 @@ class Wholesale extends BaseController
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Gagal menerbitkan Sales Order.");
 
-            return redirect()->back()->with('success', "Sales Order berhasil dibuat. Stok terpotong dan Jurnal otomatis dicatat!");
+            return redirect()->back()->with('success', "Pesanan Borong berjaya direkodkan. Stok telah dipotong dan Jurnal dikemas kini!");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -105,22 +113,29 @@ class Wholesale extends BaseController
     {
         try {
             $amount = (float)$this->request->getPost('amount');
-            if ($amount <= 0) throw new \Exception("Nominal pelunasan tidak valid.");
+            if ($amount <= 0) throw new \Exception("Nilai pembayaran tidak sah.");
 
             $this->db->transStart();
 
-            // 1. Update Status Piutang
+            $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
+            if (!$so) throw new \Exception("Pesanan tidak dijumpai.");
+
+            // PENYEMPURNAAN KESELAMATAN: Pembayaran tidak boleh melebihi baki hutang
+            $sisaPiutang = $so['total_amount'] - $so['paid_amount'];
+            if ($amount > $sisaPiutang) {
+                throw new \Exception("DITOLAK! Nilai bayaran (Rp " . number_format($amount,0,',','.') . ") melebihi baki hutang (Rp " . number_format($sisaPiutang,0,',','.') . ").");
+            }
+
+            // 1. Kemas Kini Status Hutang
             $this->db->query("UPDATE b2b_sales_orders SET paid_amount = paid_amount + ?, status = CASE WHEN paid_amount >= total_amount THEN 'PAID' ELSE 'PARTIAL' END WHERE id = ?", [$amount, $id]);
             
-            $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
-
-            // 2. PERBAIKAN: Catat Pelunasan ke Jurnal Akuntansi
+            // 2. Catat Pelunasan ke Jurnal
             $this->db->table('journals')->insert([
                 'journal_number'   => 'JRN-PAY-'.time(),
                 'transaction_date' => date('Y-m-d'),
-                'description'      => "Pelunasan Piutang SO: " . $so['so_number'],
+                'description'      => "Bayaran Ansuran SO: " . $so['so_number'],
                 'total_amount'     => $amount,
-                'created_by'       => 'Sistem Auto-B2B'
+                'created_by'       => session()->get('name') ?? 'Sistem Auto-B2B'
             ]);
             $journalId = $this->db->insertID();
 
@@ -135,9 +150,9 @@ class Wholesale extends BaseController
             }
 
             $this->db->transComplete();
-            if ($this->db->transStatus() === false) throw new \Exception("Gagal mencatat pembayaran.");
+            if ($this->db->transStatus() === false) throw new \Exception("Gagal merekodkan pembayaran.");
 
-            return redirect()->back()->with('success', 'Pembayaran piutang berhasil dicatat ke dalam Lejar Akuntansi!');
+            return redirect()->back()->with('success', 'Pembayaran hutang berjaya direkodkan ke dalam Lejar Akuntansi!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
