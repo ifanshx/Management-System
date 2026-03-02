@@ -11,22 +11,26 @@ class LocalWarehouse extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    // --- HELPER: AUTO GENERATE SKU (SAAS / WHITE-LABEL STANDARD) ---
-    private function generateSKU($type = 'FG') 
+    // --- HELPER: AUTO GENERATE SKU (ENTERPRISE STANDARD) ---
+    private function generateSKU($type = 'PRD') 
     {
-        // FG = Finished Goods (Barang Jadi), RM = Raw Material (Bahan Baku)
-        $prefix = ($type === 'FG') ? 'FG-' : 'RM-';
-        $table  = ($type === 'FG') ? 'warehouse_inventory' : 'raw_materials';
-        $column = ($type === 'FG') ? 'sku' : 'sku_material';
+        // PRD = Product (Barang Jadi), MAT = Material (Bahan Baku Mentah)
+        $prefix = ($type === 'PRD') ? 'PRD-' : 'MAT-';
+        $table  = ($type === 'PRD') ? 'warehouse_inventory' : 'raw_materials';
+        $column = ($type === 'PRD') ? 'sku' : 'sku_material';
 
-        $lastItem = $this->db->table($table)->orderBy('id', 'DESC')->get()->getRowArray();
+        // Ambil SKU terakhir berdasarkan prefix tersebut
+        $lastItem = $this->db->table($table)
+                             ->like($column, $prefix, 'after')
+                             ->orderBy('id', 'DESC')
+                             ->get()
+                             ->getRowArray();
         
         if (!$lastItem) {
             return $prefix . '0001';
         }
 
-        // Pecah SKU terakhir berdasarkan tanda strip "-" agar lebih dinamis
-        // Contoh: "FG-0045" akan dipecah menjadi ['FG', '0045']
+        // Pecah SKU terakhir berdasarkan tanda strip "-"
         $lastSku = $lastItem[$column];
         $parts = explode('-', $lastSku);
         
@@ -44,10 +48,10 @@ class LocalWarehouse extends BaseController
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // Tarik Data Barang Jadi (Finished Goods)
+        // Tarik Data Barang Jadi (Finished Goods -> PRD)
         $finishedGoods = $this->db->table('warehouse_inventory')->orderBy('id', 'DESC')->get()->getResultArray();
         
-        // Tarik Data Bahan Baku (Raw Materials)
+        // Tarik Data Bahan Baku (Raw Materials -> MAT)
         $rawMaterials = $this->db->table('raw_materials')->orderBy('id', 'DESC')->get()->getResultArray();
 
         // Kalkulasi Aset
@@ -65,33 +69,33 @@ class LocalWarehouse extends BaseController
         return view('warehouse/local_inventory', $data);
     }
 
-    // --- 2. TAMBAH BARANG JADI (KNALPOT) ---
+    // --- 2. TAMBAH BARANG JADI (KNALPOT -> PRD) ---
     public function store_fg()
     {
         try {
-            $autoSku = $this->generateSKU('FG');
+            $autoSku = $this->generateSKU('PRD');
             
             $data = [
                 'sku'            => $autoSku,
                 'item_name'      => $this->request->getPost('item_name'),
-                'item_type'      => 'Barang Jadi',
+                'item_type'      => 'Product',
                 'hpp'            => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
                 'physical_stock' => (int)$this->request->getPost('initial_stock'),
                 'min_stock'      => (int)$this->request->getPost('min_stock')
             ];
 
             $this->db->table('warehouse_inventory')->insert($data);
-            return redirect()->back()->with('success', "Barang Jadi berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
+            return redirect()->back()->with('success', "Barang Produksi (PRD) berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // --- 3. TAMBAH BAHAN BAKU (PIPA/PLAT) ---
+    // --- 3. TAMBAH BAHAN BAKU (PIPA/PLAT -> MAT) ---
     public function store_rm()
     {
         try {
-            $autoSku = $this->generateSKU('RM');
+            $autoSku = $this->generateSKU('MAT');
             
             $data = [
                 'sku_material'   => $autoSku,
@@ -103,7 +107,7 @@ class LocalWarehouse extends BaseController
             ];
 
             $this->db->table('raw_materials')->insert($data);
-            return redirect()->back()->with('success', "Bahan Baku berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
+            return redirect()->back()->with('success', "Material Bahan Baku (MAT) berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -112,10 +116,10 @@ class LocalWarehouse extends BaseController
     // --- 4. HAPUS DATA ---
     public function delete_fg($id) {
         $this->db->table('warehouse_inventory')->where('id', $id)->delete();
-        return redirect()->back()->with('success', 'Barang Jadi dihapus.');
+        return redirect()->back()->with('success', 'Barang Jadi (PRD) dihapus.');
     }
     public function delete_rm($id) {
         $this->db->table('raw_materials')->where('id', $id)->delete();
-        return redirect()->back()->with('success', 'Bahan Baku dihapus.');
+        return redirect()->back()->with('success', 'Bahan Baku (MAT) dihapus.');
     }
 }

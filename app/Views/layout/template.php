@@ -160,19 +160,16 @@
                 $isAdmin = ($role === 'admin'); 
             ?>
 
-            <?php if($isAdmin): ?>
+           <?php if($isAdmin): ?>
                 <div class="nav-label">Command Center</div>
-                <a href="<?= base_url('/omni-dashboard') ?>" class="nav-link <?= (url_is('omni-dashboard')) ? 'active' : '' ?>">
+                <a href="<?= base_url('/dashboard') ?>" class="nav-link <?= (url_is('dashboard')) ? 'active' : '' ?>">
                     <i class="ph ph-presentation-chart"></i> Dasbor Eksekutif
                 </a>
-
-                <div class="nav-label">Super Admin Panel</div>
-                <a href="<?= base_url('/dashboard') ?>" class="nav-link <?= (url_is('dashboard')) ? 'active' : '' ?>">
-                    <i class="ph ph-squares-four"></i> HRD Dashboard
-                </a>
+                
                 <a href="<?= base_url('/setting/company') ?>" class="nav-link <?= (url_is('setting/company')) ? 'active' : '' ?>">
                     <i class="ph ph-buildings"></i> Identitas Perusahaan
                 </a>
+
                 <a href="<?= base_url('/setting/workshift_create') ?>" class="nav-link <?= (url_is('setting/workshift*')) ? 'active' : '' ?>">
                     <i class="ph ph-clock"></i> Parameter Shift Kerja
                 </a>

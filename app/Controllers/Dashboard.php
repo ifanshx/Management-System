@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Controllers;
-use App\Models\EmployeeModel;
-use App\Models\PayrollModel;
 
 class Dashboard extends BaseController
 {
@@ -12,69 +10,72 @@ class Dashboard extends BaseController
             return redirect()->to('/login');
         }
 
-        $empModel = new EmployeeModel();
-        $payrollModel = new PayrollModel();
-        
-        // ==========================================
-        // 1. DATA ASLI (MODUL HRD & PAYROLL)
-        // ==========================================
-        $totalEmployees = $empModel->where('is_active', 1)->countAllResults();
+        $db = \Config\Database::connect();
         
         $currentMonth = date('m');
         $currentYear  = date('Y');
+
+        // ==========================================
+        // 1. DATA HRD & PAYROLL
+        // ==========================================
+        $totalEmployees = $db->table('employees')->where('is_active', 1)->countAllResults();
+        $payrolls = $db->table('payrolls')
+                       ->where('MONTH(period_start)', $currentMonth)
+                       ->where('YEAR(period_start)', $currentYear)
+                       ->get()->getResultArray();
         
-        // --- PERBAIKAN 1: Gunakan MONTH() dan YEAR() pada kolom period_start ---
-        $payrolls = $payrollModel->where('MONTH(period_start)', $currentMonth)
-                                 ->where('YEAR(period_start)', $currentYear)
-                                 ->findAll();
-        
-        $totalPayrollCost = 0;
-        foreach ($payrolls as $p) {
-            // --- PERBAIKAN 2: Gunakan total_amount sesuai tabel baru kita ---
-            $totalPayrollCost += $p['total_amount'];
+        $totalPayrollCost = array_sum(array_column($payrolls, 'total_amount'));
+
+        // ==========================================
+        // 2. DATA KEUANGAN (AKUNTANSI)
+        // ==========================================
+        $coa = $db->table('chart_of_accounts')->get()->getResultArray();
+        $revenue = 0; $expense = 0; $assets = 0;
+
+        foreach($coa as $acc) {
+            if($acc['account_type'] === 'PENDAPATAN') $revenue += $acc['balance'];
+            if($acc['account_type'] === 'PERBELANJAAN') $expense += $acc['balance'];
+            if($acc['account_type'] === 'ASET') $assets += $acc['balance'];
         }
+        $netProfit = $revenue - $expense;
 
         // ==========================================
-        // 2. DATA SIMULASI (MODUL PABRIK LAINNYA)
+        // 3. DATA PRODUKSI & GUDANG
         // ==========================================
+        $activeSpk = $db->table('work_orders')->where('status', 'IN_PROGRESS')->countAllResults();
         
-        // A. Modul Produksi & Manufaktur
-        $productionData = [
-            'active_spk' => 14,
-            'completed_today' => 125, // pcs silencer
-            'defect_rate' => 1.2, // persentase barang reject
-            'target_achieved' => 85 // persentase target harian
-        ];
+        // Cek item gudang yang stoknya menipis (kurang dari 10)
+        $lowStockItems = $db->table('warehouse_inventory')->where('physical_stock <=', 10)->countAllResults();
 
-        // B. Modul Gudang & Logistik
-        $warehouseData = [
-            'low_stock_items' => 8, // material yang mau habis
-            'inbound_today' => 3, // truk masuk
-            'outbound_today' => 5 // truk keluar
-        ];
+        // ==========================================
+        // 4. DATA PENJUALAN B2B & E-COMMERCE
+        // ==========================================
+        $b2bOrders = $db->table('b2b_sales_orders')
+                        ->where('MONTH(order_date)', $currentMonth)
+                        ->where('YEAR(order_date)', $currentYear)
+                        ->get()->getResultArray();
+        $b2bRevenue = array_sum(array_column($b2bOrders, 'total_amount'));
+        $pendingB2b = $db->table('b2b_sales_orders')->where('status !=', 'PAID')->countAllResults();
 
-        // C. Modul Sales & Penjualan
-        $salesData = [
-            'pending_orders' => 24,
-            'revenue_this_month' => 450500000, // Rp 450.5 Juta
-            'top_product' => 'Noric Hexagonal Carbon'
-        ];
+        $activeShops = $db->table('shopee_integrations')->where('status', 'Active')->countAllResults();
 
-        // D. Data Grafik (Tren Produksi vs Penjualan 6 Hari Terakhir)
+        // ==========================================
+        // 5. DATA GRAFIK (Simulasi 6 Bulan Terakhir untuk UI)
+        // ==========================================
         $chartData = [
-            'labels' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
-            'produksi' => [120, 135, 125, 140, 150, 90], // pcs
-            'penjualan' => [100, 115, 140, 130, 160, 110] // pcs
+            'labels' => ['Okt', 'Nov', 'Des', 'Jan', 'Feb', 'Mar'],
+            'pendapatan' => [120, 135, 125, 140, 150, ($revenue/1000000)], // Dalam Juta
+            'beban' => [100, 115, 140, 130, 110, ($expense/1000000)] // Dalam Juta
         ];
 
         $data = [
-            'title'            => 'Dashboard',
+            'title'            => 'Executive Command Center',
             'currentMonthName' => date('F Y'),
             'totalEmployees'   => $totalEmployees,
             'totalPayrollCost' => $totalPayrollCost,
-            'production'       => $productionData,
-            'warehouse'        => $warehouseData,
-            'sales'            => $salesData,
+            'finance'          => ['revenue' => $revenue, 'profit' => $netProfit, 'assets' => $assets],
+            'production'       => ['active_spk' => $activeSpk, 'low_stock' => $lowStockItems],
+            'sales'            => ['b2b_revenue' => $b2bRevenue, 'pending_b2b' => $pendingB2b, 'active_shops' => $activeShops],
             'chart'            => $chartData
         ];
 

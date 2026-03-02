@@ -40,10 +40,17 @@ class Production extends BaseController
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // Pisahkan Barang Jadi (FG) dan Bahan Baku (RM) berdasarkan awalan SKU (Asumsi standar: FG- dan RM-)
-        // Atau ambil semua dan biarkan user memilih
-        $finishedGoods = $this->db->table('warehouse_inventory')->like('sku', 'FG-', 'after')->get()->getResultArray();
-        $rawMaterials  = $this->db->table('warehouse_inventory')->like('sku', 'RM-', 'after')->get()->getResultArray();
+        // 1. Ambil Barang Jadi (Knalpot) -> Dari tabel warehouse_inventory
+        $finishedGoods = $this->db->table('warehouse_inventory')
+                                  ->like('sku', 'PRD-', 'after')
+                                  ->orderBy('item_name', 'ASC')
+                                  ->get()->getResultArray();
+                                  
+        // 2. PERBAIKAN: Ambil Bahan Baku Mentah -> Dari tabel raw_materials (BUKAN warehouse_inventory)
+        $rawMaterials  = $this->db->table('raw_materials')
+                                  ->like('sku_material', 'MAT-', 'after')
+                                  ->orderBy('material_name', 'ASC')
+                                  ->get()->getResultArray();
 
         $data = [
             'title'         => 'Bill of Materials Builder',
@@ -53,7 +60,6 @@ class Production extends BaseController
 
         return view('production/bom_builder', $data);
     }
-
     // --- 3. SIMPAN RESEP (BOM) ---
     public function store_bom()
     {
@@ -65,7 +71,7 @@ class Production extends BaseController
             $rmSkus = $this->request->getPost('rm_sku'); // Array
             $qtys = $this->request->getPost('qty'); // Array
 
-            if(empty($rmSkus)) throw new \Exception("Pilih minimal 1 bahan baku untuk resep ini.");
+            if(empty($rmSkus)) throw new \Exception("Pilih minimal 1 material dasar untuk resep ini.");
 
             // Insert Header
             $this->db->table('bom_headers')->insert([
@@ -74,7 +80,7 @@ class Production extends BaseController
             ]);
             $bomId = $this->db->insertID();
 
-            // Insert Items (Bahan Baku)
+            // Insert Items (Material)
             for ($i = 0; $i < count($rmSkus); $i++) {
                 if(!empty($rmSkus[$i]) && !empty($qtys[$i])) {
                     $this->db->table('bom_items')->insert([
@@ -91,7 +97,7 @@ class Production extends BaseController
                 throw new \Exception("Gagal menyimpan resep ke database.");
             }
 
-            return redirect()->to('/production')->with('success', 'Resep (BoM) berhasil diciptakan!');
+            return redirect()->to('/production')->with('success', 'Formulasi Resep (BoM) berhasil diciptakan!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -119,13 +125,13 @@ class Production extends BaseController
                 'start_date'  => date('Y-m-d')
             ]);
 
-            return redirect()->back()->with('success', "Surat Perintah Kerja $spkNumber berhasil diterbitkan untuk bengkel!");
+            return redirect()->back()->with('success', "Surat Perintah Kerja $spkNumber berhasil diterbitkan untuk pabrik!");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal membuat SPK: ' . $e->getMessage());
         }
     }
 
-    // --- 5. EKSEKUSI JANTUNG PABRIK: SELESAIKAN SPK & POTONG STOK ---
+   // --- 5. EKSEKUSI JANTUNG PABRIK: SELESAIKAN SPK & POTONG STOK ---
     public function complete_spk($spkId)
     {
         try {
@@ -137,26 +143,43 @@ class Production extends BaseController
                 throw new \Exception("SPK tidak valid atau sudah selesai.");
             }
 
-            // 2. Ambil Header Resep (Mengetahui Knalpot apa yang dibuat)
+            // 2. Ambil Header Resep
             $bom = $this->db->table('bom_headers')->where('id', $spk['bom_id'])->get()->getRowArray();
             $fgSku = $bom['fg_sku'];
             $targetQty = $spk['planned_qty'];
 
-            // 3. Ambil Rincian Bahan Baku dari Resep
+            // 3. Ambil Rincian Material Dasar
             $bomItems = $this->db->table('bom_items')->where('bom_id', $bom['id'])->get()->getResultArray();
 
-            // 4. PROSES PEMOTONGAN BAHAN BAKU (RAW MATERIAL DEDUCTION)
+            // 4. CEK KETERSEDIAAN SEMUA MATERIAL DULU!
             foreach ($bomItems as $item) {
                 $totalRmNeeded = $item['qty_required'] * $targetQty;
+                $rmStock = $this->db->table('warehouse_inventory')->where('sku', $item['rm_sku'])->get()->getRowArray();
                 
-                // Kurangi stok di gudang lokal
-                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$totalRmNeeded, $item['rm_sku']]);
+                // Jika tidak ketemu di warehouse_inventory, cari di raw_materials (tergantung arsitektur database Anda)
+                if (!$rmStock) {
+                    $rmStock = $this->db->table('raw_materials')->where('sku_material', $item['rm_sku'])->get()->getRowArray();
+                }
+                
+                $physStock = $rmStock['physical_stock'] ?? 0;
+                
+                if (!$rmStock || $physStock < $totalRmNeeded) {
+                    throw new \Exception("GAGAL! Stok Material <b>{$item['rm_sku']}</b> tidak cukup. Dibutuhkan: $totalRmNeeded, Sisa: $physStock.");
+                }
             }
 
-            // 5. PROSES PENAMBAHAN BARANG JADI (FINISHED GOODS ADDITION)
+            // 5. PROSES PEMOTONGAN MATERIAL JIKA STOK AMAN
+            foreach ($bomItems as $item) {
+                $totalRmNeeded = $item['qty_required'] * $targetQty;
+                // Update di tabel yang relevan (sesuaikan jika raw_materials pisah tabel)
+                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$totalRmNeeded, $item['rm_sku']]);
+                $this->db->query("UPDATE raw_materials SET physical_stock = physical_stock - ? WHERE sku_material = ?", [$totalRmNeeded, $item['rm_sku']]);
+            }
+
+            // 6. PROSES PENAMBAHAN PRODUK JADI (PRD)
             $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$targetQty, $fgSku]);
 
-            // 6. Update Status SPK
+            // 7. Update Status SPK
             $this->db->table('work_orders')->where('id', $spkId)->update([
                 'status' => 'COMPLETED',
                 'completed_at' => date('Y-m-d H:i:s')
@@ -165,10 +188,10 @@ class Production extends BaseController
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                throw new \Exception("Terjadi kegagalan saat menyelaraskan stok pabrik.");
+                throw new \Exception("Terjadi kegagalan koneksi saat menyelaraskan stok pabrik.");
             }
 
-            return redirect()->back()->with('success', "🔥 SPK Selesai! Stok Barang Jadi bertambah <b>+$targetQty</b> dan Bahan Baku otomatis terpotong.");
+            return redirect()->back()->with('success', "🔥 SPK Selesai! Stok Produk bertambah <b>+$targetQty</b> dan Material otomatis terpotong.");
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());

@@ -96,9 +96,12 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     // Modul Procurement & Pembelian (Rantai Pasok)
     // ====================================================================
     $routes->get('/procurement', 'Procurement::index');
+    $routes->get('/procurement/detail/(:num)', 'Procurement::detail/$1'); 
+    $routes->post('/procurement/store_supplier', 'Procurement::store_supplier'); 
     $routes->get('/procurement/create_po', 'Procurement::create_po');
     $routes->post('/procurement/store_po', 'Procurement::store_po');
     $routes->get('/procurement/receive_goods/(:num)', 'Procurement::receive_goods/$1');
+    $routes->get('/procurement/delete_supplier/(:num)', 'Procurement::delete_supplier/$1');
 
     // ====================================================================
     // Modul Akuntansi & Kewangan (Double-Entry General Ledger)
@@ -109,12 +112,17 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
 
     // Modul B2B Wholesale & Piutang
     $routes->get('/wholesale', 'Wholesale::index');
+    $routes->get('/wholesale/surat_jalan/(:num)', 'Wholesale::surat_jalan/$1'); // <-- TAMBAHKAN INI
+    $routes->post('/wholesale/store_customer', 'Wholesale::store_customer'); // <-- TAMBAH INI
+    $routes->get('/wholesale/delete_customer/(:num)', 'Wholesale::delete_customer/$1'); // <-- TAMBAH INI
     $routes->post('/wholesale/store_so', 'Wholesale::store_so');
     $routes->post('/wholesale/pay_installment/(:num)', 'Wholesale::pay_installment/$1');
 
     // Modul Manajemen Aset & Maintenance Pabrik
     $routes->get('/asset', 'Asset::index');
+    $routes->post('/asset/store', 'Asset::store');
     $routes->post('/asset/update_status/(:num)', 'Asset::update_status/$1');
+    $routes->get('/asset/delete/(:num)', 'Asset::delete/$1'); // <-- TAMBAHKAN BARIS INI
 
     // ====================================================================
     // INTEGRASI OMNICHANNEL (Shopee Open API)
