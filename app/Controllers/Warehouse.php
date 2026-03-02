@@ -283,4 +283,88 @@ class Warehouse extends BaseController
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
+
+    // ===========================================================================
+    // FITUR: PUSAT RESOLUSI PEMBATALAN PEMBELI (CANCELLATION HUB)
+    // ===========================================================================
+    public function cancellation_hub()
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        $shopeeApi = new \App\Libraries\ShopeeApi();
+        // Ambil toko utama yang sedang aktif
+        $shop = $this->db->table('shopee_integrations')->where('status', 'Active')->get()->getRowArray();
+        
+        if (!$shop) return redirect()->to('/shopee')->with('error', 'Tidak ada toko Shopee yang aktif.');
+
+        $shopId = $shop['shop_id'];
+        $cancelOrders = [];
+
+        try {
+            // 1. Tarik pesanan berstatus IN_CANCEL secara Real-Time dari Server Shopee
+            $resp = $shopeeApi->getInCancelOrders($shopId);
+            $orderSns = [];
+            
+            if (isset($resp['response']['order_list'])) {
+                foreach ($resp['response']['order_list'] as $o) {
+                    $orderSns[] = $o['order_sn'];
+                }
+            }
+
+            // 2. Jika ada pesanan yang minta dibatalkan, tarik detail alasannya
+            if (!empty($orderSns)) {
+                $detailResp = $shopeeApi->getCancelOrderDetails($shopId, $orderSns);
+                if (isset($detailResp['response']['order_list'])) {
+                    $cancelOrders = $detailResp['response']['order_list'];
+                }
+            }
+
+        } catch (\Exception $e) {
+            session()->setFlashdata('error', 'Gagal menarik data batal dari Shopee: ' . $e->getMessage());
+        }
+
+        $data = [
+            'title'        => 'Pusat Resolusi Pembatalan',
+            'shop'         => $shop,
+            'cancelOrders' => $cancelOrders
+        ];
+
+        return view('warehouse/cancellation_hub', $data);
+    }
+
+    // --- FITUR: PROSES TERIMA / TOLAK PEMBATALAN ---
+    public function process_cancellation()
+    {
+        $shopId    = $this->request->getPost('shop_id');
+        $orderSn   = $this->request->getPost('order_sn');
+        $operation = $this->request->getPost('operation'); // ACCEPT / REJECT
+
+        $shopeeApi = new \App\Libraries\ShopeeApi();
+        
+        try {
+            // Tembak API Shopee untuk menyetujui atau menolak
+            $resp = $shopeeApi->handleCancellation($orderSn, $operation, $shopId);
+            
+            if (isset($resp['error']) && $resp['error'] !== '') {
+                throw new \Exception($resp['message'] ?? $resp['error']);
+            }
+
+            // Jika operasi disetujui (ACCEPT), ubah status di DB Lokal menjadi CANCELLED
+            if ($operation === 'ACCEPT') {
+                $exists = $this->db->table('sales_orders')->where('order_sn', $orderSn)->countAllResults();
+                if ($exists > 0) {
+                    $this->db->table('sales_orders')->where('order_sn', $orderSn)->update(['order_status' => 'CANCELLED']);
+                }
+            }
+
+            $msg = ($operation === 'ACCEPT') 
+                 ? "Pembatalan DISETUJUI. Dana akan dikembalikan ke pembeli." 
+                 : "Pembatalan DITOLAK! Silakan lanjutkan packing dan serahkan paket ke kurir.";
+
+            return redirect()->back()->with('success', "Aksi Berhasil! " . $msg);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal merespon pembatalan: ' . $e->getMessage());
+        }
+    }
 }

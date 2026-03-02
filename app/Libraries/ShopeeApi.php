@@ -663,4 +663,274 @@ class ShopeeApi
         ];
         return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
     }
+
+    /**
+     * ===========================================================================
+     * MODUL KOMBO HEMAT (BUNDLE DEALS)
+     * ===========================================================================
+     */
+
+    /**
+     * 25. ADD BUNDLE DEAL
+     * Membuat kerangka promosi Kombo Hemat (Contoh: Beli 2 Diskon 10%)
+     */
+    public function addBundleDeal($shopId, $payload)
+    {
+        $path = "/api/v2/bundle_deal/add_bundle_deal";
+        return $this->callApi($path, $payload, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 26. ADD BUNDLE DEAL ITEM
+     * Memasukkan produk-produk ke dalam kerangka promosi Kombo Hemat
+     */
+    public function addBundleDealItem($shopId, $bundleId, $itemIds)
+    {
+        $path = "/api/v2/bundle_deal/add_bundle_deal_item";
+        
+        $itemList = [];
+        foreach ($itemIds as $id) {
+            $itemList[] = [
+                'item_id' => (int)$id,
+                'status'  => 1 // 1 = Enable (Aktif di bundle ini)
+            ];
+        }
+
+        $body = [
+            'bundle_deal_id' => (int)$bundleId,
+            'item_list'      => $itemList
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL RESOLUSI & PEMBATALAN PESANAN (CANCELLATION HUB)
+     * ===========================================================================
+     */
+
+    /**
+     * 27. GET IN_CANCEL ORDERS
+     * Menarik pesanan yang saat ini sedang diajukan pembatalan oleh pembeli.
+     */
+    public function getInCancelOrders($shopId, $days = 15)
+    {
+        $path = "/api/v2/order/get_order_list";
+        $params = [
+            'time_range_field' => 'create_time',
+            'time_from'        => time() - ($days * 86400),
+            'time_to'          => time(),
+            'page_size'        => 50,
+            'order_status'     => 'IN_CANCEL'
+        ];
+        return $this->callApi($path, $params, 'GET', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 28. GET CANCEL ORDER DETAILS
+     * Menarik alasan kenapa pembeli membatalkan pesanan.
+     */
+    public function getCancelOrderDetails($shopId, $orderSnList)
+    {
+        $path = "/api/v2/order/get_order_detail";
+        $params = [
+            'order_sn_list'            => implode(',', $orderSnList),
+            'response_optional_fields' => 'buyer_username,item_list,cancel_reason,cancel_by,total_amount'
+        ];
+        return $this->callApi($path, $params, 'GET', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 29. HANDLE BUYER CANCELLATION
+     * Menjawab permintaan batal (Operation: ACCEPT atau REJECT).
+     */
+    public function handleBuyerCancellation($shopId, $orderSn, $operation)
+    {
+        $path = "/api/v2/order/handle_buyer_cancellation";
+        $body = [
+            'order_sn'  => $orderSn,
+            'operation' => strtoupper($operation) // Harus 'ACCEPT' atau 'REJECT'
+        ];
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL KATALOG & VARIAN (PRODUCT VARIATIONS)
+     * ===========================================================================
+     */
+
+    /**
+     * 30. INIT TIER VARIATION
+     * Mengatur Varian Produk (Contoh: Warna & Ukuran) beserta harga dan stoknya.
+     */
+    public function initTierVariation($shopId, $itemId, $tierVariation, $modelList)
+    {
+        $path = "/api/v2/product/init_tier_variation";
+        
+        $body = [
+            'item_id'        => (int)$itemId,
+            'tier_variation' => $tierVariation,
+            'model'          => $modelList
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL PAKET DISKON (ADD-ON DEALS)
+     * ===========================================================================
+     */
+
+    /**
+     * 31. ADD ADD-ON DEAL (Buat Kerangka Promosi)
+     */
+    public function addAddOnDeal($shopId, $payload)
+    {
+        $path = "/api/v2/add_on_deal/add_add_on_deal";
+        return $this->callApi($path, $payload, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 32. ADD MAIN ITEM (Masukkan Produk Utama)
+     */
+    public function addAddOnDealMainItem($shopId, $addOnDealId, $itemIds)
+    {
+        $path = "/api/v2/add_on_deal/add_add_on_deal_main_item";
+        
+        $itemList = [];
+        foreach ($itemIds as $id) {
+            $itemList[] = ['item_id' => (int)$id, 'status' => 1];
+        }
+
+        $body = [
+            'add_on_deal_id' => (int)$addOnDealId,
+            'main_item_list' => $itemList
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 33. ADD SUB ITEM (Masukkan Produk Tambahan/Aksesoris beserta Harga Khususnya)
+     */
+    public function addAddOnDealSubItem($shopId, $addOnDealId, $subItemList)
+    {
+        $path = "/api/v2/add_on_deal/add_add_on_deal_sub_item";
+        $body = [
+            'add_on_deal_id' => (int)$addOnDealId,
+            'sub_item_list'  => $subItemList
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL REPUTASI & ULASAN PEMBELI (REVIEW MANAGEMENT)
+     * ===========================================================================
+     */
+
+    /**
+     * 34. GET COMMENT (Tarik Ulasan)
+     * Menarik daftar ulasan pembeli beserta rating bintangnya.
+     */
+    public function getComment($shopId, $pageSize = 50, $cursor = '')
+    {
+        $path = "/api/v2/product/get_comment";
+        $params = [
+            'page_size' => $pageSize
+        ];
+        if (!empty($cursor)) {
+            $params['cursor'] = $cursor;
+        }
+
+        return $this->callApi($path, $params, 'GET', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 35. REPLY COMMENT (Balas Ulasan)
+     * Mengirimkan teks balasan dari penjual (Seller Reply) ke ulasan pembeli.
+     */
+    public function replyComment($shopId, $commentId, $replyText)
+    {
+        $path = "/api/v2/product/reply_comment";
+        $body = [
+            'comment_list' => [
+                [
+                    'comment_id' => (int)$commentId,
+                    'comment'    => $replyText
+                ]
+            ]
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL MANAJEMEN HARGA MASSAL (MASS PRICE UPDATER)
+     * ===========================================================================
+     */
+
+    /**
+     * 36. UPDATE PRICE
+     * Mengubah harga asli produk di Shopee.
+     */
+    public function updatePrice($shopId, $itemId, $originalPrice)
+    {
+        $path = "/api/v2/product/update_price";
+        
+        // Aturan Shopee V2: Harga diupdate melalui array price_list
+        // model_id = 0 berarti produk utama (bukan varian).
+        $body = [
+            'item_id'    => (int)$itemId,
+            'price_list' => [
+                [
+                    'model_id'       => 0, 
+                    'original_price' => (float)$originalPrice
+                ]
+            ]
+        ];
+
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * ===========================================================================
+     * MODUL RETUR & SENGKETA PEMBELI (DISPUTE MANAGEMENT)
+     * ===========================================================================
+     */
+
+
+    /**
+     * 38. CONFIRM RETURN
+     * Menyetujui pengembalian dana pembeli (Jika memang murni kesalahan pabrik).
+     */
+    public function confirmReturn($shopId, $returnSn)
+    {
+        $path = "/api/v2/returns/confirm";
+        $body = [
+            'return_sn' => $returnSn
+        ];
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
+
+    /**
+     * 39. DISPUTE RETURN
+     * Mengajukan sengketa/menolak retur karena pembeli curang atau alasan tidak valid.
+     */
+    public function disputeReturn($shopId, $returnSn, $disputeReason, $disputeText)
+    {
+        $path = "/api/v2/returns/dispute";
+        $body = [
+            'return_sn'           => $returnSn,
+            'email'               => 'cs@noric-exhaust.com', // Email resmi toko untuk korespondensi tim Shopee
+            'dispute_reason'      => $disputeReason, // Pilih dari GET_RETURN_DISPUTE_REASON (Biasanya dikirim dari form)
+            'dispute_text_reason' => $disputeText
+        ];
+        return $this->callApi($path, $body, 'POST', $this->getValidToken($shopId), $shopId);
+    }
 }

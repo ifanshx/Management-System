@@ -83,9 +83,38 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/sales/offline', 'OfflineSales::index');
     $routes->post('/sales/process_offline', 'OfflineSales::process_checkout');
 
-    // Modul Pabrik & Produksi
+    // ====================================================================
+    // Modul Produksi & Manufaktur (MES)
+    // ====================================================================
     $routes->get('/production', 'Production::index');
-    $routes->post('/production/store_production', 'Production::store_production');
+    $routes->get('/production/bom_builder', 'Production::bom_builder');
+    $routes->post('/production/store_bom', 'Production::store_bom');
+    $routes->post('/production/create_spk', 'Production::create_spk');
+    $routes->get('/production/complete_spk/(:num)', 'Production::complete_spk/$1');
+
+    // ====================================================================
+    // Modul Procurement & Pembelian (Rantai Pasok)
+    // ====================================================================
+    $routes->get('/procurement', 'Procurement::index');
+    $routes->get('/procurement/create_po', 'Procurement::create_po');
+    $routes->post('/procurement/store_po', 'Procurement::store_po');
+    $routes->get('/procurement/receive_goods/(:num)', 'Procurement::receive_goods/$1');
+
+    // ====================================================================
+    // Modul Akuntansi & Kewangan (Double-Entry General Ledger)
+    // ====================================================================
+    $routes->get('/accounting', 'Accounting::index');
+    $routes->get('/accounting/journal', 'Accounting::journal');
+    $routes->post('/accounting/store_journal', 'Accounting::store_journal');
+
+    // Modul B2B Wholesale & Piutang
+    $routes->get('/wholesale', 'Wholesale::index');
+    $routes->post('/wholesale/store_so', 'Wholesale::store_so');
+    $routes->post('/wholesale/pay_installment/(:num)', 'Wholesale::pay_installment/$1');
+
+    // Modul Manajemen Aset & Maintenance Pabrik
+    $routes->get('/asset', 'Asset::index');
+    $routes->post('/asset/update_status/(:num)', 'Asset::update_status/$1');
 
     // ====================================================================
     // INTEGRASI OMNICHANNEL (Shopee Open API)
@@ -144,6 +173,31 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
         return redirect()->to('/shopee')->with('error', 'Silakan pilih toko Shopee terlebih dahulu untuk mengatur Voucher.');
     });
 
+    // Modul Kombo Hemat (Bundle Deals)
+    $routes->get('/shopee/bundle/(:segment)', 'ShopeeBundle::index/$1');
+    $routes->post('/shopee/create_bundle/(:segment)', 'ShopeeBundle::create_bundle/$1');
+
+    // Modul Variasi Produk
+    $routes->get('/shopee/variation/(:segment)/(:num)', 'ShopeeVariation::build/$1/$2');
+    $routes->post('/shopee/save_variation/(:segment)/(:num)', 'ShopeeVariation::save/$1/$2');
+
+    // Modul Paket Diskon (Add-on Deals)
+    $routes->get('/shopee/addon/(:segment)', 'ShopeeAddon::index/$1');
+    $routes->post('/shopee/create_addon/(:segment)', 'ShopeeAddon::create_addon/$1');
+
+    // Modul Reputasi & Ulasan
+    $routes->get('/shopee/reviews/(:segment)', 'ShopeeReview::index/$1');
+    $routes->post('/shopee/reply_review/(:segment)', 'ShopeeReview::reply/$1');
+
+    // Modul Update Harga Massal
+    $routes->get('/shopee/mass_price/(:segment)', 'ShopeeMassUpdate::price/$1');
+    $routes->post('/shopee/update_price_action/(:segment)', 'ShopeeMassUpdate::update_price_action/$1');
+
+    // Modul Retur & Sengketa
+    $routes->get('/shopee/returns/(:segment)', 'ShopeeReturn::index/$1');
+    $routes->get('/shopee/confirm_return/(:segment)/(:segment)', 'ShopeeReturn::confirm/$1/$2');
+    $routes->post('/shopee/dispute_return/(:segment)', 'ShopeeReturn::dispute/$1');
+
     // ====================================================================
     // MODUL GUDANG & PACKING (WAREHOUSE)
     // ====================================================================
@@ -159,6 +213,9 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->post('/warehouse/store_rm', 'LocalWarehouse::store_rm');
     $routes->get('/warehouse/delete_fg/(:num)', 'LocalWarehouse::delete_fg/$1');
     $routes->get('/warehouse/delete_rm/(:num)', 'LocalWarehouse::delete_rm/$1');
+    // Manajemen Resolusi & Pembatalan
+    $routes->get('/warehouse/cancellation-hub', 'Warehouse::cancellation_hub');
+    $routes->post('/warehouse/process_cancellation', 'Warehouse::process_cancellation');
 });
 
 // ====================================================================

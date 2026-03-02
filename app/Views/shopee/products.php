@@ -45,8 +45,13 @@
     .stock-empty { color: #ef4444; font-weight: 800; font-size: 15px;}
 
     /* Actions */
-    .btn-map { background: var(--bg-base); color: var(--accent-main); border: 1px solid var(--accent-main); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;}
-    .btn-map:hover { background: var(--accent-main); color: #fff; box-shadow: 0 4px 10px var(--accent-light);}
+    .action-group { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+    
+    .btn-map { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;}
+    .btn-map:hover { background: var(--text-main); color: var(--bg-base); box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+    
+    .btn-var { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;}
+    .btn-var:hover { background: #3b82f6; color: #fff; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);}
 </style>
 
 <div class="page-header">
@@ -138,9 +143,15 @@
                         </td>
 
                         <td style="text-align: right;">
-                            <button type="button" class="btn-map" onclick="mapSku('<?= esc($prod['item_id']) ?>', '<?= esc($prod['item_name']) ?>')">
-                                <i class="ph ph-link"></i> Kaitkan Data Gudang
-                            </button>
+                            <div class="action-group">
+                                <button type="button" class="btn-map" onclick="mapSku('<?= esc($prod['item_id']) ?>', '<?= esc($prod['item_name']) ?>')">
+                                    <i class="ph ph-link"></i> Map SKU
+                                </button>
+                                
+                                <a href="<?= base_url('/shopee/variation/'.$shop['shop_id'].'/'.$prod['item_id']) ?>" class="btn-var">
+                                    <i class="ph ph-tree-structure"></i> Atur Varian
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
