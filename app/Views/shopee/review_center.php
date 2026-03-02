@@ -113,6 +113,9 @@
 
         fetch('<?= base_url('/shopee/reply_review/'.$shop['shop_id']) ?>', {
             method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             body: formData
         })
         .then(response => response.json())

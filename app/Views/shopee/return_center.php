@@ -121,6 +121,9 @@
 
                 return fetch('<?= base_url('/shopee/dispute_return/'.$shop['shop_id']) ?>', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 })
                 .then(response => {

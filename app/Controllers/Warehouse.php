@@ -341,9 +341,9 @@ class Warehouse extends BaseController
 
         $shopeeApi = new \App\Libraries\ShopeeApi();
         
-        try {
-            // Tembak API Shopee untuk menyetujui atau menolak
-            $resp = $shopeeApi->handleCancellation($orderSn, $operation, $shopId);
+       try {
+            // PERBAIKAN: Nama fungsi dan urutan parameter yang benar
+            $resp = $shopeeApi->handleBuyerCancellation($shopId, $orderSn, $operation);
             
             if (isset($resp['error']) && $resp['error'] !== '') {
                 throw new \Exception($resp['message'] ?? $resp['error']);
