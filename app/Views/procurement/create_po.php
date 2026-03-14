@@ -51,13 +51,11 @@
         .po-row > .btn-remove { position: absolute; top: 20px; right: 20px; }
     }
 
-    /* Custom Input Money */
     .input-money { display: flex; align-items: center; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: 0.3s;}
     .input-money:focus-within { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); background: var(--bg-surface);}
     .input-money span { padding: 15px; background: rgba(0,0,0,0.02); font-size: 13px; font-weight: 800; color: var(--text-muted); border-right: 1px solid var(--border-subtle);}
     .input-money input { border: none; padding: 15px; font-size: 14px; font-weight: 700; width: 100%; outline: none; background: transparent; color: var(--text-main); font-family: 'Space Mono', monospace;}
 
-    /* Live Subtotal Badge */
     .row-subtotal { background: rgba(16, 185, 129, 0.08); color: #10b981; padding: 15px; border-radius: 14px; font-family: 'Space Mono', monospace; font-weight: 800; font-size: 14px; text-align: right; border: 1px dashed rgba(16, 185, 129, 0.3);}
 
     .btn-remove { background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid transparent; width: 48px; height: 48px; border-radius: 14px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;}
@@ -76,7 +74,20 @@
     .btn-save { width: 100%; background: #4f46e5; color: #fff; border: none; padding: 24px; border-radius: 20px; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 12px;}
     .btn-save:hover { background: #4338ca; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(79, 70, 229, 0.4);}
     .btn-save:active { transform: translateY(0); }
+    .btn-save:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none;}
+
+    /* AJAX Toast */
+    #ajaxToast {
+        position: fixed; top: 20px; right: -400px;
+        background: #10b981; color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 800;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); display: flex; align-items: center; gap: 10px; z-index: 9999;
+        transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #ajaxToast.show { right: 20px; }
+    #ajaxToast.error { background: #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); }
 </style>
+
+<div id="ajaxToast"><i class="ph-bold ph-check-circle" style="font-size: 20px;"></i> <span id="toastMsg">Sukses!</span></div>
 
 <div class="builder-wrapper">
     
@@ -101,7 +112,7 @@
     <?php endif; ?>
 
     <div class="builder-card">
-        <form action="<?= base_url('/procurement/store_po') ?>" method="post">
+        <form id="formPO" action="<?= base_url('/procurement/store_po') ?>" method="post">
             <?= csrf_field() ?>
 
             <div class="section-header">
@@ -176,8 +187,8 @@
                 <div class="total-val" id="displayTotal">Rp 0</div>
             </div>
 
-            <button type="submit" class="btn-save" <?= empty($rawMaterials) || empty($suppliers) ? 'disabled' : '' ?>>
-                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 24px;"></i> Terbitkan Dokumen PO Sekarang
+            <button type="submit" id="btnSubmitPO" class="btn-save" <?= empty($rawMaterials) || empty($suppliers) ? 'disabled' : '' ?>>
+                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 24px;"></i> <span>Terbitkan Dokumen PO Sekarang</span>
             </button>
         </form>
     </div>
@@ -186,7 +197,22 @@
 <script>
     const rmData = <?= json_encode($rawMaterials) ?>;
 
-    // Logika Penambahan Baris Baru
+    // Toast Notification
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('ajaxToast');
+        document.getElementById('toastMsg').innerText = msg;
+        if(isError) {
+            toast.classList.add('error');
+            toast.innerHTML = `<i class="ph-bold ph-warning-circle" style="font-size: 20px;"></i> <span id="toastMsg">${msg}</span>`;
+        } else {
+            toast.classList.remove('error');
+            toast.innerHTML = `<i class="ph-bold ph-check-circle" style="font-size: 20px;"></i> <span id="toastMsg">${msg}</span>`;
+        }
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 3500);
+    }
+
+    // Penambahan Baris
     function addItemRow() {
         if(rmData.length === 0) return;
 
@@ -211,7 +237,6 @@
             </button>
         `;
         
-        // Efek Animasi Meluncur Masuk
         row.style.opacity = 0;
         row.style.transform = "translateY(20px) scale(0.98)";
         container.appendChild(row);
@@ -222,7 +247,7 @@
         }, 10);
     }
 
-    // Mesin Kalkulator Real-Time
+    // Kalkulator Otomatis
     function calculateTotal() {
         let qtys = document.querySelectorAll('.qty-input');
         let prices = document.querySelectorAll('.price-input');
@@ -234,19 +259,55 @@
             let p = parseFloat(prices[i].value) || 0;
             let sub = q * p;
             
-            // Tampilkan Live Subtotal per Baris
             subtotals[i].innerText = 'Rp ' + sub.toLocaleString('id-ID');
-            
             grandTotal += sub;
         }
 
-        // Tampilkan Live Grand Total dengan Format Rupiah
         document.getElementById('displayTotal').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
     }
+
+    // AJAX Form Submit
+    document.getElementById('formPO').addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        
+        const form = this;
+        const btn = document.getElementById('btnSubmitPO');
+        const btnText = btn.querySelector('span');
+        const btnIcon = btn.querySelector('i');
+        
+        btn.disabled = true;
+        btnText.innerText = "Memproses Dokumen...";
+        btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                showToast(data.message);
+                
+                // Delay sebentar lalu pindah ke halaman index agar pengguna bisa melihat dokumen barunya
+                setTimeout(() => { window.location.href = "<?= base_url('/procurement') ?>"; }, 1500);
+            } else {
+                showToast(data.message, true);
+                btn.disabled = false;
+                btnText.innerText = "Terbitkan Dokumen PO Sekarang";
+                btnIcon.className = "ph-bold ph-paper-plane-tilt";
+            }
+        })
+        .catch(err => {
+            showToast("Koneksi Server Gagal", true);
+            btn.disabled = false;
+            btnText.innerText = "Terbitkan Dokumen PO Sekarang";
+            btnIcon.className = "ph-bold ph-paper-plane-tilt";
+        });
+    });
 </script>
 
 <style>
-    /* Sembunyikan label kolom di layar kecil agar tidak berantakan */
     @media (max-width: 1024px) {
         .desktop-labels { display: none !important; }
     }

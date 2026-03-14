@@ -1,114 +1,100 @@
 <?= $this->extend('layout/template') ?>
-
 <?= $this->section('content') ?>
 
 <style>
-    .page-header { margin-bottom: 30px; }
-    .page-title h1 { font-size: 26px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; margin-bottom: 5px; }
-    .page-title p { font-size: 13px; color: var(--text-muted); }
+    /* =========================================================
+       1. PAGE HEADER & TYPOGRAPHY
+       ========================================================= */
+    .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;}
+    .page-title { display: flex; align-items: center; gap: 15px;}
+    .title-icon { width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.05)); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 26px; border: 1px solid rgba(59, 130, 246, 0.2);}
+    .page-title h1 { font-size: 26px; font-weight: 900; color: var(--text-main); margin: 0 0 4px 0; letter-spacing: -0.5px;}
+    .page-title p { font-size: 13px; color: var(--text-muted); font-weight: 500; margin: 0;}
 
-    .profile-layout {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        gap: 30px;
-        align-items: start;
-    }
+    /* =========================================================
+       2. LAYOUT & SIDEBAR (BENTO & STICKY)
+       ========================================================= */
+    .profile-layout { display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start; }
+    @media (max-width: 992px) { .profile-layout { grid-template-columns: 1fr; } }
 
-    /* Left Sidebar: Profile Card & Menu */
-    .sidebar-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: var(--shadow-card);
-    }
-
-    .profile-header {
-        padding: 30px 20px 20px;
-        text-align: center;
-        border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        border-radius: 25px;
-        background: var(--accent-main);
-        color: #fff;
-        font-size: 32px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 15px;
-        box-shadow: 0 10px 20px -5px var(--accent-light);
-    }
-
-    .profile-name { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; margin-bottom: 4px; }
-    .profile-role { font-size: 13px; font-weight: 600; color: var(--accent-main); margin-bottom: 8px; }
-    .profile-badge { display: inline-block; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-muted); font-family: monospace; }
-
-    .nav-tabs { padding: 15px; display: flex; flex-direction: column; gap: 5px; }
-    .tab-btn {
-        display: flex; align-items: center; gap: 12px; padding: 12px 16px; width: 100%;
-        background: transparent; border: none; border-radius: 12px;
-        color: var(--text-muted); font-size: 14px; font-weight: 600; text-align: left;
-        cursor: pointer; transition: all 0.3s; font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .tab-btn i { font-size: 20px; transition: 0.3s; }
+    .sidebar-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); position: sticky; top: 20px;}
     
-    .tab-btn:hover { background: var(--bg-base); color: var(--text-main); }
-    .tab-btn.active { background: rgba(37, 99, 235, 0.1); color: var(--accent-main); }
-    html.dark .tab-btn.active { background: rgba(56, 189, 248, 0.1); }
-    .tab-btn.active i { color: var(--accent-main); }
+    .profile-header { padding: 35px 25px 25px; text-align: center; border-bottom: 1px dashed var(--border-subtle); background: rgba(0,0,0,0.01);}
+    html.dark .profile-header { background: rgba(255,255,255,0.01); }
 
-    /* Right Content Area */
-    .content-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 20px;
-        padding: 35px;
-        box-shadow: var(--shadow-card);
-        min-height: 400px;
-    }
+    .profile-avatar { width: 88px; height: 88px; border-radius: 24px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; font-size: 36px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5); border: 2px solid rgba(255,255,255,0.2);}
+    .profile-name { font-size: 20px; font-weight: 900; color: var(--text-main); line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.5px;}
+    .profile-role { font-size: 13px; font-weight: 800; color: #3b82f6; margin-bottom: 12px; }
+    .profile-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-muted); font-family: 'Space Mono', monospace; }
 
-    .tab-pane { display: none; animation: fadeIn 0.4s ease; }
+    /* Navigation Tabs */
+    .nav-tabs { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+    .tab-btn { display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; background: transparent; border: 1px solid transparent; border-radius: 14px; color: var(--text-muted); font-size: 13px; font-weight: 800; text-align: left; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
+    .tab-btn i { font-size: 20px; transition: transform 0.3s; }
+    
+    .tab-btn:hover { background: rgba(59, 130, 246, 0.05); color: #3b82f6; padding-left: 25px; border-color: rgba(59, 130, 246, 0.1);}
+    .tab-btn:hover i { transform: scale(1.1); }
+    .tab-btn.active { background: rgba(59, 130, 246, 0.1); color: #2563eb; border-color: rgba(59, 130, 246, 0.2); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);}
+    html.dark .tab-btn.active { color: #60a5fa; }
+
+    /* =========================================================
+       3. RIGHT CONTENT AREA
+       ========================================================= */
+    .content-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); min-height: 500px; }
+
+    .tab-pane { display: none; animation: slideFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
     .tab-pane.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideFadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-    .pane-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 15px; }
+    .pane-title { font-size: 18px; font-weight: 900; color: var(--text-main); margin-bottom: 30px; display: flex; align-items: center; gap: 12px; border-bottom: 2px dashed var(--border-subtle); padding-bottom: 15px; }
+    .pane-title i { color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 10px; font-size: 20px;}
 
-    /* Data Display Styles */
+    /* Info Grid (Data Pribadi) */
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .info-box { background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 16px 20px; border-radius: 16px; }
-    .info-label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
-    .info-value { font-size: 15px; font-weight: 600; color: var(--text-main); }
+    .info-box { background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 20px 25px; border-radius: 16px; transition: 0.3s;}
+    .info-box:hover { border-color: #3b82f6; background: var(--bg-surface); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.05);}
+    .info-label { font-size: 11px; color: var(--text-muted); font-weight: 900; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;}
+    .info-value { font-size: 15px; font-weight: 800; color: var(--text-main); }
 
     /* Form Styles (Akun) */
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
-    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 12px 16px; border-radius: 12px; font-size: 14px; font-family: inherit; outline: none; transition: 0.3s; }
-    .form-control:focus { border-color: var(--accent-main); box-shadow: 0 0 0 3px var(--accent-light); }
-    .btn-submit { background: var(--accent-main); color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .form-group { margin-bottom: 24px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
+    
+    .input-wrapper { display: flex; align-items: center; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: 0.3s; }
+    .input-wrapper:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background: var(--bg-surface);}
+    .input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 16px 20px; font-size: 14px; font-weight: 700; outline: none; font-family: inherit;}
+    .btn-toggle-pass { background: transparent; border: none; color: var(--text-muted); padding: 0 20px; cursor: pointer; font-size: 18px; transition: 0.2s;}
+    .btn-toggle-pass:hover { color: #3b82f6; }
+
+    .btn-submit { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border: none; padding: 16px 30px; border-radius: 14px; font-weight: 900; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.5); margin-top: 10px;}
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -5px rgba(59, 130, 246, 0.6); }
 
     /* FAQ Styles */
-    .faq-item { border: 1px solid var(--border-subtle); border-radius: 12px; margin-bottom: 15px; overflow: hidden; }
-    .faq-question { padding: 16px 20px; background: var(--bg-base); font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-    .faq-answer { padding: 0 20px; max-height: 0; overflow: hidden; transition: all 0.3s; color: var(--text-muted); font-size: 14px; line-height: 1.6; background: var(--bg-surface); }
-    .faq-item.active .faq-answer { padding: 16px 20px; max-height: 200px; border-top: 1px solid var(--border-subtle); }
-    .faq-item.active .faq-question i { transform: rotate(180deg); }
+    .faq-item { border: 1px solid var(--border-subtle); border-radius: 16px; margin-bottom: 15px; overflow: hidden; transition: 0.3s; background: var(--bg-base);}
+    .faq-question { padding: 20px 25px; font-weight: 800; color: var(--text-main); font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;}
+    .faq-question:hover { color: #3b82f6; }
+    .faq-question i { color: var(--text-muted); transition: 0.3s; font-size: 18px;}
+    
+    .faq-answer { padding: 0 25px; max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); color: var(--text-muted); font-size: 13px; line-height: 1.6; font-weight: 500;}
+    .faq-item.active { border-color: #3b82f6; background: var(--bg-surface); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);}
+    .faq-item.active .faq-answer { padding: 0 25px 25px; max-height: 300px; }
+    .faq-item.active .faq-question { color: #3b82f6; padding-bottom: 10px;}
+    .faq-item.active .faq-question i { transform: rotate(180deg); color: #3b82f6; }
 
     @media (max-width: 992px) {
-        .profile-layout { grid-template-columns: 1fr; }
-        .nav-tabs { flex-direction: row; overflow-x: auto; }
-        .tab-btn { justify-content: center; white-space: nowrap; }
+        .nav-tabs { flex-direction: row; overflow-x: auto; padding: 15px 20px;}
+        .tab-btn { justify-content: center; white-space: nowrap; padding: 12px 20px;}
+        .tab-btn:hover { padding-left: 20px; }
     }
 </style>
 
 <div class="page-header">
     <div class="page-title">
-        <h1>Pengaturan Akun</h1>
-        <p>Kelola informasi profil, keamanan akses, dan preferensi sistem Anda.</p>
+        <div class="title-icon"><i class="ph-fill ph-user-gear"></i></div>
+        <div>
+            <h1>Pengaturan Akun</h1>
+            <p>Kelola informasi profil, keamanan akses, dan preferensi sistem Anda.</p>
+        </div>
     </div>
 </div>
 
@@ -121,20 +107,20 @@
             </div>
             <div class="profile-name"><?= esc($user['name']) ?></div>
             <div class="profile-role">
-                <?= ($user['role'] === 'admin') ? 'Super Administrator' : esc($employee['position'] ?? 'Staf') ?>
+                <?= ($user['role'] === 'admin') ? 'Super Administrator' : esc($employee['position'] ?? 'Staf Karyawan') ?>
             </div>
-            <div class="profile-badge">NIK: <?= esc($user['employee_id']) ?></div>
+            <div class="profile-badge"><i class="ph-bold ph-identification-card"></i> NIK: <?= esc($user['employee_id']) ?></div>
         </div>
         
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('profil')">
-                <i class="ph ph-user"></i> Data Pribadi
+                <i class="ph-bold ph-user"></i> Data Pribadi
             </button>
             <button class="tab-btn" onclick="switchTab('keamanan')">
-                <i class="ph ph-shield-check"></i> Keamanan Akun
+                <i class="ph-bold ph-shield-check"></i> Keamanan Akun
             </button>
             <button class="tab-btn" onclick="switchTab('bantuan')">
-                <i class="ph ph-lifebuoy"></i> Bantuan & Dukungan
+                <i class="ph-bold ph-lifebuoy"></i> Bantuan & Dukungan
             </button>
         </div>
     </div>
@@ -142,12 +128,13 @@
     <div class="content-card">
         
         <div id="profil" class="tab-pane active">
-            <div class="pane-title"><i class="ph ph-identification-card"></i> Informasi Karyawan</div>
+            <div class="pane-title"><i class="ph-fill ph-identification-card"></i> Informasi Karyawan</div>
             
             <?php if($user['role'] === 'admin'): ?>
-                <div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-subtle); border-radius: 16px;">
-                    <i class="ph ph-crown" style="font-size: 40px; color: #f59e0b; margin-bottom: 10px;"></i>
-                    <p>Anda login sebagai Super Admin.<br>Data administratif tidak terikat dengan tabel Karyawan.</p>
+                <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-subtle); border-radius: 20px; background: var(--bg-base);">
+                    <i class="ph-fill ph-crown" style="font-size: 56px; color: #f59e0b; margin-bottom: 15px; display: block;"></i>
+                    <div style="font-weight: 900; font-size: 18px; color: var(--text-main); margin-bottom: 5px;">Akses Super Admin Aktif</div>
+                    <p style="font-size: 14px;">Data administratif Anda memiliki hak akses penuh dan tidak terikat pada struktur tabel kepegawaian standar.</p>
                 </div>
             <?php else: ?>
                 <div class="info-grid">
@@ -165,80 +152,90 @@
                     </div>
                     <div class="info-box">
                         <div class="info-label">Tanggal Bergabung</div>
-                        <div class="info-value"><?= date('d F Y', strtotime($employee['join_date'])) ?></div>
+                        <div class="info-value"><i class="ph-bold ph-calendar-blank" style="margin-right: 4px; color: var(--text-muted);"></i> <?= date('d F Y', strtotime($employee['join_date'])) ?></div>
                     </div>
                     <div class="info-box" style="grid-column: span 2;">
                         <div class="info-label">Alamat Terdaftar</div>
-                        <div class="info-value"><?= esc($employee['address'] ?? 'Belum diisi') ?></div>
+                        <div class="info-value" style="line-height: 1.5; font-size: 14px;"><?= esc($employee['address'] ?? 'Belum ada data alamat terdaftar.') ?></div>
                     </div>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-top: 20px;">
-                    <i class="ph ph-info"></i> Untuk mengubah data profil atau rekening bank, silakan hubungi bagian HRD.
-                </p>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 25px; display: flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.05); padding: 12px 15px; border-radius: 10px; border: 1px dashed rgba(59, 130, 246, 0.2);">
+                    <i class="ph-fill ph-info" style="color: #3b82f6; font-size: 18px;"></i> 
+                    Untuk merubah data profil demografis atau nomor rekening bank, silakan hubungi bagian HRD.
+                </div>
             <?php endif; ?>
         </div>
 
         <div id="keamanan" class="tab-pane">
-            <div class="pane-title"><i class="ph ph-lock-key"></i> Ubah Kata Sandi</div>
+            <div class="pane-title"><i class="ph-fill ph-lock-key"></i> Ubah Kata Sandi</div>
             
             <form action="<?= base_url('/profile/update_password') ?>" method="post">
                 <div class="form-group">
-                    <label>Username Anda</label>
-                    <input type="text" class="form-control" value="<?= esc($user['username']) ?>" readonly style="background: var(--bg-surface); color: var(--text-muted); cursor: not-allowed;">
+                    <label>Username Akses (ID Login)</label>
+                    <div class="input-wrapper" style="background: rgba(0,0,0,0.02);">
+                        <input type="text" value="<?= esc($user['username']) ?>" readonly style="color: var(--text-muted); cursor: not-allowed; font-family: 'Space Mono', monospace;">
+                        <span class="btn-toggle-pass" style="cursor: default;"><i class="ph-bold ph-lock"></i></span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Kata Sandi Saat Ini</label>
-                    <input type="password" name="old_password" class="form-control" placeholder="Masukkan sandi lama..." required>
+                    <div class="input-wrapper">
+                        <input type="password" name="old_password" id="oldPass" placeholder="Masukkan kata sandi lama Anda..." required>
+                        <button type="button" class="btn-toggle-pass" onclick="togglePass('oldPass', this)"><i class="ph-bold ph-eye"></i></button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Kata Sandi Baru</label>
-                    <input type="password" name="new_password" class="form-control" placeholder="Minimal 6 karakter..." required minlength="6">
+                    <div class="input-wrapper">
+                        <input type="password" name="new_password" id="newPass" placeholder="Kombinasi huruf dan angka (Min. 6 karakter)..." required minlength="6">
+                        <button type="button" class="btn-toggle-pass" onclick="togglePass('newPass', this)"><i class="ph-bold ph-eye"></i></button>
+                    </div>
                 </div>
-                <button type="submit" class="btn-submit">
-                    <i class="ph ph-floppy-disk"></i> Simpan Kata Sandi
+                <button type="submit" class="btn-submit" onclick="this.innerHTML='<i class=\'ph-bold ph-spinner-gap ph-spin\' style=\'font-size:20px;\'></i> Menyimpan...';">
+                    <i class="ph-bold ph-floppy-disk"></i> Simpan Perubahan Sandi
                 </button>
             </form>
         </div>
 
         <div id="bantuan" class="tab-pane">
-            <div class="pane-title"><i class="ph ph-headset"></i> Pusat Bantuan Noric</div>
+            <div class="pane-title"><i class="ph-fill ph-headset"></i> Pusat Bantuan Noric</div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
-                <div class="info-box" style="display: flex; align-items: center; gap: 15px;">
-                    <i class="ph ph-whatsapp-logo" style="font-size: 32px; color: #10b981;"></i>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 35px;">
+                <div class="info-box" style="display: flex; align-items: center; gap: 15px; border-color: rgba(16, 185, 129, 0.3);">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 24px;"><i class="ph-fill ph-whatsapp-logo"></i></div>
                     <div>
                         <div class="info-label">Support IT (Sistem Error)</div>
-                        <div class="info-value">0858-5468-5623</div>
+                        <div class="info-value" style="font-family: 'Space Mono', monospace;">0858-5468-5623</div>
                     </div>
                 </div>
-                <div class="info-box" style="display: flex; align-items: center; gap: 15px;">
-                    <i class="ph ph-buildings" style="font-size: 32px; color: var(--accent-main);"></i>
+                <div class="info-box" style="display: flex; align-items: center; gap: 15px; border-color: rgba(245, 158, 11, 0.3);">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 24px;"><i class="ph-fill ph-buildings"></i></div>
                     <div>
                         <div class="info-label">HRD (Tanya Gaji/Absen)</div>
-                        <div class="info-value">Ext. 104</div>
+                        <div class="info-value" style="font-family: 'Space Mono', monospace;">Ext. 104</div>
                     </div>
                 </div>
             </div>
 
-            <h4 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Pertanyaan yang Sering Diajukan (FAQ)</h4>
+            <h4 style="font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Pertanyaan yang Sering Diajukan (FAQ)</h4>
             
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    Bagaimana jika saya lupa absen di mesin fingerprint?
-                    <i class="ph ph-caret-down"></i>
+                    <span>Bagaimana jika saya lupa absen di mesin fingerprint / wajah?</span>
+                    <i class="ph-bold ph-caret-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Segera laporkan kepada atasan (Supervisor) Anda, lalu minta formulir "Koreksi Absensi Manual" ke divisi HRD maksimal 1x24 jam setelah kejadian agar tidak dihitung Alpa.
+                    Segera laporkan kepada atasan (Supervisor) Anda pada hari yang sama, lalu minta persetujuan untuk mengisi formulir "Koreksi Absensi Manual" ke divisi HRD maksimal 1x24 jam setelah kejadian agar hari tersebut tidak dihitung Alpa/Mangkir.
                 </div>
             </div>
             
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    Kapan slip gaji bisa diunduh di portal?
-                    <i class="ph ph-caret-down"></i>
+                    <span>Kapan dokumen slip gaji bulanan bisa saya unduh?</span>
+                    <i class="ph-bold ph-caret-down"></i>
                 </div>
                 <div class="faq-answer">
-                    Slip gaji bulan berjalan akan tersedia dan bisa diunduh dalam format PDF maksimal pada tanggal 1 setiap bulannya.
+                    Slip gaji resmi bulan berjalan akan otomatis tersedia di menu <b>Slip Gaji</b> pada portal Anda segera setelah dokumen Penggajian (Payroll) disahkan secara sistem oleh tim Keuangan (Finance). Anda dapat mengunduhnya kapan saja dalam format PDF.
                 </div>
             </div>
         </div>
@@ -246,60 +243,53 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Tab Switcher Logic yang Diperbarui
+    // --- 1. Tab Switcher Logic ---
     function switchTab(tabId) {
-        // Hapus class active dari semua tombol dan panel
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
         
-        // Aktifkan panel konten yang dituju
         document.getElementById(tabId).classList.add('active');
         
-        // Aktifkan tombol menu kiri yang sesuai
         const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`);
         if(activeBtn) activeBtn.classList.add('active');
 
-        // Opsional: Perbarui URL browser agar rapi tanpa me-refresh halaman
+        // Update URL tanpa refresh halaman agar jika di-reload tetap di tab yang sama
         window.history.replaceState(null, null, '#' + tabId);
     }
 
-    // Deteksi Hash di URL saat halaman pertama kali dimuat
+    // Restore tab state from URL Hash
     document.addEventListener("DOMContentLoaded", function() {
-        // Ambil teks setelah tanda '#' di URL (contoh: 'keamanan')
         const hash = window.location.hash.substring(1); 
-        
-        // Jika ada hash dan hash tersebut valid, langsung pindah ke tab itu
         if (hash === 'profil' || hash === 'keamanan' || hash === 'bantuan') {
             switchTab(hash);
         }
     });
 
-    // FAQ Accordion Logic
+    // --- 2. FAQ Accordion Logic ---
     function toggleFaq(element) {
-        const parent = element.parentElement;
-        parent.classList.toggle('active');
+        // Optional: Tutup semua FAQ lain saat satu dibuka
+        document.querySelectorAll('.faq-item').forEach(item => {
+            if(item !== element.parentElement) item.classList.remove('active');
+        });
+        element.parentElement.classList.toggle('active');
     }
 
-    // SweetAlert untuk Sukses/Error Ganti Password
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#18181b' : '#ffffff';
-    const textColor = isDark ? '#f4f4f5' : '#09090b';
-
-    <?php if(session()->getFlashdata('success')): ?>
-        Swal.fire({
-            icon: 'success', title: 'Berhasil!', text: '<?= session()->getFlashdata('success') ?>',
-            confirmButtonColor: '#38bdf8', background: bgColor, color: textColor,
-        });
-    <?php endif; ?>
-
-    <?php if(session()->getFlashdata('error')): ?>
-        Swal.fire({
-            icon: 'error', title: 'Gagal!', text: '<?= session()->getFlashdata('error') ?>',
-            confirmButtonColor: '#ef4444', background: bgColor, color: textColor,
-        });
-    <?php endif; ?>
+    // --- 3. Toggle Password Visibility ---
+    function togglePass(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        
+        if(input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'ph-bold ph-eye-slash';
+            icon.style.color = '#3b82f6';
+        } else {
+            input.type = 'password';
+            icon.className = 'ph-bold ph-eye';
+            icon.style.color = 'var(--text-muted)';
+        }
+    }
 </script>
 
 <?= $this->endSection() ?>

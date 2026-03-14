@@ -40,13 +40,11 @@ class Production extends BaseController
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // 1. Ambil Barang Jadi (Knalpot) -> Dari tabel warehouse_inventory
         $finishedGoods = $this->db->table('warehouse_inventory')
                                   ->like('sku', 'PRD-', 'after')
                                   ->orderBy('item_name', 'ASC')
                                   ->get()->getResultArray();
                                   
-        // 2. PERBAIKAN: Ambil Bahan Baku Mentah -> Dari tabel raw_materials (BUKAN warehouse_inventory)
         $rawMaterials  = $this->db->table('raw_materials')
                                   ->like('sku_material', 'MAT-', 'after')
                                   ->orderBy('material_name', 'ASC')
@@ -60,6 +58,7 @@ class Production extends BaseController
 
         return view('production/bom_builder', $data);
     }
+
     // --- 3. SIMPAN RESEP (BOM) ---
     public function store_bom()
     {
@@ -68,19 +67,17 @@ class Production extends BaseController
 
             $fgSku = $this->request->getPost('fg_sku');
             $recipeName = $this->request->getPost('recipe_name');
-            $rmSkus = $this->request->getPost('rm_sku'); // Array
-            $qtys = $this->request->getPost('qty'); // Array
+            $rmSkus = $this->request->getPost('rm_sku'); 
+            $qtys = $this->request->getPost('qty'); 
 
             if(empty($rmSkus)) throw new \Exception("Pilih minimal 1 material dasar untuk resep ini.");
 
-            // Insert Header
             $this->db->table('bom_headers')->insert([
                 'fg_sku'      => $fgSku,
                 'recipe_name' => $recipeName
             ]);
             $bomId = $this->db->insertID();
 
-            // Insert Items (Material)
             for ($i = 0; $i < count($rmSkus); $i++) {
                 if(!empty($rmSkus[$i]) && !empty($qtys[$i])) {
                     $this->db->table('bom_items')->insert([
@@ -103,11 +100,10 @@ class Production extends BaseController
         }
     }
 
-    // --- 4. BUAT SURAT PERINTAH KERJA (SPK) ---
+    // --- 4. BUAT SURAT PERINTAH KERJA (SPK) -- DENGAN AJAX SUPPORT ---
     public function create_spk()
     {
         try {
-            // Auto Generate SPK Number
             $dateStr = date('Ymd');
             $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
             $seq = 1;
@@ -125,42 +121,45 @@ class Production extends BaseController
                 'start_date'  => date('Y-m-d')
             ]);
 
+            // Jika Request adalah AJAX, kembalikan JSON
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => "Surat Perintah Kerja $spkNumber berhasil diterbitkan!"
+                ]);
+            }
+
             return redirect()->back()->with('success', "Surat Perintah Kerja $spkNumber berhasil diterbitkan untuk pabrik!");
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', 'Gagal membuat SPK: ' . $e->getMessage());
         }
     }
 
-   // --- 5. EKSEKUSI JANTUNG PABRIK: SELESAIKAN SPK & POTONG STOK ---
+   // --- 5. EKSEKUSI SPK & POTONG STOK -- DENGAN AJAX SUPPORT ---
     public function complete_spk($spkId)
     {
         try {
             $this->db->transStart();
 
-            // 1. Ambil data SPK
             $spk = $this->db->table('work_orders')->where('id', $spkId)->get()->getRowArray();
             if (!$spk || $spk['status'] === 'COMPLETED') {
                 throw new \Exception("SPK tidak valid atau sudah selesai.");
             }
 
-            // 2. Ambil Header Resep
             $bom = $this->db->table('bom_headers')->where('id', $spk['bom_id'])->get()->getRowArray();
             $fgSku = $bom['fg_sku'];
             $targetQty = $spk['planned_qty'];
 
-            // 3. Ambil Rincian Material Dasar
             $bomItems = $this->db->table('bom_items')->where('bom_id', $bom['id'])->get()->getResultArray();
 
-            // 4. CEK KETERSEDIAAN SEMUA MATERIAL DULU!
             foreach ($bomItems as $item) {
                 $totalRmNeeded = $item['qty_required'] * $targetQty;
-                $rmStock = $this->db->table('warehouse_inventory')->where('sku', $item['rm_sku'])->get()->getRowArray();
                 
-                // Jika tidak ketemu di warehouse_inventory, cari di raw_materials (tergantung arsitektur database Anda)
-                if (!$rmStock) {
-                    $rmStock = $this->db->table('raw_materials')->where('sku_material', $item['rm_sku'])->get()->getRowArray();
-                }
-                
+                // Cari di raw_materials
+                $rmStock = $this->db->table('raw_materials')->where('sku_material', $item['rm_sku'])->get()->getRowArray();
                 $physStock = $rmStock['physical_stock'] ?? 0;
                 
                 if (!$rmStock || $physStock < $totalRmNeeded) {
@@ -168,18 +167,13 @@ class Production extends BaseController
                 }
             }
 
-            // 5. PROSES PEMOTONGAN MATERIAL JIKA STOK AMAN
             foreach ($bomItems as $item) {
                 $totalRmNeeded = $item['qty_required'] * $targetQty;
-                // Update di tabel yang relevan (sesuaikan jika raw_materials pisah tabel)
-                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$totalRmNeeded, $item['rm_sku']]);
                 $this->db->query("UPDATE raw_materials SET physical_stock = physical_stock - ? WHERE sku_material = ?", [$totalRmNeeded, $item['rm_sku']]);
             }
 
-            // 6. PROSES PENAMBAHAN PRODUK JADI (PRD)
             $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$targetQty, $fgSku]);
 
-            // 7. Update Status SPK
             $this->db->table('work_orders')->where('id', $spkId)->update([
                 'status' => 'COMPLETED',
                 'completed_at' => date('Y-m-d H:i:s')
@@ -191,9 +185,19 @@ class Production extends BaseController
                 throw new \Exception("Terjadi kegagalan koneksi saat menyelaraskan stok pabrik.");
             }
 
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => "SPK Selesai! Stok Produk (+$targetQty) dan Material terpotong otomatis."
+                ]);
+            }
+
             return redirect()->back()->with('success', "🔥 SPK Selesai! Stok Produk bertambah <b>+$targetQty</b> dan Material otomatis terpotong.");
 
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }

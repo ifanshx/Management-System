@@ -11,19 +11,17 @@ class Accounting extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-   // --- 1. DASBOR AKUNTANSI ---
+    // --- 1. DASBOR AKUNTANSI ---
     public function index()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // Ringkasan Saldo (Balance) berdasarkan Tipe Akun
         $summary = $this->db->query("
             SELECT account_type, SUM(balance) as total_balance 
             FROM chart_of_accounts 
             GROUP BY account_type
         ")->getResultArray();
 
-        // Ambil 5 Jurnal Terakhir untuk Histori
         $recent_journals = $this->db->table('journals')
             ->orderBy('id', 'DESC')
             ->limit(5)
@@ -37,17 +35,17 @@ class Accounting extends BaseController
 
         return view('accounting/index', $data);
     }
-    // --- 2. HALAMAN KEMASUKAN JURNAL UMUM ---
+
+    // --- 2. HALAMAN PENCATATAN JURNAL UMUM ---
     public function journal()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
         $accounts = $this->db->table('chart_of_accounts')->orderBy('account_code', 'ASC')->get()->getResultArray();
-        
         $recent_journals = $this->db->table('journals')->orderBy('id', 'DESC')->limit(10)->get()->getResultArray();
 
         $data = [
-            'title'           => 'Kemasukan Jurnal Umum (Double-Entry)',
+            'title'           => 'Pencatatan Jurnal Umum (Double-Entry)',
             'accounts'        => $accounts,
             'recent_journals' => $recent_journals
         ];
@@ -55,25 +53,24 @@ class Accounting extends BaseController
         return view('accounting/journal', $data);
     }
 
-    // --- 3. PROSES SIMPAN JURNAL (WAJIB SEIMBANG DEBIT & KREDIT) ---
+    // --- 3. PROSES SIMPAN JURNAL (AJAX SUPPORT) ---
     public function store_journal()
     {
         try {
             $date        = $this->request->getPost('transaction_date');
             $description = $this->request->getPost('description');
-            $accounts    = $this->request->getPost('account_id'); // Array
-            $debits      = $this->request->getPost('debit'); // Array
-            $credits     = $this->request->getPost('credit'); // Array
+            $accounts    = $this->request->getPost('account_id');
+            $debits      = $this->request->getPost('debit');
+            $credits     = $this->request->getPost('credit');
 
             if (empty($accounts) || count($accounts) < 2) {
-                throw new \Exception("Satu jurnal memerlukan sekurang-kurangnya 2 akaun (Debit dan Kredit).");
+                throw new \Exception("Satu jurnal memerlukan setidaknya 2 Akun (Debit dan Kredit).");
             }
 
             $totalDebit = 0;
             $totalCredit = 0;
             $validItems = [];
 
-            // Kira jumlah Debit dan Kredit
             for ($i = 0; $i < count($accounts); $i++) {
                 $d = (float)($debits[$i] ?? 0);
                 $c = (float)($credits[$i] ?? 0);
@@ -89,14 +86,14 @@ class Accounting extends BaseController
                 }
             }
 
-            // HUKUM MUTLAK AKUNTANSI: DEBIT MESTI SAMA DENGAN KREDIT
+            // HUKUM MUTLAK AKUNTANSI: DEBIT HARUS SAMA DENGAN KREDIT
             if (abs($totalDebit - $totalCredit) > 0.01) {
-                throw new \Exception("Transaksi DITOLAK! Jumlah Debit (Rp " . number_format($totalDebit, 0, ',', '.') . ") tidak sama dengan Kredit (Rp " . number_format($totalCredit, 0, ',', '.') . ").");
+                throw new \Exception("Transaksi DITOLAK! Total Debit (Rp " . number_format($totalDebit, 0, ',', '.') . ") tidak sama dengan Kredit (Rp " . number_format($totalCredit, 0, ',', '.') . ").");
             }
 
             $this->db->transStart();
 
-            // Jana Nombor Jurnal Auto (Contoh: JRN-202603-001)
+            // Generate Nomor Jurnal Auto
             $datePrefix = date('Ym', strtotime($date));
             $lastJournal = $this->db->table('journals')->like('journal_number', "JRN-$datePrefix", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
             $seq = 1;
@@ -106,7 +103,7 @@ class Accounting extends BaseController
             }
             $journalNumber = "JRN-" . $datePrefix . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
-            // Simpan Pengepala Jurnal
+            // Simpan Header Jurnal
             $this->db->table('journals')->insert([
                 'journal_number'   => $journalNumber,
                 'transaction_date' => $date,
@@ -116,7 +113,7 @@ class Accounting extends BaseController
             ]);
             $journalId = $this->db->insertID();
 
-            // Simpan Butiran Jurnal & Kemas Kini Baki Akaun (Balance)
+            // Simpan Rincian Jurnal & Update Saldo Akun (Balance)
             foreach ($validItems as $item) {
                 $this->db->table('journal_items')->insert([
                     'journal_id' => $journalId,
@@ -125,7 +122,6 @@ class Accounting extends BaseController
                     'credit'     => $item['credit']
                 ]);
 
-                // Update Baki CoA (Logik Asas: Debit tambah Aset/Belanja, Kredit tambah Liabiliti/Ekuiti/Pendapatan)
                 $acc = $this->db->table('chart_of_accounts')->where('id', $item['account_id'])->get()->getRowArray();
                 $movement = 0;
                 
@@ -141,12 +137,22 @@ class Accounting extends BaseController
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                throw new \Exception("Gagal menyimpan data jurnal ke pangkalan data.");
+                throw new \Exception("Gagal menyimpan data jurnal ke database.");
             }
 
-            return redirect()->back()->with('success', "Berjaya! Jurnal <b>$journalNumber</b> telah direkodkan dan lejar am dikemas kini.");
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => "Jurnal $journalNumber berhasil dikunci. Buku Besar telah disesuaikan."
+                ]);
+            }
+
+            return redirect()->back()->with('success', "Berhasil! Jurnal <b>$journalNumber</b> telah direkam dan buku besar diperbarui.");
 
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }

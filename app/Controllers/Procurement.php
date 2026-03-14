@@ -11,35 +11,30 @@ class Procurement extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    // --- 1. DASBOR PURCHASING ---
     public function index()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // Tarik data PO
         $purchaseOrders = $this->db->table('purchase_orders')
             ->select('purchase_orders.*, suppliers.supplier_name')
             ->join('suppliers', 'suppliers.id = purchase_orders.supplier_id')
             ->orderBy('purchase_orders.id', 'DESC')
             ->get()->getResultArray();
 
-        // FITUR BARU: Tarik data Master Supplier
         $suppliers = $this->db->table('suppliers')->orderBy('supplier_name', 'ASC')->get()->getResultArray();
 
         $data = [
             'title'          => 'Manajemen Pembelian (Procurement)',
             'purchaseOrders' => $purchaseOrders,
-            'suppliers'      => $suppliers // Kirim ke View
+            'suppliers'      => $suppliers
         ];
 
         return view('procurement/index', $data);
     }
 
-    // --- FITUR BARU: HAPUS SUPPLIER AMAN ---
     public function delete_supplier($id)
     {
         try {
-            // Cek apakah supplier ini sudah pernah dipakai di PO
             $used = $this->db->table('purchase_orders')->where('supplier_id', $id)->countAllResults();
             if ($used > 0) {
                 throw new \Exception("DITOLAK! Anda tidak bisa menghapus Vendor ini karena sudah memiliki riwayat transaksi Purchase Order (PO).");
@@ -58,8 +53,8 @@ class Procurement extends BaseController
 
         $suppliers = $this->db->table('suppliers')->get()->getResultArray();
         
-        // PERBAIKAN ENTERPRISE: Tarik data dari tabel raw_materials yang baru
         $rawMaterials = $this->db->table('raw_materials')
+                                 ->like('sku_material', 'MAT-', 'after')
                                  ->orderBy('material_name', 'ASC')
                                  ->get()->getResultArray();
 
@@ -84,10 +79,9 @@ class Procurement extends BaseController
             $prices     = $this->request->getPost('price');
 
             if(empty($rmSkus) || count($rmSkus) === 0) {
-                throw new \Exception("Anda harus memilih minimal 1 barang untuk dipesan.");
+                throw new \Exception("Anda harus memilih minimal 1 material untuk dipesan.");
             }
 
-            // Generate PO Number
             $dateStr = date('Ym');
             $lastPo = $this->db->table('purchase_orders')->like('po_number', "PO-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
             $seq = 1;
@@ -130,15 +124,26 @@ class Procurement extends BaseController
                 }
             }
 
-            if ($validItems === 0) throw new \Exception("Kuantitas barang tidak valid. PO dibatalkan.");
+            if ($validItems === 0) throw new \Exception("Kuantitas material tidak valid. PO dibatalkan.");
 
             $this->db->table('purchase_orders')->where('id', $poId)->update(['total_amount' => $grandTotal]);
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) throw new \Exception("Gagal menyimpan Purchase Order.");
 
-            return redirect()->to('/procurement')->with('success', "Purchase Order <b>$poNumber</b> berhasil diterbitkan ke Supplier.");
+            // Dukungan AJAX Response
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => "Purchase Order $poNumber berhasil diterbitkan ke Vendor."
+                ]);
+            }
+
+            return redirect()->to('/procurement')->with('success', "Purchase Order <b>$poNumber</b> berhasil diterbitkan ke Vendor.");
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -150,29 +155,48 @@ class Procurement extends BaseController
 
             $po = $this->db->table('purchase_orders')->where('id', $poId)->get()->getRowArray();
             if (!$po || $po['status'] === 'RECEIVED') {
-                throw new \Exception("PO tidak valid atau barang sudah diterima sebelumnya.");
+                throw new \Exception("PO tidak valid atau material sudah diterima sebelumnya.");
             }
 
             $poItems = $this->db->table('purchase_order_items')->where('po_id', $poId)->get()->getResultArray();
 
-            // PERBAIKAN: Update stok fisik dan modal HPP ke tabel raw_materials (bukan warehouse_inventory)
             foreach ($poItems as $item) {
                 $this->db->query("UPDATE raw_materials SET physical_stock = physical_stock + ? WHERE sku_material = ?", [$item['qty'], $item['rm_sku']]);
                 $this->db->query("UPDATE raw_materials SET hpp = ? WHERE sku_material = ?", [$item['unit_price'], $item['rm_sku']]);
             }
 
             $this->db->table('purchase_orders')->where('id', $poId)->update(['status' => 'RECEIVED']);
+
+            $this->db->table('journals')->insert([
+                'journal_number'   => 'JRN-PO-'.time(),
+                'transaction_date' => date('Y-m-d'),
+                'description'      => "Penerimaan Material PO: " . $po['po_number'],
+                'total_amount'     => $po['total_amount'],
+                'created_by'       => session()->get('name') ?? 'System'
+            ]);
+            $journalId = $this->db->insertID();
+
+            $invAccount = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
+            $apAccount  = $this->db->table('chart_of_accounts')->where('account_code', '2-1000')->get()->getRowArray(); 
+
+            if($invAccount && $apAccount) {
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAccount['id'], 'debit' => $po['total_amount'], 'credit' => 0]);
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $apAccount['id'], 'debit' => 0, 'credit' => $po['total_amount']]);
+                
+                $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$po['total_amount'], $invAccount['id']]);
+                $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$po['total_amount'], $apAccount['id']]);
+            }
+
             $this->db->transComplete();
 
-            if ($this->db->transStatus() === false) throw new \Exception("Gagal melakukan proses penerimaan barang.");
+            if ($this->db->transStatus() === false) throw new \Exception("Gagal melakukan proses penerimaan material.");
 
-            return redirect()->back()->with('success', "Barang dari PO <b>{$po['po_number']}</b> telah diterima. Stok fisik gudang otomatis bertambah!");
+            return redirect()->back()->with('success', "Material dari PO {$po['po_number']} telah diterima. Stok fisik dan Buku Besar Otomatis terupdate!");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // --- FITUR BARU: REGISTRASI VENDOR / SUPPLIER ---
     public function store_supplier()
     {
         try {
@@ -181,10 +205,9 @@ class Procurement extends BaseController
             $phone   = $this->request->getPost('phone');
             $address = $this->request->getPost('address');
 
-            // Cek apakah supplier sudah ada (mencegah duplikat)
             $exists = $this->db->table('suppliers')->where('supplier_name', $name)->countAllResults();
             if ($exists > 0) {
-                throw new \Exception("Vendor dengan nama <b>$name</b> sudah terdaftar di sistem.");
+                throw new \Exception("Vendor dengan nama <b>$name</b> sudah terdaftar.");
             }
 
             $this->db->table('suppliers')->insert([
@@ -194,29 +217,35 @@ class Procurement extends BaseController
                 'address'        => $address
             ]);
 
+            // Dukungan AJAX Response
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => "Vendor $name berhasil didaftarkan!"
+                ]);
+            }
+
             return redirect()->back()->with('success', "Vendor/Supplier <b>$name</b> berhasil didaftarkan ke sistem!");
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // --- FITUR BARU: LIHAT DETAIL DOKUMEN PO ---
     public function detail($id)
     {
-        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+        if (!session()->getLoggedIn()) return redirect()->to('/portal');
 
-        // 1. Ambil Header PO beserta Info Supplier
         $po = $this->db->table('purchase_orders')
             ->select('purchase_orders.*, suppliers.supplier_name, suppliers.contact_person, suppliers.phone, suppliers.address')
             ->join('suppliers', 'suppliers.id = purchase_orders.supplier_id')
             ->where('purchase_orders.id', $id)
             ->get()->getRowArray();
 
-        if (!$po) {
-            return redirect()->to('/procurement')->with('error', 'Dokumen Purchase Order tidak ditemukan.');
-        }
+        if (!$po) return redirect()->to('/procurement')->with('error', 'Dokumen Purchase Order tidak ditemukan.');
 
-        // 2. Ambil Rincian Barang (Items) yang dipesan dari tabel raw_materials
         $items = $this->db->table('purchase_order_items')
             ->select('purchase_order_items.*, raw_materials.material_name, raw_materials.unit')
             ->join('raw_materials', 'raw_materials.sku_material = purchase_order_items.rm_sku', 'left')

@@ -27,7 +27,7 @@ class Dashboard extends BaseController
         $totalPayrollCost = array_sum(array_column($payrolls, 'total_amount'));
 
         // ==========================================
-        // 2. DATA KEUANGAN (AKUNTANSI)
+        // 2. DATA KEUANGAN (AKUNTANSI & ASET FISIK)
         // ==========================================
         $coa = $db->table('chart_of_accounts')->get()->getResultArray();
         $revenue = 0; $expense = 0; $assets = 0;
@@ -39,13 +39,20 @@ class Dashboard extends BaseController
         }
         $netProfit = $revenue - $expense;
 
+        // PERBAIKAN: Hitung Aset Gudang Fisik Real-time (Produk Jadi PRD + Material MAT)
+        $valPRD = $db->query("SELECT SUM(physical_stock * hpp) as total FROM warehouse_inventory")->getRow()->total ?? 0;
+        $valMAT = $db->query("SELECT SUM(physical_stock * hpp) as total FROM raw_materials")->getRow()->total ?? 0;
+        $inventoryValue = $valPRD + $valMAT;
+
         // ==========================================
         // 3. DATA PRODUKSI & GUDANG
         // ==========================================
         $activeSpk = $db->table('work_orders')->where('status', 'IN_PROGRESS')->countAllResults();
         
-        // Cek item gudang yang stoknya menipis (kurang dari 10)
-        $lowStockItems = $db->table('warehouse_inventory')->where('physical_stock <=', 10)->countAllResults();
+        // PERBAIKAN: Cek item gudang (PRD dan MAT) yang stoknya menipis berdasarkan kolom 'min_stock' (Bukan hardcode angka 10)
+        $lowStockPrd = $db->table('warehouse_inventory')->where('physical_stock <= min_stock')->countAllResults();
+        $lowStockMat = $db->table('raw_materials')->where('physical_stock <= min_stock')->countAllResults();
+        $lowStockItems = $lowStockPrd + $lowStockMat;
 
         // ==========================================
         // 4. DATA PENJUALAN B2B & E-COMMERCE
@@ -73,9 +80,21 @@ class Dashboard extends BaseController
             'currentMonthName' => date('F Y'),
             'totalEmployees'   => $totalEmployees,
             'totalPayrollCost' => $totalPayrollCost,
-            'finance'          => ['revenue' => $revenue, 'profit' => $netProfit, 'assets' => $assets],
-            'production'       => ['active_spk' => $activeSpk, 'low_stock' => $lowStockItems],
-            'sales'            => ['b2b_revenue' => $b2bRevenue, 'pending_b2b' => $pendingB2b, 'active_shops' => $activeShops],
+            'finance'          => [
+                'revenue'         => $revenue, 
+                'profit'          => $netProfit, 
+                'assets'          => $assets,
+                'inventory_value' => $inventoryValue // Tambahan aset fisik real-time
+            ],
+            'production'       => [
+                'active_spk' => $activeSpk, 
+                'low_stock'  => $lowStockItems
+            ],
+            'sales'            => [
+                'b2b_revenue'  => $b2bRevenue, 
+                'pending_b2b'  => $pendingB2b, 
+                'active_shops' => $activeShops
+            ],
             'chart'            => $chartData
         ];
 

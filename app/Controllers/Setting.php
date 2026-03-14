@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\WorkShiftModel;
 use App\Models\CompanyModel; // Panggil Model di sini agar lebih rapi
+use App\Models\LandingCatalogModel;
 
 class Setting extends BaseController
 {
@@ -65,16 +66,22 @@ class Setting extends BaseController
     // 2. PENGATURAN IDENTITAS PERUSAHAAN (WHITE-LABEL ENGINE)
     // ========================================================================
     
-    // Tampilkan Form Identitas Perusahaan
+    // Tampilkan Form Identitas Perusahaan & Manajemen Katalog
     public function company()
     {
         if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') {
             return redirect()->to('/portal');
         }
 
+        // Inisialisasi Model
+        $catalogModel = new LandingCatalogModel();
+
+        // Ambil data katalog
         $data = [
-            'title' => 'Identitas Perusahaan'
+            'title'    => 'Identitas Perusahaan',
+            'catalogs' => $catalogModel->findAll() // <-- Baris ini yang akan mengatasi "katalog kosong"
         ];
+        
         // Catatan: Variabel $company sudah otomatis terkirim ke view secara global dari BaseController!
         return view('setting/company', $data);
     }
@@ -139,5 +146,59 @@ class Setting extends BaseController
         }
 
         return redirect()->back()->with('success', 'Identitas Aplikasi berhasil diperbarui secara global!');
+    }
+
+    public function store_catalog()
+    {
+        $catalogModel = new \App\Models\LandingCatalogModel();
+        
+        $dataToSave = [
+            'product_name'   => $this->request->getPost('product_name'),
+            'category'       => $this->request->getPost('category'),
+            'price'          => preg_replace('/[^0-9]/', '', $this->request->getPost('price')),
+            'discount_price' => preg_replace('/[^0-9]/', '', $this->request->getPost('discount_price') ?? 0),
+            'specs'          => $this->request->getPost('specs'),
+            'badge_text'     => $this->request->getPost('badge_text'),
+            'icon_class'     => $this->request->getPost('icon_class'),
+            'shopee_link'    => $this->request->getPost('shopee_link'),
+            'wa_link'        => $this->request->getPost('wa_link'),
+        ];
+
+        // LOGIKA UPLOAD GAMBAR PRODUK
+        $imgFile = $this->request->getFile('product_image');
+        if ($imgFile && $imgFile->isValid() && !$imgFile->hasMoved()) {
+            $newName = $imgFile->getRandomName();
+            $imgFile->move(ROOTPATH . 'public/uploads/catalogs/', $newName); // Pastikan folder ini ada
+            $dataToSave['product_image'] = $newName;
+        }
+
+        $catalogModel->save($dataToSave);
+        return redirect()->to('/setting/company')->with('success', 'Produk katalog berhasil ditambahkan!');
+    }
+
+    public function delete_catalog($id)
+    {
+        $catalogModel = new LandingCatalogModel();
+        $catalogModel->delete($id);
+        return redirect()->to('/setting/company')->with('success', 'Katalog berhasil dihapus!');
+    }
+
+    public function update_catalog($id)
+    {
+        $catalogModel = new \App\Models\LandingCatalogModel();
+        
+        $catalogModel->update($id, [
+            'product_name'   => $this->request->getPost('product_name'),
+            'category'       => $this->request->getPost('category'),
+            'price'          => preg_replace('/[^0-9]/', '', $this->request->getPost('price')),
+            'discount_price' => preg_replace('/[^0-9]/', '', $this->request->getPost('discount_price') ?? 0),
+            'specs'          => $this->request->getPost('specs'),
+            'badge_text'     => $this->request->getPost('badge_text'),
+            'icon_class'     => $this->request->getPost('icon_class'),
+            'shopee_link'    => $this->request->getPost('shopee_link'),
+            'wa_link'        => $this->request->getPost('wa_link'),
+        ]);
+        
+        return redirect()->to('/setting/company')->with('success', 'Produk katalog berhasil diperbarui!');
     }
 }

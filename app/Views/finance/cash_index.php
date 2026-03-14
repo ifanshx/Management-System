@@ -4,339 +4,399 @@
 <style>
     /* --- HEADER --- */
     .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; gap: 20px;}
-    .page-title h1 { font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 5px; letter-spacing: -1px; }
-    .page-title p { font-size: 13px; color: var(--text-muted); }
+    .page-title h1 { font-size: 26px; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+    .page-title p { font-size: 13px; color: var(--text-muted); margin: 0;}
+    .title-icon { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.05)); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid rgba(16, 185, 129, 0.2);}
 
     /* --- STATS BENTO GRID --- */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-    .stat-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 16px; display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow-card); transition: 0.3s; }
-    .stat-card:hover { border-color: var(--accent-main); transform: translateY(-2px); }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .stat-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.3s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    
+    .font-mono { font-family: 'Space Mono', monospace; font-weight: 900; font-size: 18px; margin-top: 4px; letter-spacing: -0.5px;}
+    .text-green { color: #10b981; }
+    .text-red { color: #ef4444; }
 
     /* --- LAYOUT UTAMA --- */
-    .finance-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
-    @media (max-width: 1024px) { .finance-grid { grid-template-columns: 1fr; } }
-
-    /* --- KARTU BENTO (FORM & INFO) --- */
-    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 25px; box-shadow: var(--shadow-card); }
-    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-subtle); }
-    .icon-wrapper { width: 34px; height: 34px; border-radius: 8px; background: var(--accent-light); color: var(--accent-main); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .card-header h3 { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; }
-
-    /* --- FORM ELEMENTS --- */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); overflow: hidden;}
     
-    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; transition: all 0.2s ease; }
-    .input-wrapper:focus-within { border-color: var(--accent-main); box-shadow: 0 0 0 3px var(--accent-light); }
-    .input-wrapper input, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 12px 14px; font-size: 13px; font-weight: 600; outline: none; font-family: inherit; resize: none; width: 100%;}
+    /* --- TABLE CONTROLS --- */
+    .table-controls { padding-bottom: 20px; border-bottom: 1px dashed var(--border-subtle); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
     
-    .prefix { background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 12px; font-weight: 700; padding: 0 14px; display: flex; align-items: center; border-right: 1px solid var(--border-subtle); }
-    html.dark .prefix { background: rgba(255,255,255,0.02); }
-
-    /* --- CUSTOM RADIO BOX (BIASA & MUTASI) --- */
-    .radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .radio-label { position: relative; cursor: pointer; display: block;}
-    .radio-label input { position: absolute; opacity: 0; }
-    .radio-box { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text-muted); transition: 0.2s; }
+    .form-control-date { background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 15px; border-radius: 12px; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; outline: none; transition: 0.3s; cursor: pointer;}
+    .form-control-date:focus { border-color: #10b981; }
     
-    /* Active States (Transaksi Biasa) */
-    .radio-label input:checked + .radio-box.in { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; }
-    .radio-label input:checked + .radio-box.out { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; }
-    .radio-label input:checked + .radio-box.cash { background: rgba(249, 115, 22, 0.1); border-color: #f97316; color: #f97316; }
-    .radio-label input:checked + .radio-box.atm { background: rgba(139, 92, 246, 0.1); border-color: #8b5cf6; color: #8b5cf6; }
-
-    /* Active States (Mutasi Khusus) */
-    .radio-box.mutasi-box { padding: 15px; justify-content: space-between; border: 2px solid transparent; background: var(--bg-base); }
-    .radio-label input:checked + .radio-box.mutasi-box { background: var(--accent-light); border-color: var(--accent-main); box-shadow: 0 4px 12px rgba(37,99,235,0.1); }
-
-    /* Segmented Control (Tabs) */
-    .segment-control { display: flex; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-    .segment-btn { flex: 1; text-align: center; padding: 8px; font-size: 12px; font-weight: 700; color: var(--text-muted); border-radius: 6px; cursor: pointer; transition: 0.2s; }
-    .segment-btn.active { background: var(--bg-surface); color: var(--accent-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-    .btn-submit { width: 100%; background: var(--accent-main); color: #fff; padding: 14px; border: none; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 12px var(--accent-light); margin-top: 10px;}
-    .btn-submit:hover { transform: translateY(-3px); filter: brightness(1.1); }
-
-    /* --- TABLE STYLES --- */
-    .table-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: var(--shadow-card); overflow: hidden; }
-    .table-controls { padding: 20px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; background: rgba(0,0,0,0.01); }
-    html.dark .table-controls { background: rgba(255,255,255,0.02); }
-    
-    .form-control { background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 15px; border-radius: 10px; font-family: inherit; font-size: 13px; outline: none; }
-    .btn-filter { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;}
+    .btn-filter { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px;}
     .btn-filter:hover { background: var(--border-subtle); }
+    
+    .btn-create { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.5); transition: 0.3s; text-decoration: none;}
+    .btn-create:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -6px rgba(16, 185, 129, 0.6);}
 
+    /* --- TABEL ANALITIK --- */
     table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-    th { text-align: left; padding: 15px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); background: var(--bg-base); border-bottom: 1px solid var(--border-subtle); }
-    td { padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); color: var(--text-main); font-size: 13px; font-weight: 500; }
-    tr:hover td { background: rgba(0,0,0,0.01); }
+    th { text-align: center; padding: 16px 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; color: var(--text-muted); background: var(--bg-base); border-bottom: 2px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); letter-spacing: 0.5px;}
+    td { text-align: center; padding: 16px 20px; border-bottom: 1px dashed var(--border-subtle); border-right: 1px solid var(--border-subtle); color: var(--text-main); font-size: 13px; font-weight: 600; vertical-align: middle; transition: 0.2s;}
+    
+    th:first-child, td:first-child { text-align: left; }
+    th:nth-child(2), td:nth-child(2) { text-align: left; }
+    th:last-child, td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
+    
+    tr:hover td { background: rgba(16, 185, 129, 0.02); }
     html.dark tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .badge-metode { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-metode { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
     .badge-metode.cash { background: rgba(249, 115, 22, 0.1); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.2); }
     .badge-metode.atm { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); }
 
-    .font-mono { font-family: monospace; font-weight: 800; font-size: 14px; }
-    .text-green { color: #10b981; }
-    .text-red { color: #ef4444; }
+    /* =========================================================
+       MODAL STYLES (PREMIUM RE-DESIGN)
+       ========================================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s;}
+    .modal-overlay.active { display: flex; opacity: 1; }
+    
+    .modal-box { background: var(--bg-surface); border-radius: 28px; width: 100%; max-width: 520px; padding: 40px; transform: scale(0.95) translateY(20px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); max-height: 90vh; overflow-y: auto; border-top: 8px solid #10b981;}
+    .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+    
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .modal-title { font-size: 22px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 12px; margin: 0;}
+    .btn-close { background: var(--bg-base); border: 1px solid var(--border-subtle); width: 38px; height: 38px; border-radius: 50%; font-size: 16px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;}
+    .btn-close:hover { background: #ef4444; color: #fff; border-color: #ef4444; transform: rotate(90deg);}
+
+    /* Segment Control (iOS Pill Style) */
+    .segment-control { display: flex; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 6px; margin-bottom: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+    .segment-btn { flex: 1; text-align: center; padding: 12px; font-size: 13px; font-weight: 800; color: var(--text-muted); border-radius: 12px; cursor: pointer; transition: all 0.3s; }
+    .segment-btn.active { background: var(--bg-surface); color: var(--text-main); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 900; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+    /* Input Text & Textarea */
+    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; transition: all 0.2s ease; }
+    .input-wrapper:focus-within { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); background: var(--bg-surface);}
+    .input-wrapper input, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 16px 20px; font-size: 14px; font-weight: 600; outline: none; resize: none;}
+    
+    /* Input Uang (Lebih Menonjol) */
+    .money-wrapper { border-color: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1); background: var(--bg-surface);}
+    .prefix { background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 16px; font-weight: 900; padding: 0 20px; display: flex; align-items: center; border-right: 1px solid rgba(16, 185, 129, 0.2); }
+    .money-wrapper input { font-size: 24px; font-family: 'Space Mono', monospace; font-weight: 900; color: #10b981; padding: 16px 20px;}
+
+    /* Custom File Upload */
+    .file-upload-wrapper { background: var(--bg-base); border: 2px dashed var(--border-subtle); border-radius: 16px; padding: 12px; display: flex; align-items: center; transition: 0.3s; cursor: pointer;}
+    .file-upload-wrapper:hover { border-color: #10b981; background: var(--bg-surface); }
+    .file-upload-wrapper input[type="file"] { width: 100%; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; outline: none;}
+    .file-upload-wrapper input[type="file"]::file-selector-button { background: rgba(16, 185, 129, 0.1); color: #10b981; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-right: 15px;}
+    .file-upload-wrapper input[type="file"]::file-selector-button:hover { background: #10b981; color: #fff; }
+
+    /* Radio Custom Selection */
+    .radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .radio-label { position: relative; cursor: pointer; display: block;}
+    .radio-label input { position: absolute; opacity: 0; }
+    
+    .radio-box { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; background: var(--bg-base); border: 2px solid var(--border-subtle); border-radius: 16px; font-size: 14px; font-weight: 800; color: var(--text-muted); transition: all 0.3s; }
+    .radio-box i { font-size: 20px; }
+    
+    .radio-label input:checked + .radio-box.in { background: rgba(16, 185, 129, 0.08); border-color: #10b981; color: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);}
+    .radio-label input:checked + .radio-box.out { background: rgba(239, 68, 68, 0.08); border-color: #ef4444; color: #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);}
+    .radio-label input:checked + .radio-box.cash { background: rgba(249, 115, 22, 0.08); border-color: #f97316; color: #f97316; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.15);}
+    .radio-label input:checked + .radio-box.atm { background: rgba(139, 92, 246, 0.08); border-color: #8b5cf6; color: #8b5cf6; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.15);}
+    
+    /* Mutasi Khusus Style */
+    .mutasi-box { padding: 20px 25px; justify-content: space-between; }
+    .radio-label input:checked + .radio-box.mutasi-box { background: var(--bg-surface); border-color: #3b82f6; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: slideFadeUp 0.3s; }
+
+    .btn-submit-modal { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 20px; border: none; border-radius: 16px; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.5); margin-top: 15px;}
+    .btn-submit-modal:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.6);}
 </style>
 
 <div class="page-header">
     <div class="page-title">
-        <h1>Kas Operasional (Petty Cash)</h1>
-        <p>Catat dan pantau aliran dana harian pabrik secara terpusat.</p>
+        <div class="title-icon"><i class="ph-fill ph-wallet"></i></div>
+        <div>
+            <h1>Kas Operasional Harian</h1>
+            <p>Catat pengeluaran tunai dan sinkronisasi otomatis dengan Jurnal Akuntansi.</p>
+        </div>
     </div>
     
-    <div style="text-align: right; background: var(--bg-surface); padding: 10px 20px; border-radius: 12px; border: 1px solid var(--border-subtle); box-shadow: var(--shadow-card);">
-        <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Waktu Real-Time</div>
-        <div id="live-clock" style="font-size: 20px; font-weight: 800; font-family: monospace; color: var(--accent-main);"><?= date('H:i:s') ?></div>
+    <div style="text-align: right; background: var(--bg-surface); padding: 12px 24px; border-radius: 16px; border: 1px solid var(--border-subtle); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <div style="font-size: 10px; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">Jam Operasional</div>
+        <div id="live-clock" style="font-size: 24px; font-weight: 900; font-family: 'Space Mono', monospace; color: #10b981; letter-spacing: -1px; margin-top: 2px;"><?= date('H:i:s') ?></div>
     </div>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(100, 116, 139, 0.1); color: #64748b;"><i class="ph ph-clock-counter-clockwise"></i></div>
+        <div class="stat-icon" style="background: rgba(100, 116, 139, 0.1); color: #64748b;"><i class="ph-fill ph-clock-counter-clockwise"></i></div>
         <div>
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">SALDO AWAL (HARI INI)</div>
-            <div class="font-mono" style="font-size: 18px; color: var(--text-main);">Rp <?= number_format($saldo_awal, 0, ',', '.') ?></div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 900; letter-spacing: 0.5px;">SALDO AWAL (HARI INI)</div>
+            <div class="font-mono" style="color: var(--text-main);">Rp <?= number_format($saldo_awal, 0, ',', '.') ?></div>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph ph-trend-up"></i></div>
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph-bold ph-trend-up"></i></div>
         <div>
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">PEMASUKAN GLOBAL</div>
-            <div class="font-mono" style="font-size: 18px; color: #10b981;">+ Rp <?= number_format($masuk_hari_ini, 0, ',', '.') ?></div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 900; letter-spacing: 0.5px;">PEMASUKAN GLOBAL</div>
+            <div class="font-mono text-green">+ Rp <?= number_format($masuk_hari_ini, 0, ',', '.') ?></div>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="ph ph-trend-down"></i></div>
+        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="ph-bold ph-trend-down"></i></div>
         <div>
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">PENGELUARAN GLOBAL</div>
-            <div class="font-mono" style="font-size: 18px; color: #ef4444;">- Rp <?= number_format($keluar_hari_ini, 0, ',', '.') ?></div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 900; letter-spacing: 0.5px;">PENGELUARAN GLOBAL</div>
+            <div class="font-mono text-red">- Rp <?= number_format($keluar_hari_ini, 0, ',', '.') ?></div>
         </div>
     </div>
-    <div class="stat-card" style="border-color: var(--accent-main); background: var(--accent-light);">
-        <div class="stat-icon" style="background: var(--accent-main); color: #fff;"><i class="ph ph-wallet"></i></div>
+    <div class="stat-card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); border-color: rgba(59, 130, 246, 0.3);">
+        <div class="stat-icon" style="background: #3b82f6; color: #fff; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);"><i class="ph-fill ph-vault"></i></div>
         <div>
-            <div style="font-size: 11px; color: var(--accent-main); font-weight: 800;">TOTAL SALDO AKHIR</div>
-            <div class="font-mono" style="font-size: 20px; color: var(--accent-main);">Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></div>
+            <div style="font-size: 11px; color: #3b82f6; font-weight: 900; letter-spacing: 0.5px;">TOTAL SALDO AKHIR</div>
+            <div class="font-mono" style="font-size: 24px; color: #2563eb;">Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></div>
         </div>
     </div>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-    <div style="background: var(--bg-surface); padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(249, 115, 22, 0.3); border-left: 4px solid #f97316; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: var(--bg-surface); padding: 20px 30px; border-radius: 20px; border: 1px solid rgba(249, 115, 22, 0.2); border-left: 6px solid #f97316; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
         <div>
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Dompet Tunai (Brankas Cash)</div>
-            <div class="font-mono" style="font-size: 18px; color: var(--text-main);">Rp <?= number_format($sisa_cash, 0, ',', '.') ?></div>
+            <div style="font-size: 13px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Isi Dompet (Cash Fisik)</div>
+            <div class="font-mono" style="font-size: 26px; color: var(--text-main);">Rp <?= number_format($sisa_cash, 0, ',', '.') ?></div>
         </div>
-        <i class="ph ph-money" style="font-size: 32px; color: #f97316; opacity: 0.5;"></i>
+        <i class="ph-fill ph-money" style="font-size: 50px; color: #f97316; opacity: 0.15;"></i>
     </div>
-    <div style="background: var(--bg-surface); padding: 15px 20px; border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.3); border-left: 4px solid #8b5cf6; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: var(--bg-surface); padding: 20px 30px; border-radius: 20px; border: 1px solid rgba(139, 92, 246, 0.2); border-left: 6px solid #8b5cf6; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
         <div>
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Rekening Bank (Saldo ATM)</div>
-            <div class="font-mono" style="font-size: 18px; color: var(--text-main);">Rp <?= number_format($sisa_atm, 0, ',', '.') ?></div>
+            <div style="font-size: 13px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Rekening Bank (ATM)</div>
+            <div class="font-mono" style="font-size: 26px; color: var(--text-main);">Rp <?= number_format($sisa_atm, 0, ',', '.') ?></div>
         </div>
-        <i class="ph ph-credit-card" style="font-size: 32px; color: #8b5cf6; opacity: 0.5;"></i>
+        <i class="ph-fill ph-credit-card" style="font-size: 50px; color: #8b5cf6; opacity: 0.15;"></i>
     </div>
 </div>
 
+<div class="bento-card">
+    <div class="table-controls">
+        <form action="" method="get" style="display: flex; gap: 10px; align-items: center;">
+            <div style="font-weight: 900; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pilih Tanggal:</div>
+            <input type="date" name="tgl" class="form-control-date" value="<?= esc($tgl_filter) ?>" onchange="this.form.submit()">
+            <button type="submit" class="btn-filter"><i class="ph-bold ph-magnifying-glass"></i> Filter</button>
+        </form>
+        
+        <button onclick="openModal('modalKas')" class="btn-create">
+            <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Catat Transaksi Baru
+        </button>
+    </div>
 
-<div class="finance-grid">
-    
-    <div class="bento-card" style="position: sticky; top: 20px;">
-        <div class="card-header">
-            <div class="icon-wrapper"><i class="ph ph-receipt"></i></div>
-            <h3>Catat Transaksi</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Waktu & ID</th>
+                    <th>Keterangan Transaksi</th>
+                    <th style="text-align: center;">Metode</th>
+                    <th style="text-align: right;">Nominal Mutasi</th>
+                    <th style="text-align: right;">Saldo Berjalan</th>
+                    <th style="text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background: rgba(0,0,0,0.02);">
+                    <td style="border-left: 4px solid var(--text-muted); font-weight: 900; font-size: 12px;">SALDO AWAL</td>
+                    <td>
+                        <span style="background: var(--border-subtle); color: var(--text-main); padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 900; letter-spacing: 0.5px;">
+                            SISTEM KALKULASI
+                        </span>
+                    </td>
+                    <td style="text-align: center; color: var(--text-muted);">-</td>
+                    <td style="text-align: right; color: var(--text-muted);">-</td>
+                    <td style="text-align: right; font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 900;">
+                        Rp <?= number_format($saldo_awal, 0, ',', '.') ?>
+                    </td>
+                    <td></td>
+                </tr>
+                
+                <?php if(empty($transactions)): ?>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 60px 20px;">
+                            <i class="ph-fill ph-wallet" style="font-size: 48px; color: var(--border-subtle); display: block; margin-bottom: 10px;"></i>
+                            <div style="color: var(--text-muted); font-weight: 600;">Belum ada catatan pengeluaran/pemasukan di tanggal ini.</div>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php $running = $saldo_awal; ?>
+                    <?php foreach($transactions as $trx): ?>
+                    <?php 
+                        if($trx['type'] == 'Cash In') {
+                            $running += $trx['amount'];
+                            $color = 'text-green'; $sign = '+';
+                        } else {
+                            $running -= $trx['amount'];
+                            $color = 'text-red'; $sign = '-';
+                        }
+                    ?>
+                    <tr>
+                        <td>
+                            <div style="font-weight: 900; font-size: 13px; margin-bottom: 4px;">
+                                <?= date('H:i', strtotime($trx['created_at'])) ?> WIB
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-family: 'Space Mono', monospace; font-weight: 700;">
+                                <?= esc($trx['transaction_code']) ?>
+                            </div>
+                        </td>
+                        <td style="white-space: normal; line-height: 1.4; max-width: 250px;">
+                            <div style="font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+                                <?= esc($trx['description']) ?>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                                <i class="ph-fill ph-user-circle"></i> <?= esc($trx['pic_name']) ?>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge-metode <?= strtolower($trx['metode']) ?>">
+                                <?= esc($trx['metode']) ?>
+                            </span>
+                        </td>
+                        <td style="text-align: right;" class="font-mono <?= $color ?>">
+                            <?= $sign ?> Rp <?= number_format($trx['amount'], 0, ',', '.') ?>
+                        </td>
+                        <td style="text-align: right; color: var(--text-main);" class="font-mono">
+                            Rp <?= number_format($running, 0, ',', '.') ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; justify-content: center; gap: 12px; align-items: center;">
+                                <?php if($trx['receipt_file']): ?>
+                                    <a href="<?= base_url('uploads/receipts/' . $trx['receipt_file']) ?>" target="_blank" style="color: #3b82f6; font-size: 20px; transition: 0.2s;" title="Lihat Bukti Foto" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                        <i class="ph-bold ph-image"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <span style="color: var(--border-subtle); font-size: 20px;" title="Tanpa Struk">
+                                        <i class="ph-bold ph-prohibit"></i>
+                                    </span>
+                                <?php endif; ?>
+                                <a href="javascript:void(0)" onclick="confirmDelete('<?= base_url('/finance/cash_delete/'.$trx['id']) ?>')" style="color: #ef4444; font-size: 20px; transition: 0.2s;" title="Hapus" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                    <i class="ph-bold ph-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalKas">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title">
+                <div style="background: rgba(16, 185, 129, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #10b981;">
+                    <i class="ph-fill ph-receipt"></i>
+                </div>
+                Catat Transaksi
+            </div>
+            <button class="btn-close" onclick="closeModal('modalKas')" type="button"><i class="ph-bold ph-x"></i></button>
         </div>
         
         <div class="segment-control">
-            <div class="segment-btn active" id="btn-biasa" onclick="switchTab('biasa')">Transaksi Biasa</div>
-            <div class="segment-btn" id="btn-mutasi" onclick="switchTab('mutasi')">Pindah Dana</div>
+            <div class="segment-btn active" id="btn-biasa" onclick="switchFormTab('biasa')">Buku Kas Harian</div>
+            <div class="segment-btn" id="btn-mutasi" onclick="switchFormTab('mutasi')">Pindah Dana Internal</div>
         </div>
 
-        <form action="<?= base_url('/finance/cash_store') ?>" method="POST" enctype="multipart/form-data">
+        <form id="formKas" action="<?= base_url('/finance/cash_store') ?>" method="POST" enctype="multipart/form-data">
             <?= csrf_field() ?>
-            <input type="hidden" name="transaction_date" value="<?= esc($tgl_filter) ?>">
+            <input type="hidden" name="mode_input" id="mode_input_val" value="transaksi">
             
             <div id="tab-biasa" class="tab-content active">
-                <input type="hidden" name="mode_input" id="mode_input_biasa" value="transaksi">
-                
                 <div class="form-group">
-                    <label class="form-label">Arus Kas</label>
+                    <label>Sifat Transaksi</label>
                     <div class="radio-grid">
                         <label class="radio-label">
                             <input type="radio" name="type" value="Cash In">
-                            <div class="radio-box in"><i class="ph ph-arrow-down-left"></i> Masuk</div>
+                            <div class="radio-box in"><i class="ph-bold ph-arrow-down-left"></i> Pemasukan</div>
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="type" value="Cash Out" checked>
-                            <div class="radio-box out"><i class="ph ph-arrow-up-right"></i> Keluar</div>
+                            <div class="radio-box out"><i class="ph-bold ph-arrow-up-right"></i> Pengeluaran</div>
                         </label>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Sumber Dana</label>
+                    <label>Lokasi Penyimpanan Dana</label>
                     <div class="radio-grid">
                         <label class="radio-label">
                             <input type="radio" name="metode" value="Cash" checked>
-                            <div class="radio-box cash"><i class="ph ph-money"></i> Cash</div>
+                            <div class="radio-box cash"><i class="ph-fill ph-money"></i> Laci Kasir</div>
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="metode" value="ATM">
-                            <div class="radio-box atm"><i class="ph ph-credit-card"></i> ATM</div>
+                            <div class="radio-box atm"><i class="ph-fill ph-credit-card"></i> Bank (ATM)</div>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div id="tab-mutasi" class="tab-content">
-                <input type="hidden" name="mode_input" id="mode_input_mutasi" value="mutasi" disabled>
                 <div class="form-group">
-                    <label class="form-label">Jenis Pemindahan Aset</label>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        
+                    <label>Arah Perpindahan Dana</label>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
                         <label class="radio-label">
-                            <input type="radio" name="arah_mutasi" value="atm_to_cash" checked>
+                            <input type="radio" name="arah_mutasi" value="atm_to_cash" checked disabled class="mutasi-input">
                             <div class="radio-box mutasi-box">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #8b5cf6;"><i class="ph ph-credit-card"></i> ATM</span>
-                                    <i class="ph ph-arrow-right" style="color: var(--text-muted);"></i>
-                                    <span style="color: #f97316;"><i class="ph ph-money"></i> CASH</span>
+                                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px;">
+                                    <span style="color: #8b5cf6; font-weight: 900;"><i class="ph-fill ph-credit-card"></i> Bank</span>
+                                    <i class="ph-bold ph-arrow-right" style="color: var(--text-muted);"></i>
+                                    <span style="color: #f97316; font-weight: 900;"><i class="ph-fill ph-money"></i> Laci</span>
                                 </div>
-                                <span style="font-size:10px; background:var(--bg-surface); padding:4px 8px; border-radius:6px; border: 1px solid var(--border-subtle); color: var(--text-main);">TARIK TUNAI</span>
+                                <span style="font-size:10px; background:var(--bg-base); padding:6px 10px; border-radius:8px; border: 1px solid var(--border-subtle); color: var(--text-main); font-weight: 900;">TARIK TUNAI</span>
                             </div>
                         </label>
-
                         <label class="radio-label">
-                            <input type="radio" name="arah_mutasi" value="cash_to_atm">
+                            <input type="radio" name="arah_mutasi" value="cash_to_atm" disabled class="mutasi-input">
                             <div class="radio-box mutasi-box">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #f97316;"><i class="ph ph-money"></i> CASH</span>
-                                    <i class="ph ph-arrow-right" style="color: var(--text-muted);"></i>
-                                    <span style="color: #8b5cf6;"><i class="ph ph-credit-card"></i> ATM</span>
+                                <div style="display: flex; align-items: center; gap: 12px; font-size: 16px;">
+                                    <span style="color: #f97316; font-weight: 900;"><i class="ph-fill ph-money"></i> Laci</span>
+                                    <i class="ph-bold ph-arrow-right" style="color: var(--text-muted);"></i>
+                                    <span style="color: #8b5cf6; font-weight: 900;"><i class="ph-fill ph-credit-card"></i> Bank</span>
                                 </div>
-                                <span style="font-size:10px; background:var(--bg-surface); padding:4px 8px; border-radius:6px; border: 1px solid var(--border-subtle); color: var(--text-main);">SETOR TUNAI</span>
+                                <span style="font-size:10px; background:var(--bg-base); padding:6px 10px; border-radius:8px; border: 1px solid var(--border-subtle); color: var(--text-main); font-weight: 900;">SETOR TUNAI</span>
                             </div>
                         </label>
-
                     </div>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-top: 20px;">
-                <label class="form-label" style="color: var(--accent-main);">Nominal (Rp)</label>
-                <div class="input-wrapper" style="border-color: var(--accent-main); box-shadow: 0 4px 15px var(--accent-light);">
-                    <div class="prefix" style="color: var(--accent-main); font-weight: 800; background: var(--accent-light);">Rp</div>
-                    <input type="text" name="amount" placeholder="0" onkeyup="formatRupiah(this)" style="font-size: 20px; font-family: monospace; font-weight: 800; color: var(--text-main); padding: 15px;" required autocomplete="off">
+            <div class="form-group" style="margin-top: 25px;">
+                <label style="color: #10b981;">Besaran Nominal Transaksi</label>
+                <div class="input-wrapper money-wrapper">
+                    <div class="prefix">Rp</div>
+                    <input type="text" name="amount" placeholder="0" onkeyup="formatRupiah(this)" required autocomplete="off">
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Keterangan Lengkap</label>
+                <label>Keterangan / Tujuan Transaksi</label>
                 <div class="input-wrapper">
-                    <textarea name="description" rows="2" placeholder="Contoh: Beli bensin mobil box..." required></textarea>
+                    <textarea name="description" rows="2" placeholder="Cth: Beli bensin mobil operasional pabrik..." required></textarea>
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Bukti Nota / Struk (Opsional)</label>
-                <div class="input-wrapper" style="padding: 5px;">
-                    <input type="file" name="receipt_file" accept="image/*" style="font-size: 12px; padding: 6px;">
+                <label>Unggah Struk / Bukti Bayar (Opsional)</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" name="receipt_file" accept="image/*">
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">
-                <i class="ph ph-floppy-disk"></i> Bukukan Transaksi
+            <button type="submit" id="btnSubmitKas" class="btn-submit-modal">
+                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 22px;"></i> <span>Simpan & Bukukan Transaksi</span>
             </button>
         </form>
     </div>
-
-    <div class="table-card">
-        
-        <div class="table-controls">
-            <form action="" method="get" style="display: flex; gap: 15px; align-items: center;">
-                <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">Tanggal Buku:</div>
-                <input type="date" name="tgl" class="form-control" value="<?= esc($tgl_filter) ?>" onchange="this.form.submit()">
-                <button type="submit" class="btn-filter"><i class="ph ph-magnifying-glass"></i> Tampilkan</button>
-            </form>
-        </div>
-
-        <div style="overflow-x: auto; max-height: 700px; overflow-y: auto;">
-            <table>
-                <thead style="position: sticky; top: 0; z-index: 10;">
-                    <tr>
-                        <th>Waktu & ID</th>
-                        <th>Keterangan Transaksi</th>
-                        <th style="text-align: center;">Metode</th>
-                        <th style="text-align: right;">Nominal</th>
-                        <th style="text-align: right;">Saldo Berjalan</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr style="background: rgba(0,0,0,0.02);">
-                        <td style="border-left: 3px solid var(--text-main);"><b>SALDO AWAL</b></td>
-                        <td colspan="2"><span style="background: var(--border-subtle); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800;">SISTEM KALKULASI</span></td>
-                        <td style="text-align: right; color: var(--text-muted);">-</td>
-                        <td style="text-align: right; font-family: monospace; font-size: 15px; font-weight: 800;">Rp <?= number_format($saldo_awal, 0, ',', '.') ?></td>
-                        <td></td>
-                    </tr>
-                    
-                    <?php if(empty($transactions)): ?>
-                        <tr><td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">Belum ada transaksi di tanggal ini.</td></tr>
-                    <?php else: ?>
-                        <?php $running = $saldo_awal; ?>
-                        <?php foreach($transactions as $trx): ?>
-                        <?php 
-                            if($trx['type'] == 'Cash In') {
-                                $running += $trx['amount'];
-                                $color = 'text-green'; $sign = '+';
-                            } else {
-                                $running -= $trx['amount'];
-                                $color = 'text-red'; $sign = '-';
-                            }
-                        ?>
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700; font-size: 13px;"><?= date('H:i', strtotime($trx['created_at'])) ?> WIB</div>
-                                <div style="font-size: 11px; color: var(--text-muted); font-family: monospace; margin-top: 4px;"><?= esc($trx['transaction_code']) ?></div>
-                            </td>
-                            <td>
-                                <div style="max-width: 250px; white-space: normal; line-height: 1.4; font-weight: 600; margin-bottom: 4px;"><?= esc($trx['description']) ?></div>
-                                <div style="font-size: 11px; color: var(--text-muted);"><i class="ph ph-user"></i> <?= esc($trx['pic_name']) ?></div>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="badge-metode <?= strtolower($trx['metode']) ?>"><?= esc($trx['metode']) ?></span>
-                            </td>
-                            <td style="text-align: right;" class="font-mono <?= $color ?>">
-                                <?= $sign ?> Rp <?= number_format($trx['amount'], 0, ',', '.') ?>
-                            </td>
-                            <td style="text-align: right; color: var(--accent-main);" class="font-mono">
-                                Rp <?= number_format($running, 0, ',', '.') ?>
-                            </td>
-                            <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
-                                <?php if($trx['receipt_file']): ?>
-                                    <a href="<?= base_url('uploads/receipts/' . $trx['receipt_file']) ?>" target="_blank" style="color: var(--accent-main); font-size: 18px;" title="Lihat Struk"><i class="ph ph-image"></i></a>
-                                <?php else: ?>
-                                    <span style="color: var(--border-subtle); font-size: 18px;" title="Tanpa Struk"><i class="ph ph-prohibit"></i></span>
-                                <?php endif; ?>
-                                <a href="javascript:void(0)" onclick="confirmDelete('<?= base_url('/finance/cash_delete/'.$trx['id']) ?>')" style="color: #ef4444; font-size: 18px;" title="Hapus Data"><i class="ph ph-trash"></i></a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -351,42 +411,89 @@
         var number_string = angka.value.replace(/[^,\d]/g, '').toString(),
             split   = number_string.split(','), sisa = split[0].length % 3,
             rupiah  = split[0].substr(0, sisa), ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-        if (ribuan) { separator = sisa ? '.' : ''; rupiah += separator + ribuan.join('.'); }
+        if (ribuan) { let separator = sisa ? '.' : ''; rupiah += separator + ribuan.join('.'); }
         angka.value = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
     }
 
-    // Tab Logic
-    function switchTab(tabName) {
+    function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
+    function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+    window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) closeModal('modalKas'); }
+
+    function switchFormTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
         
         document.getElementById('tab-' + tabName).classList.add('active');
         document.getElementById('btn-' + tabName).classList.add('active');
-        
+        document.getElementById('mode_input_val').value = tabName;
+
         if(tabName === 'biasa') {
-            document.getElementById('mode_input_biasa').disabled = false;
-            document.getElementById('mode_input_mutasi').disabled = true;
+            document.querySelectorAll('.mutasi-input').forEach(el => el.disabled = true);
+            document.querySelectorAll('input[name="type"]').forEach(el => el.disabled = false);
+            document.querySelectorAll('input[name="metode"]').forEach(el => el.disabled = false);
         } else {
-            document.getElementById('mode_input_biasa').disabled = true;
-            document.getElementById('mode_input_mutasi').disabled = false;
+            document.querySelectorAll('.mutasi-input').forEach(el => el.disabled = false);
+            document.querySelectorAll('input[name="type"]').forEach(el => el.disabled = true);
+            document.querySelectorAll('input[name="metode"]').forEach(el => el.disabled = true);
         }
     }
 
-    <?php if(session()->getFlashdata('success')): ?>
-        const isDark = document.documentElement.classList.contains('dark');
-        Swal.fire({
-            icon: 'success', title: 'Berhasil!', text: '<?= session()->getFlashdata('success') ?>',
-            confirmButtonColor: '#38bdf8', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b',
+    // AJAX Form Submission yang terkoneksi ke window.showGlobalToast (dari template.php)
+    document.getElementById('formKas').addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        
+        const form = this;
+        const btn = document.getElementById('btnSubmitKas');
+        const btnText = btn.querySelector('span');
+        const btnIcon = btn.querySelector('i');
+        
+        btn.disabled = true;
+        btnText.innerText = "Mengunci Jurnal...";
+        btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message);
+                form.reset();
+                closeModal('modalKas');
+                setTimeout(() => { window.location.reload(); }, 1200);
+            } else {
+                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message, true);
+                btn.disabled = false;
+                btnText.innerText = "Simpan & Bukukan Transaksi";
+                btnIcon.className = "ph-bold ph-paper-plane-tilt";
+            }
+        })
+        .catch(err => {
+            if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Koneksi Server Gagal", true);
+            btn.disabled = false;
+            btnText.innerText = "Simpan & Bukukan Transaksi";
+            btnIcon.className = "ph-bold ph-paper-plane-tilt";
         });
-    <?php endif; ?>
+    });
 
     function confirmDelete(url) {
+        const isDark = document.documentElement.classList.contains('dark');
         Swal.fire({
-            title: 'Hapus Transaksi?', text: "Saldo harian akan dikalkulasi ulang secara otomatis.",
-            icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#cbd5e1', confirmButtonText: 'Ya, Hapus'
+            title: 'Hapus Transaksi?', 
+            text: "Data yang dihapus tidak bisa dikembalikan. Saldo akan otomatis disesuaikan.",
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonColor: '#ef4444', 
+            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', 
+            confirmButtonText: 'Ya, Hapus Data',
+            background: isDark ? '#18181b' : '#ffffff', 
+            color: isDark ? '#f4f4f5' : '#09090b',
         }).then((result) => {
             if (result.isConfirmed) window.location.href = url;
         })
     }
 </script>
+
 <?= $this->endSection() ?>

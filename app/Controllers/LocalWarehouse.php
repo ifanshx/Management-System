@@ -11,50 +11,37 @@ class LocalWarehouse extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    // --- HELPER: AUTO GENERATE SKU (ENTERPRISE STANDARD) ---
+    // --- HELPER: AUTO GENERATE SKU ---
     private function generateSKU($type = 'PRD') 
     {
-        // PRD = Product (Barang Jadi), MAT = Material (Bahan Baku Mentah)
         $prefix = ($type === 'PRD') ? 'PRD-' : 'MAT-';
         $table  = ($type === 'PRD') ? 'warehouse_inventory' : 'raw_materials';
         $column = ($type === 'PRD') ? 'sku' : 'sku_material';
 
-        // Ambil SKU terakhir berdasarkan prefix tersebut
         $lastItem = $this->db->table($table)
                              ->like($column, $prefix, 'after')
                              ->orderBy('id', 'DESC')
                              ->get()
                              ->getRowArray();
         
-        if (!$lastItem) {
-            return $prefix . '0001';
-        }
+        if (!$lastItem) return $prefix . '0001';
 
-        // Pecah SKU terakhir berdasarkan tanda strip "-"
         $lastSku = $lastItem[$column];
         $parts = explode('-', $lastSku);
-        
-        // Ambil bagian paling belakang (angkanya)
         $lastNumber = intval(end($parts)); 
-        
-        // Tambah 1 dan format kembali menjadi 4 digit (0046)
         $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         
         return $prefix . $newNumber;
     }
 
-    // --- 1. HALAMAN MASTER DATA GUDANG (TABBED) ---
+    // --- 1. HALAMAN MASTER DATA GUDANG ---
     public function index()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        // Tarik Data Barang Jadi (Finished Goods -> PRD)
         $finishedGoods = $this->db->table('warehouse_inventory')->orderBy('id', 'DESC')->get()->getResultArray();
-        
-        // Tarik Data Bahan Baku (Raw Materials -> MAT)
         $rawMaterials = $this->db->table('raw_materials')->orderBy('id', 'DESC')->get()->getResultArray();
 
-        // Kalkulasi Aset
         $totalValueFG = 0; foreach($finishedGoods as $f) { $totalValueFG += ($f['physical_stock'] * $f['hpp']); }
         $totalValueRM = 0; foreach($rawMaterials as $r) { $totalValueRM += ($r['physical_stock'] * $r['hpp']); }
 
@@ -69,7 +56,7 @@ class LocalWarehouse extends BaseController
         return view('warehouse/local_inventory', $data);
     }
 
-    // --- 2. TAMBAH BARANG JADI (KNALPOT -> PRD) ---
+    // --- 2. TAMBAH BARANG JADI (PRD) ---
     public function store_fg()
     {
         try {
@@ -85,13 +72,20 @@ class LocalWarehouse extends BaseController
             ];
 
             $this->db->table('warehouse_inventory')->insert($data);
+
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'success', 'message' => "Produk Jadi (PRD) berhasil disimpan dengan SKU: $autoSku"]);
+            }
             return redirect()->back()->with('success', "Barang Produksi (PRD) berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // --- 3. TAMBAH BAHAN BAKU (PIPA/PLAT -> MAT) ---
+    // --- 3. TAMBAH BAHAN BAKU (MAT) ---
     public function store_rm()
     {
         try {
@@ -107,8 +101,15 @@ class LocalWarehouse extends BaseController
             ];
 
             $this->db->table('raw_materials')->insert($data);
+
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'success', 'message' => "Material Mentah (MAT) berhasil disimpan dengan SKU: $autoSku"]);
+            }
             return redirect()->back()->with('success', "Material Bahan Baku (MAT) berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
         } catch (\Exception $e) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
