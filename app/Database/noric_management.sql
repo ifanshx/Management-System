@@ -40,9 +40,6 @@ CREATE TABLE `attendances` (
 
 /*Data for the table `attendances` */
 
-insert  into `attendances`(`id`,`employee_id`,`date`,`time_in`,`break_out`,`break_in`,`time_out`,`status`,`late_minutes`,`overtime_minutes`,`work_duration_minutes`,`created_at`,`updated_at`) values 
-(1,'NRC-2026-002','2026-02-26','08:00:00',NULL,'12:30:00','17:00:00','Hadir',0,60,540,'2026-02-26 22:26:22','2026-02-26 22:30:29');
-
 /*Table structure for table `b2b_customers` */
 
 DROP TABLE IF EXISTS `b2b_customers`;
@@ -54,13 +51,27 @@ CREATE TABLE `b2b_customers` (
   `phone` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `b2b_customers` */
 
-insert  into `b2b_customers`(`id`,`company_name`,`contact_name`,`phone`,`address`) values 
-(1,'Grosir Knalpot Jakarta','Bpk. Hendra','08111222333','Jl. Kebon Jeruk, Jkt'),
-(2,'SpeedShop Surabaya','Kang Emil','08999888777','Jl. Pahlawan, Sby');
+/*Table structure for table `b2b_sales_order_items` */
+
+DROP TABLE IF EXISTS `b2b_sales_order_items`;
+
+CREATE TABLE `b2b_sales_order_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `so_id` int(11) NOT NULL COMMENT 'ID dari tabel b2b_sales_orders',
+  `fg_sku` varchar(100) NOT NULL COMMENT 'SKU Knalpot',
+  `qty` int(11) NOT NULL,
+  `price` decimal(15,2) NOT NULL,
+  `subtotal` decimal(15,2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `so_id` (`so_id`),
+  CONSTRAINT `b2b_items_fk_1` FOREIGN KEY (`so_id`) REFERENCES `b2b_sales_orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+/*Data for the table `b2b_sales_order_items` */
 
 /*Table structure for table `b2b_sales_orders` */
 
@@ -79,7 +90,7 @@ CREATE TABLE `b2b_sales_orders` (
   PRIMARY KEY (`id`),
   KEY `customer_id` (`customer_id`),
   CONSTRAINT `b2b_sales_orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `b2b_customers` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `b2b_sales_orders` */
 
@@ -93,7 +104,7 @@ CREATE TABLE `bom_headers` (
   `recipe_name` varchar(100) NOT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `bom_headers` */
 
@@ -109,7 +120,7 @@ CREATE TABLE `bom_items` (
   PRIMARY KEY (`id`),
   KEY `bom_id` (`bom_id`),
   CONSTRAINT `bom_items_ibfk_1` FOREIGN KEY (`bom_id`) REFERENCES `bom_headers` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `bom_items` */
 
@@ -220,10 +231,6 @@ CREATE TABLE `factory_assets` (
 
 /*Data for the table `factory_assets` */
 
-insert  into `factory_assets`(`id`,`asset_code`,`asset_name`,`purchase_date`,`status`) values 
-(1,'AST-001','Mesin Las Argon TIG','2023-01-15','ACTIVE'),
-(2,'AST-002','Mesin Bending Pipa Hidrolik','2022-11-10','ACTIVE');
-
 /*Table structure for table `fingerspot_logs` */
 
 DROP TABLE IF EXISTS `fingerspot_logs`;
@@ -254,7 +261,7 @@ CREATE TABLE `journal_items` (
   KEY `account_id` (`account_id`),
   CONSTRAINT `journal_items_ibfk_1` FOREIGN KEY (`journal_id`) REFERENCES `journals` (`id`) ON DELETE CASCADE,
   CONSTRAINT `journal_items_ibfk_2` FOREIGN KEY (`account_id`) REFERENCES `chart_of_accounts` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `journal_items` */
 
@@ -271,9 +278,33 @@ CREATE TABLE `journals` (
   `created_by` varchar(100) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `journals` */
+
+/*Table structure for table `landing_catalogs` */
+
+DROP TABLE IF EXISTS `landing_catalogs`;
+
+CREATE TABLE `landing_catalogs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_name` varchar(255) NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `product_image` varchar(255) DEFAULT NULL,
+  `price` int(11) NOT NULL,
+  `discount_price` int(11) DEFAULT 0,
+  `specs` varchar(255) DEFAULT NULL COMMENT 'Pisahkan dengan koma, misal: Dyno Tested, Las Argon',
+  `badge_text` varchar(50) DEFAULT NULL COMMENT 'Contoh: HOT ITEM',
+  `icon_class` varchar(100) DEFAULT 'ph-motorcycle' COMMENT 'Class dari Phosphor Icon',
+  `shopee_link` text DEFAULT NULL,
+  `wa_link` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+/*Data for the table `landing_catalogs` */
+
+insert  into `landing_catalogs`(`id`,`product_name`,`category`,`product_image`,`price`,`discount_price`,`specs`,`badge_text`,`icon_class`,`shopee_link`,`wa_link`) values 
+(3,'P30 GRADE A BULAT JENONG','SLINCER','1772824931_23af61acfc9aa4cffa45.jpg',120000,150000,'SUARA NGEBASS','','ph-motorcycle','http://localhost:8080/setting/company','08585485151');
 
 /*Table structure for table `leave_requests` */
 
@@ -310,12 +341,9 @@ CREATE TABLE `offline_sale_items` (
   `price` decimal(15,2) NOT NULL,
   `subtotal` decimal(15,2) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `offline_sale_items` */
-
-insert  into `offline_sale_items`(`id`,`invoice_no`,`sku`,`item_name`,`qty`,`price`,`subtotal`) values 
-(1,'INV-20260228-0001','FG-0001','WR155',1,100000.00,100000.00);
 
 /*Table structure for table `offline_sales` */
 
@@ -329,14 +357,12 @@ CREATE TABLE `offline_sales` (
   `payment_method` varchar(50) DEFAULT 'Cash',
   `sale_date` datetime DEFAULT current_timestamp(),
   `cashier_name` varchar(100) DEFAULT 'Admin',
+  `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `invoice_no` (`invoice_no`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `offline_sales` */
-
-insert  into `offline_sales`(`id`,`invoice_no`,`customer_name`,`total_amount`,`payment_method`,`sale_date`,`cashier_name`) values 
-(1,'INV-20260228-0001','Umum',100000.00,'Cash','2026-02-28 23:44:52','Administrator Noric');
 
 /*Table structure for table `operational_cash` */
 
@@ -356,7 +382,7 @@ CREATE TABLE `operational_cash` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `operational_cash` */
 
@@ -435,7 +461,7 @@ CREATE TABLE `purchase_order_items` (
   PRIMARY KEY (`id`),
   KEY `po_id` (`po_id`),
   CONSTRAINT `purchase_order_items_ibfk_1` FOREIGN KEY (`po_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `purchase_order_items` */
 
@@ -454,7 +480,7 @@ CREATE TABLE `purchase_orders` (
   PRIMARY KEY (`id`),
   KEY `supplier_id` (`supplier_id`),
   CONSTRAINT `purchase_orders_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `purchase_orders` */
 
@@ -473,7 +499,7 @@ CREATE TABLE `raw_materials` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `sku_material` (`sku_material`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `raw_materials` */
 
@@ -611,13 +637,9 @@ CREATE TABLE `suppliers` (
   `phone` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `suppliers` */
-
-insert  into `suppliers`(`id`,`supplier_name`,`contact_person`,`phone`,`address`) values 
-(1,'PT. Baja Stainless Indo','Bpk. Budi','08123456789','Kawasan Industri Cikarang'),
-(2,'CV. Glaswool Abadi','Ibu Siska','08987654321','Bandung');
 
 /*Table structure for table `users` */
 
@@ -639,7 +661,6 @@ CREATE TABLE `users` (
 
 insert  into `users`(`id`,`employee_id`,`username`,`password`,`name`,`role`,`created_at`,`updated_at`) values 
 (1,'NRC-2026-000','admin','$2y$10$EDTW.EgLnjsn28qMwmQ88uQyKbB3rVhBgMnU2XoeOpSxzPGQ2QCPm','Administrator Noric','admin','2026-02-24 17:29:59','2026-02-25 10:30:22'),
-(6,'NRC-2026-001','sumanto','$2y$10$4SV8qTj/NvkiENoRB1f4kOGuzp92a22eYECvpazpr2ODuoFIwg0ZW','Sumanto','karyawan','2026-02-25 03:08:34','2026-02-25 10:30:31'),
 (8,'NRC-2026-001','aliando','$2y$10$9H8gLluhztFgvOySvHx4LuY8Uk2WQHZSzqtkvtyDDGQVMv41iEraW','IRFAAN SHOODIQ','karyawan','2026-02-27 12:00:32','2026-02-27 12:00:32');
 
 /*Table structure for table `warehouse_inventory` */
@@ -657,12 +678,9 @@ CREATE TABLE `warehouse_inventory` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `sku` (`sku`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `warehouse_inventory` */
-
-insert  into `warehouse_inventory`(`id`,`sku`,`item_name`,`item_type`,`hpp`,`physical_stock`,`min_stock`,`updated_at`) values 
-(1,'FG-0001','WR155','Barang Jadi',100000.00,11,5,'2026-02-28 23:44:52');
 
 /*Table structure for table `work_orders` */
 
@@ -678,7 +696,7 @@ CREATE TABLE `work_orders` (
   `completed_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 /*Data for the table `work_orders` */
 
