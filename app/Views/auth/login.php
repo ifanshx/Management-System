@@ -73,7 +73,6 @@
             overflow: hidden;
         }
 
-        /* Efek Cahaya / Glow pada Panel Kiri */
         .login-left::before {
             content: ''; position: absolute; top: -100px; left: -100px;
             width: 400px; height: 400px; background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%); border-radius: 50%;
@@ -95,160 +94,65 @@
         }
 
         .login-left img {
-            width: 110px; 
-            height: auto; 
-            border-radius: 12px;
-            display: block;
+            width: 110px; height: auto; border-radius: 12px; display: block;
         }
 
         .brand-title {
-            font-size: 36px;
-            font-weight: 900; 
-            margin-bottom: 8px;
-            letter-spacing: -1px;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 10;
-            line-height: 1.1;
+            font-size: 36px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1px; text-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10; line-height: 1.1;
         }
 
         .company-name {
-            font-size: 14px; 
-            font-weight: 600; 
-            letter-spacing: 2px;
-            color: rgba(255,255,255,0.8); 
-            text-transform: uppercase; 
-            z-index: 10;
+            font-size: 14px; font-weight: 600; letter-spacing: 2px; color: rgba(255,255,255,0.8); text-transform: uppercase; z-index: 10;
         }
 
         .copyright {
-            position: absolute; 
-            bottom: 30px; 
-            font-size: 11px; 
-            color: rgba(255,255,255,0.5); 
-            z-index: 10; 
-            font-weight: 500;
-            font-family: 'Space Mono', monospace;
+            position: absolute; bottom: 30px; font-size: 11px; color: rgba(255,255,255,0.5); z-index: 10; font-weight: 500; font-family: 'Space Mono', monospace;
         }
 
         /* --- PANEL KANAN (FORMULIR INTERAKTIF) --- */
         .login-right {
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center;
-            padding: 60px 80px; 
-            background: #ffffff;
+            flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 60px 80px; background: #ffffff;
         }
 
         .header-form { margin-bottom: 40px; }
-        .header-form h1 { 
-            color: var(--text-main); 
-            font-weight: 900; 
-            font-size: 32px; 
-            margin-bottom: 10px; 
-            letter-spacing: -1px;
-        }
-        .header-form p { 
-            color: var(--text-muted); 
-            font-size: 14px; 
-            font-weight: 500; 
-            line-height: 1.5; 
-        }
+        .header-form h1 { color: var(--text-main); font-weight: 900; font-size: 32px; margin-bottom: 10px; letter-spacing: -1px; }
+        .header-form p { color: var(--text-muted); font-size: 14px; font-weight: 500; line-height: 1.5; }
         .header-form b { color: var(--brand-primary); }
 
-        /* Floating Input Fields */
-        .input-group { 
-            position: relative; 
-            margin-bottom: 25px; 
-        }
+        .input-group { position: relative; margin-bottom: 25px; }
         .input-group input {
-            width: 100%; 
-            background-color: transparent; 
-            border: 2px solid var(--border-line);
-            padding: 20px 20px 12px; 
-            border-radius: 16px; 
-            font-size: 15px; 
-            font-weight: 700;
-            color: var(--text-main); 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
+            width: 100%; background-color: transparent; border: 2px solid var(--border-line);
+            padding: 20px 20px 12px; border-radius: 16px; font-size: 15px; font-weight: 700;
+            color: var(--text-main); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;
         }
         
         .input-group input:hover { border-color: #cbd5e1; }
-        .input-group input:focus { 
-            border-color: var(--brand-primary); 
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
-            background-color: rgba(37, 99, 235, 0.02);
-        }
+        .input-group input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); background-color: rgba(37, 99, 235, 0.02); }
         
         .input-group label {
-            position: absolute; 
-            left: 20px; 
-            top: 50%; 
-            transform: translateY(-50%);
-            color: var(--text-muted); 
-            font-size: 14px; 
-            font-weight: 600; 
-            pointer-events: none;
-            transition: all 0.2s ease-out; 
-            background-color: transparent; 
-            padding: 0 4px;
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); font-size: 14px; font-weight: 600; pointer-events: none;
+            transition: all 0.2s ease-out; background-color: transparent; padding: 0 4px;
         }
         
-        /* Efek teks melayang naik saat diketik / fokus */
-        .input-group input:focus ~ label, 
-        .input-group input:not(:placeholder-shown) ~ label {
-            top: 0; 
-            font-size: 11px; 
-            color: var(--brand-primary); 
-            font-weight: 800;
-            background-color: #fff;
+        .input-group input:focus ~ label, .input-group input:not(:placeholder-shown) ~ label {
+            top: 0; font-size: 11px; color: var(--brand-primary); font-weight: 800; background-color: #fff;
         }
 
         .toggle-password {
-            position: absolute; 
-            right: 20px; 
-            top: 50%; 
-            transform: translateY(-50%);
-            cursor: pointer; 
-            color: var(--text-muted); 
-            transition: color 0.3s; 
-            display: flex; 
-            align-items: center;
-            font-size: 20px;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: var(--text-muted); transition: color 0.3s; display: flex; align-items: center; font-size: 20px;
         }
         .toggle-password:hover { color: var(--brand-primary); }
 
-        /* Tombol Login Super Premium */
         button.btn-login {
-            width: 100%; 
-            border-radius: 16px; 
-            border: none; 
-            background: linear-gradient(135deg, var(--brand-primary), #1d4ed8);
-            color: #FFFFFF; 
-            font-size: 16px; 
-            font-weight: 900; 
-            padding: 18px; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            margin-top: 15px; 
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            width: 100%; border-radius: 16px; border: none; background: linear-gradient(135deg, var(--brand-primary), #1d4ed8);
+            color: #FFFFFF; font-size: 16px; font-weight: 900; padding: 18px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 15px; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5); display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        button.btn-login:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6); 
-            filter: brightness(1.1);
-        }
-        button.btn-login:active { 
-            transform: translateY(0); 
-            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); 
-        }
+        button.btn-login:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6); filter: brightness(1.1); }
+        button.btn-login:active { transform: translateY(0); box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); }
 
-        /* --- RESPONSIVITAS --- */
         @media (max-width: 900px) {
             .login-wrapper { flex-direction: column; width: 100%; max-width: 480px; min-height: auto; border-radius: 24px;}
             .login-left { padding: 50px 30px 40px; flex: none; }
@@ -261,22 +165,6 @@
     </style>
 </head>
 <body>
-
-    <?php if(session()->getFlashdata('error')): ?>
-        <script>
-            Swal.fire({
-                icon: 'error', 
-                title: 'Akses Ditolak', 
-                text: '<?= session()->getFlashdata('error') ?>', 
-                confirmButtonColor: '#ef4444',
-                background: '#ffffff',
-                customClass: {
-                    popup: 'swal2-custom-radius'
-                }
-            });
-        </script>
-        <style>.swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }</style>
-    <?php endif; ?>
 
     <div class="login-wrapper">
         <div class="login-left">
@@ -296,7 +184,7 @@
                 <p>Silakan masukkan kredensial Anda untuk mengakses <b>Portal Manajemen Area</b>.</p>
             </div>
 
-            <form action="<?= base_url('login/process'); ?>" method="post" id="loginForm">
+            <form action="/login/process" method="post" id="loginForm">
                 <?= csrf_field() ?>
                 
                 <div class="input-group">
@@ -305,7 +193,7 @@
                 </div>
                 
                 <div class="input-group">
-                    <input type="password" name="password" id="password" placeholder=" " required autocomplete="off" />
+                    <input type="text" name="password" id="password" style="-webkit-text-security: disc;" placeholder=" " required autocomplete="off" />
                     <label for="password">Kata Sandi Rahasia</label>
                     <span class="toggle-password" onclick="togglePassword()" title="Tampilkan Sandi">
                         <i id="eye-icon" class="ph-bold ph-eye"></i>
@@ -320,23 +208,39 @@
     </div>
 
     <script>
-        // Animasi Tampil/Sembunyi Password dengan icon Phosphor
+        // Logika Hide/Show Password sekarang memodifikasi CSS, bukan attribute 'type'
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eye-icon');
             
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
+            if (passwordInput.style.webkitTextSecurity === 'disc') {
+                passwordInput.style.webkitTextSecurity = 'none'; // Munculkan huruf
                 eyeIcon.classList.remove('ph-eye');
                 eyeIcon.classList.add('ph-eye-slash');
                 eyeIcon.style.color = 'var(--brand-primary)';
             } else {
-                passwordInput.type = 'password';
+                passwordInput.style.webkitTextSecurity = 'disc'; // Samarkan lagi jadi titik-titik
                 eyeIcon.classList.remove('ph-eye-slash');
                 eyeIcon.classList.add('ph-eye');
                 eyeIcon.style.color = 'var(--text-muted)';
             }
         }
+
+        // PENANGKAP ERROR
+        document.addEventListener("DOMContentLoaded", function() {
+            <?php if(session()->getFlashdata('error')): ?>
+                Swal.fire({
+                    icon: 'error', 
+                    title: 'Akses Ditolak', 
+                    text: '<?= session()->getFlashdata('error') ?>', 
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    customClass: { popup: 'swal2-custom-radius' }
+                });
+            <?php endif; ?>
+        });
     </script>
+    <style>.swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+
 </body>
 </html>

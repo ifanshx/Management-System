@@ -5,23 +5,20 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\AttendanceModel;
 use App\Models\EmployeeModel;
 use App\Models\WorkShiftModel;
+use App\Models\UserModel; 
+use App\Libraries\Fingerspot; 
 
 class Webhook extends ResourceController
 {
-    // ====================================================================
-    // ENDPOINT UTAMA PENERIMA WEBHOOK DARI MESIN FINGERSPOT
-    // ====================================================================
     public function fingerspot()
     {
-        $requestData = $this->request->getJSON(true); // Tangkap payload JSON
+        $requestData = $this->request->getJSON(true); 
         $cloudIdEnv  = getenv('FINGERSPOT_CLOUD_ID');
 
-        // 1. Keamanan Dasar: Validasi Payload
         if (!$requestData || !isset($requestData['type']) || !isset($requestData['cloud_id'])) {
             return $this->fail('Invalid payload format', 400);
         }
 
-        // Pastikan mesin yang mengirim data adalah mesin pabrik kita
         if ($requestData['cloud_id'] !== $cloudIdEnv) {
             return $this->failUnauthorized('Unrecognized Cloud ID');
         }
@@ -29,7 +26,6 @@ class Webhook extends ResourceController
         $type = $requestData['type'];
         $db = \Config\Database::connect();
 
-        // 2. Simpan Data Mentah ke Log (Untuk keperluan Audit IT)
         $db->table('fingerspot_logs')->insert([
             'cloud_id'      => $requestData['cloud_id'],
             'type'          => $type,
@@ -37,7 +33,6 @@ class Webhook extends ResourceController
             'created_at'    => date('Y-m-d H:i:s')
         ]);
 
-        // 3. ROUTER TUGAS BERDASARKAN TIPE WEBHOOK
         if ($type === 'attlog') {
             return $this->processRealtimeAttendance($requestData['data']);
         } 
@@ -53,11 +48,9 @@ class Webhook extends ResourceController
         elseif ($type === 'get_userid_list') {
             return $this->processGetAllPinStatus($requestData);
         }
-
         elseif ($type === 'set_time') {
             return $this->processSetTimeStatus($requestData);
         }
-
         elseif ($type === 'register_online') {
             return $this->processRegisterOnlineStatus($requestData);
         }
@@ -65,12 +58,10 @@ class Webhook extends ResourceController
         return $this->respond(['status' => 'OK', 'message' => "Log for type '{$type}' saved successfully."]);
     }
 
-    // ====================================================================
-    // FUNGSI 1: LOGIKA SINKRONISASI DATA USER/KARYAWAN
-    // ====================================================================
     private function processUserInfoSync($data)
     {
         $empModel = new EmployeeModel();
+        $userModel = new UserModel();
         
         $pin = $data['pin'] ?? null;
         if (!$pin) return $this->fail('PIN is missing in payload data');
@@ -91,13 +82,46 @@ class Webhook extends ResourceController
                 'status'  => 'OK', 
                 'message' => "Biometric data for employee {$emp['name']} synced successfully."
             ]);
-        } else {
-            return $this->failNotFound("Employee with PIN {$pin} not found in ERP Database.");
+        } 
+        else {
+            $tmpNik = "NIK-" . $pin . "-" . time();
+            $name   = (!empty($data['name'])) ? $data['name'] : "USER MESIN ID " . $pin;
+
+            $empData = [
+                'pin'               => $pin,
+                'employee_id'       => $tmpNik,
+                'name'              => $name,
+                'shift_id'          => 1, 
+                'status'            => 'Tetap',
+                'payment_method'    => 'Cash',
+                'join_date'         => date('Y-m-d'),
+                'is_active'         => 1,
+                'basic_salary'      => 0,
+                'machine_privilege' => $data['privilege'] ?? "0",
+                'rfid'              => $data['rfid'] ?? null,
+                'finger_count'      => $data['finger'] ?? 0,
+                'face_count'        => $data['face'] ?? 0,
+            ];
+
+            $empModel->insert($empData);
+
+            $userModel->insert([
+                'employee_id' => $tmpNik,
+                'username'    => "user" . $pin,
+                'password'    => password_hash("123456", PASSWORD_DEFAULT),
+                'name'        => $name,
+                'role'        => 'karyawan'
+            ]);
+
+            return $this->respond([
+                'status'  => 'OK', 
+                'message' => "DRAFT Employee created for PIN {$pin} from Machine."
+            ]);
         }
     }
 
     // ====================================================================
-    // FUNGSI 2: LOGIKA ABSENSI REAL-TIME (SMART HEURISTIC SCAN)
+    // FUNGSI 2: LOGIKA ABSENSI REAL-TIME DENGAN STATUS_SCAN, FOTO & VERIFY
     // ====================================================================
     private function processRealtimeAttendance($data)
     {
@@ -107,6 +131,11 @@ class Webhook extends ResourceController
 
         $pin = $data['pin']; 
         $scanTime = $data['scan'];
+        
+        // TANGKAP 3 DATA PENTING DARI MESIN IOT
+        $statusScan   = isset($data['status_scan']) ? (string)$data['status_scan'] : null;
+        $photoUrl     = isset($data['photo_url']) ? (string)$data['photo_url'] : null; 
+        $verifyMethod = isset($data['verify']) ? (string)$data['verify'] : null; // <--- TANGKAP METODE VERIFIKASI
 
         $datePart = date('Y-m-d', strtotime($scanTime));
         $timePart = date('H:i:s', strtotime($scanTime));
@@ -118,197 +147,162 @@ class Webhook extends ResourceController
         $existingLog = $attModel->where(['employee_id' => $nikWeb, 'date' => $datePart])->first();
         $shift = $shiftModel->find($emp['shift_id']);
 
-        // -----------------------------------------------------------
-        // SKENARIO 1: SCAN PERTAMA KALI (MASUK)
-        // -----------------------------------------------------------
         if (!$existingLog) {
             $status = 'Hadir';
             $lateMinutes = 0;
 
-            if ($shift) {
-                $shiftStart = strtotime($datePart . ' ' . $shift['start_time']);
+            if ($shift && !empty($shift['time_in']) && ($statusScan === "0" || $statusScan === null)) {
+                $shiftStart = strtotime($datePart . ' ' . $shift['time_in']);
                 $actualIn = strtotime($scanTime);
-                if ($actualIn > ($shiftStart + ($shift['tolerance_minutes'] * 60))) {
+                if ($actualIn > ($shiftStart + (($shift['late_tolerance'] ?? 0) * 60))) {
                     $status = 'Terlambat';
                     $lateMinutes = round(($actualIn - $shiftStart) / 60);
                 }
             }
 
-            $attModel->insert([
-                'employee_id'  => $nikWeb,
-                'date'         => $datePart,
-                'time_in'      => $timePart,
-                'status'       => $status,
-                'late_minutes' => $lateMinutes
-            ]);
+            $insertData = [
+                'employee_id'   => $nikWeb,
+                'date'          => $datePart,
+                'status'        => $status,
+                'late_minutes'  => $lateMinutes,
+                'photo_url'     => $photoUrl, 
+                'verify_method' => $verifyMethod // <--- SIMPAN VERIFIKASI
+            ];
 
-            return $this->respond(['status' => 'OK', 'message' => 'Check-IN Recorded']);
+            if ($statusScan === "0") $insertData['time_in'] = $timePart;
+            elseif ($statusScan === "1") $insertData['time_out'] = $timePart;
+            elseif ($statusScan === "2") $insertData['break_in'] = $timePart; 
+            elseif ($statusScan === "3") $insertData['break_out'] = $timePart;
+            else $insertData['time_in'] = $timePart; 
+
+            $attModel->insert($insertData);
+            return $this->respond(['status' => 'OK', 'message' => 'Check-IN Recorded via Status']);
         } 
-        
-        // -----------------------------------------------------------
-        // SKENARIO 2: SCAN LANJUTAN (SMART DETECTION)
-        // -----------------------------------------------------------
         else {
-            $timeInStr = strtotime($existingLog['date'] . ' ' . $existingLog['time_in']);
-            $currentScanStr = strtotime($scanTime);
-            $hoursElapsed = ($currentScanStr - $timeInStr) / 3600;
-
-            // Abaikan jika jarak scan terlalu cepat (dibawah 1 jam) -> Pencegahan Double Tap
-            if ($hoursElapsed < 1) {
-                return $this->respond(['status' => 'OK', 'message' => 'Duplicate Scan Ignored']);
-            }
-
             $updateData = [];
+            
+            if (!empty($photoUrl)) $updateData['photo_url'] = $photoUrl;
+            if (!empty($verifyMethod)) $updateData['verify_method'] = $verifyMethod; // <--- UPDATE VERIFIKASI TERBARU
 
-            // A. ISTIRAHAT KELUAR (Terjadi antara 2.5 hingga 5 jam setelah absen masuk)
-            if ($hoursElapsed >= 2.5 && $hoursElapsed <= 5 && empty($existingLog['break_out'])) {
-                $updateData['break_out'] = $timePart;
+            if ($statusScan === "0" && empty($existingLog['time_in'])) {
+                $updateData['time_in'] = $timePart;
             } 
-            // B. ISTIRAHAT MASUK (Terjadi antara 3.5 hingga 6 jam setelah masuk)
-            elseif ($hoursElapsed >= 3.5 && $hoursElapsed <= 6 && !empty($existingLog['break_out']) && empty($existingLog['break_in'])) {
+            elseif ($statusScan === "2") {
                 $updateData['break_in'] = $timePart;
             } 
-            // C. PULANG (Lebih dari 6 jam, atau menimpa absen pulang sebelumnya)
-            elseif ($hoursElapsed > 6) {
+            elseif ($statusScan === "3") {
+                $updateData['break_out'] = $timePart;
+            } 
+            elseif ($statusScan === "1") {
                 $updateData['time_out'] = $timePart;
 
-                if ($shift) {
-                    // PERBAIKAN: Gunakan time_out sesuai database Anda
+                $timeInStr = strtotime($existingLog['date'] . ' ' . $existingLog['time_in']);
+                $currentScanStr = strtotime($scanTime);
+
+                if ($shift && !empty($shift['time_out'])) {
                     $shiftEnd = strtotime($datePart . ' ' . $shift['time_out']);
-                    
-                    // Jika shift malam (melewati tengah malam)
                     if ($shift['time_out'] < $shift['time_in']) $shiftEnd += 86400; 
 
                     if ($currentScanStr > $shiftEnd) {
-                        $updateData['overtime_minutes'] = round(($currentScanStr - $shiftEnd) / 60);
+                        $overtime = round(($currentScanStr - $shiftEnd) / 60);
+                        $minOv = $shift['min_overtime'] ?? 0;
+                        $deduct = $shift['overtime_deduction'] ?? 0;
+                        
+                        if ($overtime < $minOv) $overtime = 0;
+                        if ($overtime > 0 && $deduct > 0) $overtime -= $deduct;
+                        $updateData['overtime_minutes'] = $overtime;
                     } else {
                         $updateData['overtime_minutes'] = 0;
                     }
                 }
 
-                // Hitung Total Durasi Kerja Bersih (Masuk s/d Pulang, dikurangi waktu istirahat jika ada)
-                $totalWorkSeconds = $currentScanStr - $timeInStr;
-                
-                $bOut = $existingLog['break_out'] ? strtotime($existingLog['date'] . ' ' . $existingLog['break_out']) : 0;
-                $bIn = $existingLog['break_in'] ? strtotime($existingLog['date'] . ' ' . $existingLog['break_in']) : 0;
-                
-                if ($bOut > 0 && $bIn > 0) {
-                    $breakDuration = $bIn - $bOut;
-                    $totalWorkSeconds -= $breakDuration;
+                if (!empty($existingLog['time_in'])) {
+                    $totalWorkSeconds = $currentScanStr - $timeInStr;
+                    $bOut = $existingLog['break_out'] ? strtotime($existingLog['date'] . ' ' . $existingLog['break_out']) : 0;
+                    $bIn = $existingLog['break_in'] ? strtotime($existingLog['date'] . ' ' . $existingLog['break_in']) : 0;
+                    if ($bOut > 0 && $bIn > 0 && $bIn > $bOut) {
+                        $totalWorkSeconds -= ($bIn - $bOut);
+                    }
+                    $updateData['work_duration_minutes'] = round($totalWorkSeconds / 60);
                 }
-
-                $updateData['work_duration_minutes'] = round($totalWorkSeconds / 60);
             }
 
             if (!empty($updateData)) {
                 $attModel->update($existingLog['id'], $updateData);
-                return $this->respond(['status' => 'OK', 'message' => 'Status Updated Automatically']);
+                return $this->respond(['status' => 'OK', 'message' => 'Status Updated by Machine Status']);
             }
-
-            return $this->respond(['status' => 'OK', 'message' => 'Scan ignored (Does not fit logical timeframe)']);
+            return $this->respond(['status' => 'OK', 'message' => 'Scan ignored']);
         }
     }
 
-    // ====================================================================
-    // FUNGSI 3: LOGIKA BALASAN SET USERINFO
-    // ====================================================================
-    private function processSetUserInfoStatus($payload)
-    {
+    private function processSetUserInfoStatus($payload) {
         $status = $payload['data']['status'] ?? null; 
         $transId = $payload['trans_id'] ?? 'unknown';
-
-        if ($status == "1") {
-            log_message('info', "[Fingerspot] Karyawan sukses ditambahkan ke mesin. Trans ID: {$transId}");
-        } elseif ($status == "2") {
-            log_message('error', "[Fingerspot] GAGAL mendaftarkan karyawan ke mesin. Trans ID: {$transId}");
-        }
-
-        return $this->respond(['status' => 'OK', 'message' => 'Set Userinfo status processed']);
+        if ($status == "1") log_message('info', "[Fingerspot] Karyawan sukses ditambahkan. Trans ID: {$transId}");
+        elseif ($status == "2") log_message('error', "[Fingerspot] GAGAL mendaftarkan karyawan. Trans ID: {$transId}");
+        return $this->respond(['status' => 'OK']);
     }
 
-    // ====================================================================
-    // FUNGSI 4: LOGIKA BALASAN DELETE USERINFO
-    // ====================================================================
-    private function processDeleteUserInfoStatus($payload)
-    {
+    private function processDeleteUserInfoStatus($payload) {
         $status = $payload['data']['status'] ?? null; 
         $transId = $payload['trans_id'] ?? 'unknown';
-
-        if ($status == "1") {
-            log_message('info', "[Fingerspot Security] Akses biometrik mesin BERHASIL dicabut. Trans ID: {$transId}");
-        } elseif ($status == "2") {
-            log_message('warning', "[Fingerspot Security] GAGAL mencabut akses biometrik mesin (mungkin PIN tidak ditemukan). Trans ID: {$transId}");
-        }
-
-        return $this->respond(['status' => 'OK', 'message' => 'Delete Userinfo status processed']);
+        if ($status == "1") log_message('info', "[Fingerspot] Akses mesin BERHASIL dicabut. Trans ID: {$transId}");
+        elseif ($status == "2") log_message('warning', "[Fingerspot] GAGAL mencabut akses mesin. Trans ID: {$transId}");
+        return $this->respond(['status' => 'OK']);
     }
 
-    // ====================================================================
-    // FUNGSI 5: LOGIKA BALASAN AUDIT GET ALL PIN
-    // ====================================================================
     private function processGetAllPinStatus($payload)
     {
         $total = $payload['data']['total'] ?? 0;
         $pinArr = $payload['data']['pin_arr'] ?? [];
-        $transId = $payload['trans_id'] ?? 'unknown';
+
+        ob_start();
+        $responseJson = json_encode(['status' => 'OK', 'message' => 'Processing in background.']);
+        header('Content-Type: application/json');
+        header('Connection: close');
+        header('Content-Length: ' . strlen($responseJson));
+        echo $responseJson;
+        ob_end_flush();
+        ob_flush();
+        flush();
+        
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+
+        ignore_user_abort(true);
+        set_time_limit(0);
 
         if (is_array($pinArr) && count($pinArr) > 0) {
-            $pinListString = implode(', ', $pinArr);
-            log_message('info', "[Fingerspot Audit] Berhasil menarik {$total} PIN dari mesin. Daftar PIN: [{$pinListString}]. Trans ID: {$transId}");
-        } else {
-            log_message('warning', "[Fingerspot Audit] Mesin merespons, tetapi tidak ada PIN yang terdaftar di mesin (Kosong).");
-        }
-
-        return $this->respond(['status' => 'OK', 'message' => 'Get All PIN list processed']);
-    }
-
-    // ====================================================================
-    // FUNGSI 6: LOGIKA BALASAN SINKRONISASI WAKTU MESIN
-    // ====================================================================
-    private function processSetTimeStatus($payload)
-    {
-        // Status 1: Aksi berhasil, 2: Aksi gagal
-        $status = $payload['data']['status'] ?? null; 
-        $transId = $payload['trans_id'] ?? 'unknown';
-
-        if ($status == "1") {
-            log_message('info', "[Fingerspot IoT] Waktu mesin BERHASIL disinkronkan dengan server. Trans ID: {$transId}");
-        } elseif ($status == "2") {
-            log_message('error', "[Fingerspot IoT] GAGAL melakukan sinkronisasi waktu mesin. Trans ID: {$transId}");
-        }
-
-        return $this->respond(['status' => 'OK', 'message' => 'Set Time status processed']);
-    }
-
-    // ====================================================================
-    // FUNGSI 7: LOGIKA BALASAN REGISTER ONLINE (REKAM JARI/WAJAH LANGSUNG)
-    // ====================================================================
-    private function processRegisterOnlineStatus($payload)
-    {
-        // Status 1: berhasil direkam, 2: gagal direkam / timeout
-        $status = $payload['data']['status'] ?? null; 
-        $transId = $payload['trans_id'] ?? 'unknown';
-
-        if ($status == "1") {
-            log_message('info', "[Fingerspot IoT] Perekaman biometrik di mesin BERHASIL diselesaikan oleh karyawan. Trans ID: {$transId}");
+            $fingerspot = new \App\Libraries\Fingerspot();
             
-            // Catatan: Biasanya setelah ini HRD akan menekan tombol "Sync Data Jari" 
-            // untuk menarik update jumlah jari ke database web.
-        } elseif ($status == "2") {
-            log_message('warning', "[Fingerspot IoT] Perekaman biometrik GAGAL (mungkin karyawan tidak menempelkan jari hingga batas waktu habis). Trans ID: {$transId}");
+            $empModel = new \App\Models\EmployeeModel();
+            $existingData = $empModel->select('pin')->where('pin !=', null)->where('pin !=', '')->findAll();
+            $existingPins = array_column($existingData, 'pin');
+            
+            $countNew = 0;
+
+            foreach ($pinArr as $pin) {
+                if (in_array($pin, $existingPins)) {
+                    continue; 
+                }
+
+                $fingerspot->getUserInfo($pin);
+                $countNew++;
+                usleep(100000); 
+            }
+
+            log_message('info', "[Fingerspot] Berhasil menarik {$countNew} karyawan baru dari sisa total {$total} PIN.");
         }
 
-        return $this->respond(['status' => 'OK', 'message' => 'Register Online status processed']);
+        exit(); 
     }
 
-    // ====================================================================
-    // FUNGSI : PING TEST DARI BROWSER (GET METHOD)
-    // ====================================================================
-    public function ping()
+    public function ping() 
     {
         return $this->respond([
-            'status'  => 'OK',
-            'message' => 'Noric Webhook Endpoint is Ready. Please send POST request with Fingerspot JSON payload.'
-        ]);
+            'status'  => 'OK', 
+            'message' => 'Noric Webhook Endpoint is Ready. Waiting for POST request from IoT Machine.'
+        ], 200);
     }
 }

@@ -2,69 +2,109 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Controller;
+
 class Accounting extends BaseController
 {
-    private $db;
+    protected $db;
 
     public function __construct()
     {
         $this->db = \Config\Database::connect();
     }
 
-    // --- 1. DASBOR AKUNTANSI ---
+    // =========================================================
+    // 1. DASHBOARD ACCOUNTING
+    // =========================================================
     public function index()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
         $summary = $this->db->query("
-            SELECT account_type, SUM(balance) as total_balance 
-            FROM chart_of_accounts 
+            SELECT account_type, SUM(calculated_balance) as total_balance
+            FROM v_account_balances
+            WHERE is_active = 1
             GROUP BY account_type
         ")->getResultArray();
 
+        $pendapatan = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_type = 'PENDAPATAN'
+        ")->getRowArray()['total'] ?? 0;
+
+        $hpp = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_code = '5-1000'
+        ")->getRowArray()['total'] ?? 0;
+
+        $beban_ops = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_type = 'PERBELANJAAN'
+            AND account_code != '5-1000'
+        ")->getRowArray()['total'] ?? 0;
+
+        $laba_kotor = $pendapatan - $hpp;
+        $laba_bersih = $laba_kotor - $beban_ops;
+
         $recent_journals = $this->db->table('journals')
             ->orderBy('id', 'DESC')
-            ->limit(5)
+            ->limit(8)
             ->get()->getResultArray();
 
-        $data = [
-            'title'           => 'Dasbor Finansial & Buku Besar',
+        return view('accounting/index', [
+            'title'           => 'Dasbor Finansial Eksekutif',
             'summary'         => $summary,
+            'pendapatan'      => $pendapatan,
+            'hpp'             => $hpp,
+            'beban_ops'       => $beban_ops,
+            'laba_kotor'      => $laba_kotor,
+            'laba_bersih'     => $laba_bersih,
             'recent_journals' => $recent_journals
-        ];
-
-        return view('accounting/index', $data);
+        ]);
     }
 
-    // --- 2. HALAMAN PENCATATAN JURNAL UMUM ---
+    // =========================================================
+    // 2. HALAMAN JURNAL UMUM
+    // =========================================================
     public function journal()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
-        $accounts = $this->db->table('chart_of_accounts')->orderBy('account_code', 'ASC')->get()->getResultArray();
-        $recent_journals = $this->db->table('journals')->orderBy('id', 'DESC')->limit(10)->get()->getResultArray();
+        $accounts = $this->db->table('chart_of_accounts')
+            ->where('is_active', 1)
+            ->orderBy('account_code', 'ASC')
+            ->get()->getResultArray();
 
-        $data = [
-            'title'           => 'Pencatatan Jurnal Umum (Double-Entry)',
+        $recent_journals = $this->db->table('journals')
+            ->orderBy('id', 'DESC')
+            ->limit(15)
+            ->get()->getResultArray();
+
+        return view('accounting/journal', [
+            'title'           => 'Pencatatan Jurnal Umum',
             'accounts'        => $accounts,
             'recent_journals' => $recent_journals
-        ];
-
-        return view('accounting/journal', $data);
+        ]);
     }
 
-    // --- 3. PROSES SIMPAN JURNAL (AJAX SUPPORT) ---
+    // =========================================================
+    // 3. STORE JURNAL
+    // =========================================================
     public function store_journal()
     {
         try {
             $date        = $this->request->getPost('transaction_date');
-            $description = $this->request->getPost('description');
+            $description = trim($this->request->getPost('description'));
             $accounts    = $this->request->getPost('account_id');
             $debits      = $this->request->getPost('debit');
             $credits     = $this->request->getPost('credit');
+            $lines       = $this->request->getPost('line_description');
 
             if (empty($accounts) || count($accounts) < 2) {
-                throw new \Exception("Satu jurnal memerlukan setidaknya 2 Akun (Debit dan Kredit).");
+                throw new \Exception("Minimal harus ada 2 akun dalam satu jurnal.");
             }
 
             $totalDebit = 0;
@@ -72,88 +112,253 @@ class Accounting extends BaseController
             $validItems = [];
 
             for ($i = 0; $i < count($accounts); $i++) {
-                $d = (float)($debits[$i] ?? 0);
-                $c = (float)($credits[$i] ?? 0);
+                $d = (float) str_replace(',', '', $debits[$i] ?? 0);
+                $c = (float) str_replace(',', '', $credits[$i] ?? 0);
 
                 if ($d > 0 || $c > 0) {
                     $totalDebit += $d;
                     $totalCredit += $c;
+
                     $validItems[] = [
-                        'account_id' => $accounts[$i],
-                        'debit'      => $d,
-                        'credit'     => $c
+                        'account_id'       => $accounts[$i],
+                        'line_description' => $lines[$i] ?? null,
+                        'debit'            => $d,
+                        'credit'           => $c
                     ];
                 }
             }
 
-            // HUKUM MUTLAK AKUNTANSI: DEBIT HARUS SAMA DENGAN KREDIT
+            if (count($validItems) < 2) {
+                throw new \Exception("Minimal harus ada 2 baris transaksi valid.");
+            }
+
             if (abs($totalDebit - $totalCredit) > 0.01) {
-                throw new \Exception("Transaksi DITOLAK! Total Debit (Rp " . number_format($totalDebit, 0, ',', '.') . ") tidak sama dengan Kredit (Rp " . number_format($totalCredit, 0, ',', '.') . ").");
+                throw new \Exception("Total Debit dan Kredit harus seimbang.");
             }
 
             $this->db->transStart();
 
-            // Generate Nomor Jurnal Auto
             $datePrefix = date('Ym', strtotime($date));
-            $lastJournal = $this->db->table('journals')->like('journal_number', "JRN-$datePrefix", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+            $lastJournal = $this->db->table('journals')
+                ->like('journal_number', "JRN-$datePrefix", 'after')
+                ->orderBy('id', 'DESC')
+                ->get()->getRowArray();
+
             $seq = 1;
             if ($lastJournal) {
                 $parts = explode('-', $lastJournal['journal_number']);
                 $seq = intval(end($parts)) + 1;
             }
+
             $journalNumber = "JRN-" . $datePrefix . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
-            // Simpan Header Jurnal
             $this->db->table('journals')->insert([
                 'journal_number'   => $journalNumber,
                 'transaction_date' => $date,
                 'description'      => $description,
+                'reference_number' => null,
+                'source_module'    => 'manual_journal',
+                'source_id'        => null,
                 'total_amount'     => $totalDebit,
+                'status'           => 'POSTED',
                 'created_by'       => session()->get('name') ?? 'Sistem'
             ]);
+
             $journalId = $this->db->insertID();
 
-            // Simpan Rincian Jurnal & Update Saldo Akun (Balance)
             foreach ($validItems as $item) {
                 $this->db->table('journal_items')->insert([
-                    'journal_id' => $journalId,
-                    'account_id' => $item['account_id'],
-                    'debit'      => $item['debit'],
-                    'credit'     => $item['credit']
+                    'journal_id'       => $journalId,
+                    'account_id'       => $item['account_id'],
+                    'line_description' => $item['line_description'],
+                    'debit'            => $item['debit'],
+                    'credit'           => $item['credit']
                 ]);
-
-                $acc = $this->db->table('chart_of_accounts')->where('id', $item['account_id'])->get()->getRowArray();
-                $movement = 0;
-                
-                if (in_array($acc['account_type'], ['ASET', 'PERBELANJAAN'])) {
-                    $movement = $item['debit'] - $item['credit'];
-                } else {
-                    $movement = $item['credit'] - $item['debit'];
-                }
-
-                $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$movement, $item['account_id']]);
             }
 
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                throw new \Exception("Gagal menyimpan data jurnal ke database.");
+                throw new \Exception("Gagal menyimpan jurnal.");
             }
 
-            if ($this->request->isAJAX()) {
-                return $this->response->setJSON([
-                    'status' => 'success',
-                    'message' => "Jurnal $journalNumber berhasil dikunci. Buku Besar telah disesuaikan."
-                ]);
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => "Jurnal {$journalNumber} berhasil disimpan."
+            ]);
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // =========================================================
+    // 4. VOID JURNAL
+    // =========================================================
+    public function void_journal($id)
+    {
+        try {
+            $journal = $this->db->table('journals')->where('id', $id)->get()->getRowArray();
+            if (!$journal) throw new \Exception("Jurnal tidak ditemukan.");
+
+            if ($journal['status'] === 'VOID') {
+                throw new \Exception("Jurnal sudah di-void sebelumnya.");
             }
 
-            return redirect()->back()->with('success', "Berhasil! Jurnal <b>$journalNumber</b> telah direkam dan buku besar diperbarui.");
+            $this->db->table('journals')->where('id', $id)->update([
+                'status'      => 'VOID',
+                'void_reason' => 'Dibatalkan oleh user',
+                'voided_at'   => date('Y-m-d H:i:s'),
+                'voided_by'   => session()->get('name') ?? 'Sistem'
+            ]);
 
-        } catch (\Exception $e) {
-            if ($this->request->isAJAX()) {
-                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
-            }
+            return redirect()->back()->with('success', 'Jurnal berhasil di-void.');
+        } catch (\Throwable $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+    // =========================================================
+    // 5. CHART OF ACCOUNTS
+    // =========================================================
+    public function coa()
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        $accounts = $this->db->query("
+            SELECT coa.*, vab.calculated_balance
+            FROM chart_of_accounts coa
+            LEFT JOIN v_account_balances vab ON vab.id = coa.id
+            ORDER BY coa.account_code ASC
+        ")->getResultArray();
+
+        return view('accounting/coa', [
+            'title'    => 'Chart of Accounts',
+            'accounts' => $accounts
+        ]);
+    }
+
+    // =========================================================
+    // 6. STORE ACCOUNT
+    // =========================================================
+    public function store_account()
+    {
+        try {
+            $this->db->table('chart_of_accounts')->insert([
+                'account_code'   => trim($this->request->getPost('account_code')),
+                'account_name'   => trim($this->request->getPost('account_name')),
+                'account_type'   => $this->request->getPost('account_type'),
+                'parent_id'      => $this->request->getPost('parent_id') ?: null,
+                'normal_balance' => $this->request->getPost('normal_balance'),
+                'is_contra'      => $this->request->getPost('is_contra') ? 1 : 0,
+                'is_active'      => 1,
+                'notes'          => trim($this->request->getPost('notes'))
+            ]);
+
+            return redirect()->back()->with('success', 'Akun berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    // =========================================================
+    // 7. BUKU BESAR
+    // =========================================================
+    public function ledger()
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        $accountId = $this->request->getGet('account_id');
+        $startDate = $this->request->getGet('start_date') ?? date('Y-m-01');
+        $endDate   = $this->request->getGet('end_date') ?? date('Y-m-d');
+
+        $accounts = $this->db->table('chart_of_accounts')
+            ->where('is_active', 1)
+            ->orderBy('account_code', 'ASC')
+            ->get()->getResultArray();
+
+        $ledger = [];
+        $selectedAccount = null;
+
+        if ($accountId) {
+            $selectedAccount = $this->db->table('chart_of_accounts')->where('id', $accountId)->get()->getRowArray();
+
+            $ledger = $this->db->query("
+                SELECT 
+                    j.transaction_date,
+                    j.journal_number,
+                    j.description as journal_description,
+                    ji.line_description,
+                    ji.debit,
+                    ji.credit
+                FROM journal_items ji
+                JOIN journals j ON j.id = ji.journal_id
+                WHERE ji.account_id = ?
+                AND j.status = 'POSTED'
+                AND j.transaction_date BETWEEN ? AND ?
+                ORDER BY j.transaction_date ASC, ji.id ASC
+            ", [$accountId, $startDate, $endDate])->getResultArray();
+        }
+
+        return view('accounting/ledger', [
+            'title'           => 'Buku Besar',
+            'accounts'        => $accounts,
+            'ledger'          => $ledger,
+            'selectedAccount' => $selectedAccount,
+            'accountId'       => $accountId,
+            'startDate'       => $startDate,
+            'endDate'         => $endDate
+        ]);
+    }
+
+    // =========================================================
+    // 8. PRINT REPORT
+    // =========================================================
+    public function print_report()
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        $summary = $this->db->query("
+            SELECT account_type, SUM(calculated_balance) as total_balance
+            FROM v_account_balances
+            WHERE is_active = 1
+            GROUP BY account_type
+        ")->getResultArray();
+
+        $pendapatan = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_type = 'PENDAPATAN'
+        ")->getRowArray()['total'] ?? 0;
+
+        $hpp = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_code = '5-1000'
+        ")->getRowArray()['total'] ?? 0;
+
+        $beban_ops = $this->db->query("
+            SELECT SUM(calculated_balance) as total
+            FROM v_account_balances
+            WHERE account_type = 'PERBELANJAAN'
+            AND account_code != '5-1000'
+        ")->getRowArray()['total'] ?? 0;
+
+        $company = [
+            'company_name' => 'Noric Exhaust',
+            'address'      => 'Pusat Manufaktur Knalpot',
+            'phone'        => '-'
+        ];
+
+        return view('accounting/print_report', [
+            'title'      => 'Laporan Keuangan',
+            'summary'    => $summary,
+            'pendapatan' => $pendapatan,
+            'hpp'        => $hpp,
+            'beban_ops'  => $beban_ops,
+            'company'    => $company
+        ]);
     }
 }

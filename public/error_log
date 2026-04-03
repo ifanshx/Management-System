@@ -1,0 +1,25 @@
+[31-Mar-2026 02:38:32 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:38:32 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:38:32 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/uwjqdfka/test.noric-management.my.id/index.php:51
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/uwjqdfka/test.noric-management.my.id/index.php:51
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/uwjqdfka/test.noric-management.my.id/index.php:51
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:27 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:27 UTC] PHP Warning:  require(/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php): Failed to open stream: No such file or directory in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[31-Mar-2026 02:39:27 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/uwjqdfka/test.noric-management.my.id/../app/Config/Paths.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/uwjqdfka/test.noric-management.my.id/index.php:51
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
+[01-Apr-2026 14:27:12 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Procurement::receive_goods() in /home/uwjqdfka/test/app/Controllers/Procurement.php on line 353

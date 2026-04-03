@@ -1,94 +1,174 @@
 <?= $this->extend('layout/template') ?>
 <?= $this->section('content') ?>
 
-<style>
-    /* --- HEADER & LAYOUT --- */
-    .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;}
-    .page-title h1 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; letter-spacing: -0.5px; }
-    .page-title p { font-size: 13px; color: var(--text-muted); }
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; }
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const bgColor = isDark ? '#18181b' : '#ffffff';
+    const textColor = isDark ? '#f4f4f5' : '#09090b';
+
+    <?php if(session()->getFlashdata('success')): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            html: '<?= session()->getFlashdata('success') ?>',
+            confirmButtonColor: '#10b981',
+            background: bgColor,
+            color: textColor,
+            customClass: { popup: 'swal2-custom-radius' }
+        });
+    <?php endif; ?>
+
+    <?php if(session()->getFlashdata('error')): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            html: '<?= session()->getFlashdata('error') ?>',
+            confirmButtonColor: '#ef4444',
+            background: bgColor,
+            color: textColor,
+            customClass: { popup: 'swal2-custom-radius' }
+        });
+    <?php endif; ?>
+
+    togglePayrollFields();
+    toggleBankFields();
+
+    document.getElementById('statusSelect').addEventListener('change', togglePayrollFields);
+    document.getElementById('paymentMethodSelect').addEventListener('change', toggleBankFields);
+});
+
+function togglePayrollFields() {
+    const status = document.getElementById('statusSelect').value;
+    const salaryFields = document.querySelectorAll('.salary-fixed-only');
+
+    salaryFields.forEach(el => {
+        if (status === 'Borongan') {
+            el.style.display = 'none';
+            el.querySelectorAll('input').forEach(inp => inp.value = '0');
+        } else {
+            el.style.display = '';
+        }
+    });
+}
+
+function toggleBankFields() {
+    const payment = document.getElementById('paymentMethodSelect').value;
+    const bankFields = document.getElementById('bankFields');
+
+    if (payment === 'Transfer') {
+        bankFields.style.display = '';
+    } else {
+        bankFields.style.display = 'none';
+        document.querySelector('input[name="bank_name"]').value = '';
+        document.querySelector('input[name="bank_account"]').value = '';
+    }
+}
+
+
+    function formatRupiah(angka) {
+        if (!angka) return;
+        let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
+            split   = number_string.split(','),
+            sisa    = split[0].length % 3,
+            rupiah  = split[0].substr(0, sisa),
+            ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
+            
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+        
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        angka.value = rupiah;
+    }
+
+</script>
+
+<style>
+    .swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 18px; margin-bottom: 28px; }
+    .page-title-wrap { display: flex; align-items: center; gap: 16px; }
+    .page-icon { width: 56px; height: 56px; border-radius: 20px; background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(59,130,246,.05)); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 25px; border: 1px solid rgba(37,99,235,.15); box-shadow: 0 14px 35px -18px rgba(37,99,235,.45); }
+    .page-title h1 { font-size: 28px; font-weight: 900; margin: 0 0 5px 0; color: var(--text-main); letter-spacing: -0.7px; }
+    .page-title p { margin: 0; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    
+    .btn-back { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 16px; border-radius: 12px; font-weight: 800; text-decoration: none; font-size: 12px; transition: .25s ease; }
+    .btn-back:hover { transform: translateY(-2px); }
+
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
     @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
 
-    /* --- BENTO CARDS --- */
-    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 25px; box-shadow: var(--shadow-card); }
-    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-subtle); }
-    .icon-wrapper { width: 36px; height: 36px; border-radius: 10px; background: var(--accent-light); color: var(--accent-main); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .card-header h3 { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; }
+    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 22px; padding: 22px; box-shadow: 0 18px 40px -30px rgba(0,0,0,.22); }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px dashed var(--border-subtle); }
+    .icon-wrapper { width: 34px; height: 34px; border-radius: 12px; background: rgba(37,99,235,.08); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .card-header h3 { font-size: 14px; font-weight: 900; color: var(--text-main); margin: 0; }
 
-    /* --- FORM ELEMENTS --- */
-    .form-group { margin-bottom: 18px; }
-    .form-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; transition: all 0.2s ease; }
-    .input-wrapper:focus-within { border-color: var(--accent-main); box-shadow: 0 0 0 3px var(--accent-light); }
-    .input-wrapper input, .input-wrapper select, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 14px 16px; font-size: 13px; font-weight: 600; outline: none; font-family: inherit; width: 100%;}
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 10px; font-weight: 900; color: var(--text-muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .6px; }
+    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: .25s ease; }
+    .input-wrapper:focus-within { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+    .input-wrapper input, .input-wrapper select, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 12px 14px; font-size: 12px; font-weight: 700; outline: none; font-family: inherit; width: 100%; }
     .input-wrapper textarea { resize: vertical; min-height: 80px; }
-    
-    .prefix { background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 13px; font-weight: 800; padding: 0 16px; display: flex; align-items: center; border-right: 1px solid var(--border-subtle); }
-    html.dark .prefix { background: rgba(255,255,255,0.02); }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px !important; background-size: 10px; }
 
-    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px !important; }
-
-    /* --- CUSTOM TOGGLE CARD (BPJS) --- */
-    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
     .checkbox-label { position: relative; cursor: pointer; display: block; }
     .checkbox-label input { position: absolute; opacity: 0; }
-    .checkbox-box { display: flex; align-items: center; gap: 8px; padding: 14px 16px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--text-muted); transition: 0.2s; }
-    .checkbox-label input:checked + .checkbox-box { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);}
+    .checkbox-box { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; font-size: 11px; font-weight: 800; color: var(--text-muted); transition: .25s ease; }
+    .checkbox-label input:checked + .checkbox-box { background: rgba(16,185,129,.1); border-color: #10b981; color: #10b981; box-shadow: 0 10px 20px -16px rgba(16,185,129,.5); }
 
-    .btn-submit { background: var(--accent-main); color: #fff; padding: 14px 30px; border: none; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px var(--accent-light); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;}
-    .btn-submit:hover { transform: translateY(-3px); filter: brightness(1.1); }
+    .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; padding: 13px 20px; border: none; border-radius: 14px; font-weight: 900; font-size: 13px; cursor: pointer; transition: .25s ease; box-shadow: 0 12px 24px -16px rgba(37,99,235,.65); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; }
+    .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.05); }
 </style>
 
 <div class="page-header">
-    <div class="page-title">
-        <h1>Tambah Karyawan Baru</h1>
-        <p>Daftarkan profil lengkap, atur penugasan, dan tentukan parameter penggajian.</p>
+    <div class="page-title-wrap">
+        <div class="page-icon"><i class="ph-fill ph-user-plus"></i></div>
+        <div class="page-title">
+            <h1>Tambah Karyawan Baru</h1>
+            <p>Input profil employee, payroll, akun login, dan integrasi mesin absensi.</p>
+        </div>
     </div>
-    <a href="<?= base_url('/employee') ?>" style="background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 20px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 13px; transition: 0.2s;">
-        &larr; Batal & Kembali
-    </a>
+    <a href="<?= base_url('/employee') ?>" class="btn-back">&larr; Kembali</a>
 </div>
 
 <form action="<?= base_url('/employee/store') ?>" method="post">
     <?= csrf_field() ?>
-    
     <div class="main-grid">
-        
+
         <div class="bento-card">
             <div class="card-header">
-                <div class="icon-wrapper"><i class="ph ph-user-plus"></i></div>
-                <h3>Profil Dasar & Penugasan</h3>
+                <div class="icon-wrapper"><i class="ph-bold ph-user-plus"></i></div>
+                <h3>Profil Karyawan</h3>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Nomor Induk Karyawan (NIK) <span style="color:var(--accent-main); text-transform:none; font-weight:600;">(Otomatis)</span></label>
+                <label class="form-label">Nomor Induk (NIK)</label>
                 <div class="input-wrapper" style="background: rgba(0,0,0,0.02); border-color: transparent;">
-                    <input type="text" name="employee_id" value="<?= esc($autoNIK) ?>" readonly style="cursor: not-allowed; color: var(--text-muted); font-family: monospace; font-size: 14px; font-weight: 800;">
+                    <input type="text" name="employee_id" value="<?= esc($autoNIK) ?>" readonly style="cursor:not-allowed; color:var(--text-muted); font-family:'Space Mono', monospace; font-size:13px; font-weight:900;">
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Nama Lengkap</label>
-                <div class="input-wrapper">
-                    <input type="text" name="name" placeholder="Nama sesuai KTP" required autocomplete="off">
-                </div>
+                <div class="input-wrapper"><input type="text" name="name" required value="<?= old('name') ?>"></div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Nomor HP</label>
-                    <div class="input-wrapper">
-                        <input type="tel" name="phone" placeholder="08..." autocomplete="off">
-                    </div>
+                    <div class="input-wrapper"><input type="tel" name="phone" value="<?= old('phone') ?>"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Status Pernikahan</label>
                     <div class="input-wrapper">
                         <select name="marital_status">
-                            <option value="Lajang">Lajang</option>
-                            <option value="Menikah">Menikah</option>
+                            <option value="Lajang" <?= old('marital_status') == 'Lajang' ? 'selected' : '' ?>>Lajang</option>
+                            <option value="Menikah" <?= old('marital_status') == 'Menikah' ? 'selected' : '' ?>>Menikah</option>
+                            <option value="TK/0" <?= old('marital_status') == 'TK/0' ? 'selected' : '' ?>>TK/0</option>
                         </select>
                     </div>
                 </div>
@@ -96,50 +176,35 @@
 
             <div class="form-group">
                 <label class="form-label">Alamat Domisili</label>
-                <div class="input-wrapper">
-                    <textarea name="address" placeholder="Alamat lengkap..."></textarea>
-                </div>
+                <div class="input-wrapper"><textarea name="address"><?= old('address') ?></textarea></div>
             </div>
 
-            <hr style="border: 0; border-top: 1px dashed var(--border-subtle); margin: 20px 0;">
+            <hr style="border:0; border-top:1px dashed var(--border-subtle); margin:18px 0;">
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Departemen</label>
-                    <div class="input-wrapper">
-                        <select name="department" required>
-                            <option value="" disabled selected>-- Pilih Dept --</option>
-                            <option value="Manajemen & HRD">Manajemen & HRD</option>
-                            <option value="Produksi & Manufaktur">Produksi & Manufaktur</option>
-                            <option value="Quality Control & R&D">Quality Control & R&D</option>
-                            <option value="Gudang & Logistik">Gudang & Logistik</option>
-                            <option value="Sales & Marketing">Sales & Marketing</option>
-                        </select>
-                    </div>
+                    <div class="input-wrapper"><input type="text" name="department" required value="<?= old('department') ?>"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Jabatan</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="position" placeholder="Contoh: Staff" required autocomplete="off">
-                    </div>
+                    <div class="input-wrapper"><input type="text" name="position" required value="<?= old('position') ?>"></div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Tanggal Bergabung</label>
-                    <div class="input-wrapper">
-                        <input type="date" name="join_date" value="<?= date('Y-m-d') ?>" required>
-                    </div>
+                    <div class="input-wrapper"><input type="date" name="join_date" value="<?= old('join_date') ?: date('Y-m-d') ?>" required></div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Shift Kerja (Wajib)</label>
-                    <div class="input-wrapper" style="border-color: var(--accent-main); box-shadow: 0 0 0 2px var(--accent-light);">
+                    <label class="form-label">Shift Kerja</label>
+                    <div class="input-wrapper">
                         <select name="shift_id" required>
-                            <option value="" disabled selected>-- Pilih Jadwal Shift --</option>
+                            <option value="" disabled <?= !old('shift_id') ? 'selected' : '' ?>>-- Pilih Shift --</option>
                             <?php foreach($shifts as $shift): ?>
-                                <option value="<?= $shift['id'] ?>">
-                                    <?= esc($shift['shift_name']) ?> (<?= date('H:i', strtotime($shift['time_in'])) ?> - <?= date('H:i', strtotime($shift['time_out'])) ?>)
+                                <option value="<?= $shift['id'] ?>" <?= old('shift_id') == $shift['id'] ? 'selected' : '' ?>>
+                                    <?= esc($shift['shift_name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -147,139 +212,150 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label class="form-label">Akses Mesin (IoT)</label>
-                    <div class="input-wrapper">
-                        <select name="machine_privilege">
-                            <option value="0">0 - User Biasa</option>
-                            <option value="14">14 - Super Admin</option>
-                        </select>
-                    </div>
-                </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Status Pekerja</label>
                     <div class="input-wrapper">
-                        <select name="status">
-                            <option value="Tetap">Karyawan Tetap</option>
-                            <option value="Kontrak">Kontrak</option>
-                            <option value="Magang">Magang / Internship</option>
+                        <select name="status" required id="statusSelect">
+                            <option value="Tetap" <?= old('status', 'Tetap') == 'Tetap' ? 'selected' : '' ?>>Tetap</option>
+                            <option value="Borongan" <?= old('status') == 'Borongan' ? 'selected' : '' ?>>Borongan</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Metode Pembayaran</label>
+                    <div class="input-wrapper">
+                        <select name="payment_method" required id="paymentMethodSelect">
+                            <option value="Cash" <?= old('payment_method', 'Cash') == 'Cash' ? 'selected' : '' ?>>Cash</option>
+                            <option value="Transfer" <?= old('payment_method') == 'Transfer' ? 'selected' : '' ?>>Transfer</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <hr style="border: 0; border-top: 1px dashed var(--border-subtle); margin: 20px 0;">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label class="form-label">Username Portal</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="username" placeholder="Saran: Gunakan NIK" required autocomplete="off">
+            <div id="bankFields">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Nama Bank</label>
+                        <div class="input-wrapper"><input type="text" name="bank_name" value="<?= old('bank_name') ?>" placeholder="Contoh: BCA"></div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password Portal</label>
-                    <div class="input-wrapper">
-                        <input type="password" name="password" placeholder="Min. 6 karakter" required autocomplete="off">
+                    <div class="form-group">
+                        <label class="form-label">No Rekening</label>
+                        <div class="input-wrapper"><input type="text" name="bank_account" value="<?= old('bank_account') ?>" placeholder="Contoh: 1234567890"></div>
                     </div>
                 </div>
             </div>
-            
         </div>
 
         <div class="bento-card">
             <div class="card-header">
-                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph ph-wallet"></i></div>
-                <h3>Parameter Penggajian</h3>
+                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph-bold ph-wallet"></i></div>
+                <h3>Payroll, Login & Hak Akses</h3>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Tipe Pembayaran Gaji</label>
+                <label class="form-label">Tipe Gaji</label>
                 <div class="input-wrapper">
                     <select name="salary_type" required>
-                        <option value="Bulanan" selected>Bulanan (Akhir Bulan)</option>
-                        <option value="Mingguan">Mingguan (Per Sabtu)</option>
-                        <option value="Harian">Harian</option>
+                        <option value="Harian" <?= old('salary_type') == 'Harian' ? 'selected' : '' ?>>Harian</option>
+                        <option value="Mingguan" <?= old('salary_type', 'Mingguan') == 'Mingguan' ? 'selected' : '' ?>>Mingguan</option>
+                        <option value="Bulanan" <?= old('salary_type') == 'Bulanan' ? 'selected' : '' ?>>Bulanan</option>
                     </select>
                 </div>
             </div>
 
+           <div class="salary-fixed-only">
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--accent-main);">Gaji Pokok</label>
+                    <div class="input-wrapper" style="border-color: var(--accent-main); box-shadow: 0 0 0 2px var(--accent-light);">
+                        <div class="prefix" style="color: var(--accent-main); background: var(--accent-light);">Rp</div>
+                        <input type="text" name="basic_salary" onkeyup="formatRupiah(this)" autocomplete="off" style="font-size: 14px; font-weight: 900; color: var(--accent-main); font-family: 'Space Mono', monospace;" value="<?= old('basic_salary') ?>">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Tunjangan Jabatan</label>
+                        <div class="input-wrapper">
+                            <div class="prefix">Rp</div>
+                            <input type="text" name="position_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('position_allowance') ?>">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Uang Makan</label>
+                        <div class="input-wrapper">
+                            <div class="prefix">Rp</div>
+                            <input type="text" name="meal_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('meal_allowance') ?>">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Uang Transport</label>
+                        <div class="input-wrapper">
+                            <div class="prefix">Rp</div>
+                            <input type="text" name="transport_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('transport_allowance') ?>">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tarif Lembur</label>
+                        <div class="input-wrapper">
+                            <div class="prefix">Rp</div>
+                            <input type="text" name="overtime_rate" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('overtime_rate') ?>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border:0; border-top:1px dashed var(--border-subtle); margin:18px 0;">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Username Login</label>
+                    <div class="input-wrapper"><input type="text" name="username" required value="<?= old('username') ?>"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password Login</label>
+                    <div class="input-wrapper"><input type="text" name="password" required value="<?= old('password') ?>"></div>
+                </div>
+            </div>
+
             <div class="form-group">
-                <label class="form-label" style="color: var(--accent-main);">Gaji Pokok Utama</label>
-                <div class="input-wrapper" style="border-color: var(--accent-main); box-shadow: 0 2px 8px var(--accent-light);">
-                    <div class="prefix" style="color: var(--accent-main); background: var(--accent-light);">Rp</div>
-                    <input type="text" name="basic_salary" placeholder="0" onkeyup="formatRupiah(this)" style="font-size: 16px; font-weight: 800; color: var(--accent-main);" required autocomplete="off">
+                <label class="form-label">Role Aplikasi</label>
+                <div class="input-wrapper">
+                    <select name="role" required>
+                        <option value="karyawan" <?= old('role', 'karyawan') == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
+                        <option value="admin" <?= old('role') == 'admin' ? 'selected' : '' ?>>Admin</option>
+                    </select>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label class="form-label">Tunjangan Jabatan</label>
-                    <div class="input-wrapper">
-                        <div class="prefix">Rp</div>
-                        <input type="text" name="position_allowance" placeholder="0" onkeyup="formatRupiah(this)" autocomplete="off">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Uang Makan /Hari</label>
-                    <div class="input-wrapper">
-                        <div class="prefix">Rp</div>
-                        <input type="text" name="meal_allowance" placeholder="0" onkeyup="formatRupiah(this)" autocomplete="off">
-                    </div>
+            <hr style="border:0; border-top:1px dashed var(--border-subtle); margin:18px 0;">
+
+            <div class="form-group">
+                <label class="form-label">Privilege Mesin Absensi (IoT)</label>
+                <div class="input-wrapper">
+                    <select name="machine_privilege">
+                        <option value="0" <?= old('machine_privilege', '0') == '0' ? 'selected' : '' ?>>User Biasa</option>
+                        <option value="14" <?= old('machine_privilege') == '14' ? 'selected' : '' ?>>Admin Mesin</option>
+                    </select>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label class="form-label">Tunj. Transport</label>
-                    <div class="input-wrapper">
-                        <div class="prefix">Rp</div>
-                        <input type="text" name="transport_allowance" placeholder="0" onkeyup="formatRupiah(this)" autocomplete="off">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tarif Lembur /Jam</label>
-                    <div class="input-wrapper">
-                        <div class="prefix">Rp</div>
-                        <input type="text" name="overtime_rate" placeholder="0" onkeyup="formatRupiah(this)" autocomplete="off">
-                    </div>
-                </div>
-            </div>
-
-            <hr style="border: 0; border-top: 1px dashed var(--border-subtle); margin: 20px 0;">
-
-            <div class="form-label">Potongan Wajib (Asuransi)</div>
             <div class="checkbox-grid">
                 <label class="checkbox-label">
-                    <input type="hidden" name="bpjs_kesehatan" value="0">
-                    <input type="checkbox" name="bpjs_kesehatan" value="1">
-                    <div class="checkbox-box"><i class="ph ph-heartbeat" style="font-size: 18px;"></i> BPJS Kesehatan</div>
+                    <input type="checkbox" name="bpjs_kesehatan" value="1" <?= old('bpjs_kesehatan') ? 'checked' : '' ?>>
+                    <div class="checkbox-box"><i class="ph-bold ph-heartbeat"></i> BPJS Kesehatan</div>
                 </label>
                 <label class="checkbox-label">
-                    <input type="hidden" name="bpjs_ketenagakerjaan" value="0">
-                    <input type="checkbox" name="bpjs_ketenagakerjaan" value="1">
-                    <div class="checkbox-box"><i class="ph ph-hard-hat" style="font-size: 18px;"></i> BPJS TK (Kerja)</div>
+                    <input type="checkbox" name="bpjs_ketenagakerjaan" value="1" <?= old('bpjs_ketenagakerjaan') ? 'checked' : '' ?>>
+                    <div class="checkbox-box"><i class="ph-bold ph-hard-hat"></i> BPJS Ketenagakerjaan</div>
                 </label>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Nama Bank</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="bank_name" placeholder="BCA / BRI" autocomplete="off">
-                    </div>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Nomor Rekening</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="bank_account" placeholder="123456789" style="font-family: monospace;" autocomplete="off">
-                    </div>
-                </div>
             </div>
 
             <button type="submit" class="btn-submit">
-                <i class="ph ph-check-circle"></i> Daftarkan Karyawan
+                <i class="ph-bold ph-floppy-disk"></i> Simpan Karyawan
             </button>
         </div>
     </div>

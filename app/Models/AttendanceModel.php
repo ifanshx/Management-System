@@ -7,10 +7,14 @@ class AttendanceModel extends Model
 {
     protected $table            = 'attendances';
     protected $primaryKey       = 'id';
+    
+    // HAPUS 'cash_advance' dan PASTIKAN 'is_meal_taken' ada di sini
     protected $allowedFields = [
-        'employee_id', 'date', 'time_in', 'time_out', 'status', 'late_minutes',
-        'break_out', 'break_in', 'overtime_minutes', 'work_duration_minutes' // <-- TAMBAHKAN INI
+        'employee_id', 'date', 'time_in', 'time_out', 'status', 
+        'late_minutes', 'break_out', 'break_in', 'overtime_minutes', 
+        'work_duration_minutes', 'is_meal_taken', 'photo_url', 'verify_method' // <--- TAMBAHKAN INI
     ];
+    
     protected $useTimestamps    = true;
 
     // Fungsi khusus untuk mengambil rekap absen harian beserta nama dan divisinya

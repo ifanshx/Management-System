@@ -14,6 +14,7 @@ class Dashboard extends BaseController
         
         $currentMonth = date('m');
         $currentYear  = date('Y');
+        $today        = date('Y-m-d');
 
         // ==========================================
         // 1. DATA HRD & PAYROLL
@@ -27,35 +28,58 @@ class Dashboard extends BaseController
         $totalPayrollCost = array_sum(array_column($payrolls, 'total_amount'));
 
         // ==========================================
-        // 2. DATA KEUANGAN (AKUNTANSI & ASET FISIK)
+        // 2. DATA KEUANGAN (AKUNTANSI)
         // ==========================================
         $coa = $db->table('chart_of_accounts')->get()->getResultArray();
-        $revenue = 0; $expense = 0; $assets = 0;
+        $revenue = 0; $expense = 0; $liquidAssets = 0;
 
         foreach($coa as $acc) {
-            if($acc['account_type'] === 'PENDAPATAN') $revenue += $acc['balance'];
-            if($acc['account_type'] === 'PERBELANJAAN') $expense += $acc['balance'];
-            if($acc['account_type'] === 'ASET') $assets += $acc['balance'];
+            // Amankan nilai saldo. (Coba tangkap dari kolom 'balance' atau 'saldo' jika ada)
+            $bal = isset($acc['balance']) ? (float)$acc['balance'] : (isset($acc['saldo']) ? (float)$acc['saldo'] : 0);
+
+            if($acc['account_type'] === 'PENDAPATAN') $revenue += $bal;
+            if($acc['account_type'] === 'PERBELANJAAN') $expense += $bal;
+            
+            // Hanya hitung Kas/Bank/Piutang dari CoA sebagai Aset Likuid
+            if($acc['account_type'] === 'ASET' && !in_array($acc['account_code'], ['1-3000', '1-5000', '1-5001'])) {
+                $liquidAssets += $bal;
+            }
         }
         $netProfit = $revenue - $expense;
 
-        // PERBAIKAN: Hitung Aset Gudang Fisik Real-time (Produk Jadi PRD + Material MAT)
+        // ==========================================
+        // 3. VALUASI GUDANG (INVENTORY)
+        // ==========================================
         $valPRD = $db->query("SELECT SUM(physical_stock * hpp) as total FROM warehouse_inventory")->getRow()->total ?? 0;
         $valMAT = $db->query("SELECT SUM(physical_stock * hpp) as total FROM raw_materials")->getRow()->total ?? 0;
         $inventoryValue = $valPRD + $valMAT;
 
         // ==========================================
-        // 3. DATA PRODUKSI & GUDANG
+        // 4. VALUASI ASET TETAP (MESIN, GEDUNG)
+        // ==========================================
+        // Amankan Perhitungan Aset Tetap
+        $totalPurchasePrice = $db->query("SELECT SUM(purchase_price) as total FROM factory_assets WHERE status = 'ACTIVE'")->getRow()->total ?? 0;
+        
+        // Ambil baris Akumulasi Penyusutan dengan aman, tidak peduli apakah ada kolom 'balance' atau tidak
+        $accDepRow = $db->table('chart_of_accounts')->where('account_code', '1-5001')->get()->getRowArray();
+        $accumulatedDepreciation = 0;
+        if ($accDepRow) {
+            $accumulatedDepreciation = isset($accDepRow['balance']) ? (float)$accDepRow['balance'] : (isset($accDepRow['saldo']) ? (float)$accDepRow['saldo'] : 0);
+        }
+
+        $fixedAssetValue = $totalPurchasePrice - $accumulatedDepreciation;
+        $totalWealth = $liquidAssets + $inventoryValue + $fixedAssetValue;
+
+        // ==========================================
+        // 5. DATA PRODUKSI & GUDANG FISIK
         // ==========================================
         $activeSpk = $db->table('work_orders')->where('status', 'IN_PROGRESS')->countAllResults();
-        
-        // PERBAIKAN: Cek item gudang (PRD dan MAT) yang stoknya menipis berdasarkan kolom 'min_stock' (Bukan hardcode angka 10)
         $lowStockPrd = $db->table('warehouse_inventory')->where('physical_stock <= min_stock')->countAllResults();
         $lowStockMat = $db->table('raw_materials')->where('physical_stock <= min_stock')->countAllResults();
         $lowStockItems = $lowStockPrd + $lowStockMat;
 
         // ==========================================
-        // 4. DATA PENJUALAN B2B & E-COMMERCE
+        // 6. DATA PENJUALAN B2B & E-COMMERCE
         // ==========================================
         $b2bOrders = $db->table('b2b_sales_orders')
                         ->where('MONTH(order_date)', $currentMonth)
@@ -67,12 +91,58 @@ class Dashboard extends BaseController
         $activeShops = $db->table('shopee_integrations')->where('status', 'Active')->countAllResults();
 
         // ==========================================
-        // 5. DATA GRAFIK (Simulasi 6 Bulan Terakhir untuk UI)
+        // 7. DATA GRAFIK (Tren Arus Kas 6 Bulan Real-Time)
         // ==========================================
+        $labelsArr     = [];
+        $pendapatanArr = [];
+        $bebanArr      = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $targetMonth = date('m', mktime(0, 0, 0, $currentMonth - $i, 1, $currentYear));
+            $targetYear  = date('Y', mktime(0, 0, 0, $currentMonth - $i, 1, $currentYear));
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+            $labelsArr[] = $monthNames[(int)$targetMonth - 1];
+
+            $revQ = $db->table('journal_items')
+                       ->selectSum('journal_items.credit', 'kredit')
+                       ->selectSum('journal_items.debit', 'debit')
+                       ->join('journals', 'journals.id = journal_items.journal_id')
+                       ->join('chart_of_accounts', 'chart_of_accounts.id = journal_items.account_id')
+                       ->where('chart_of_accounts.account_type', 'PENDAPATAN')
+                       ->where('MONTH(journals.transaction_date)', $targetMonth)
+                       ->where('YEAR(journals.transaction_date)', $targetYear)
+                       ->get()->getRowArray();
+            $totRev = ($revQ['kredit'] ?? 0) - ($revQ['debit'] ?? 0);
+            $pendapatanArr[] = round($totRev / 1000000, 2);
+
+            $expQ = $db->table('journal_items')
+                       ->selectSum('journal_items.debit', 'debit')
+                       ->selectSum('journal_items.credit', 'kredit')
+                       ->join('journals', 'journals.id = journal_items.journal_id')
+                       ->join('chart_of_accounts', 'chart_of_accounts.id = journal_items.account_id')
+                       ->where('chart_of_accounts.account_type', 'PERBELANJAAN')
+                       ->where('MONTH(journals.transaction_date)', $targetMonth)
+                       ->where('YEAR(journals.transaction_date)', $targetYear)
+                       ->get()->getRowArray();
+            $totExp = ($expQ['debit'] ?? 0) - ($expQ['kredit'] ?? 0);
+            $bebanArr[] = round($totExp / 1000000, 2);
+        }
+
+        // ==========================================
+        // 8. DATA ABSENSI KARYAWAN HARI INI
+        // ==========================================
+        $recentAttendance = $db->table('attendances') 
+                       ->select('attendances.*, employees.name, employees.position') 
+                       ->join('employees', 'employees.employee_id = attendances.employee_id', 'left') 
+                       ->where('date', $today)
+                       ->orderBy('time_in', 'DESC')
+                       ->limit(8)
+                       ->get()->getResultArray();
+
         $chartData = [
-            'labels' => ['Okt', 'Nov', 'Des', 'Jan', 'Feb', 'Mar'],
-            'pendapatan' => [120, 135, 125, 140, 150, ($revenue/1000000)], // Dalam Juta
-            'beban' => [100, 115, 140, 130, 110, ($expense/1000000)] // Dalam Juta
+            'labels'     => $labelsArr,
+            'pendapatan' => $pendapatanArr, 
+            'beban'      => $bebanArr  
         ];
 
         $data = [
@@ -80,11 +150,14 @@ class Dashboard extends BaseController
             'currentMonthName' => date('F Y'),
             'totalEmployees'   => $totalEmployees,
             'totalPayrollCost' => $totalPayrollCost,
+            'recentAttendance' => $recentAttendance, // Data absensi dikirim ke Views
             'finance'          => [
                 'revenue'         => $revenue, 
                 'profit'          => $netProfit, 
-                'assets'          => $assets,
-                'inventory_value' => $inventoryValue // Tambahan aset fisik real-time
+                'liquid_assets'   => $liquidAssets,    
+                'fixed_assets'    => $fixedAssetValue, 
+                'inventory_value' => $inventoryValue,  
+                'total_wealth'    => $totalWealth      
             ],
             'production'       => [
                 'active_spk' => $activeSpk, 

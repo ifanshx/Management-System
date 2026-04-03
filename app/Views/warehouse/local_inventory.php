@@ -1,24 +1,48 @@
 <?= $this->extend('layout/template') ?>
 <?= $this->section('content') ?>
 
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <style>
     /* =========================================================
-       PAGE HEADER
+       1. GLOBAL & ANIMATIONS
        ========================================================= */
-    .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;}
-    .page-title h1 { font-size: 26px; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;}
-    .page-title p { font-size: 13px; color: var(--text-muted); margin: 0; font-weight: 500;}
-    
-    /* =========================================================
-       PREMIUM TAB NAVIGATION
-       ========================================================= */
-    .tab-nav { display: inline-flex; background: var(--bg-surface); padding: 8px; border-radius: 16px; border: 1px solid var(--border-subtle); margin-bottom: 25px; box-shadow: var(--shadow-sm);}
-    .tab-btn { padding: 12px 24px; font-size: 14px; font-weight: 800; border-radius: 12px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px;}
-    .tab-btn:hover { color: var(--text-main); }
-    .tab-btn.active { background: var(--text-main); color: var(--bg-surface); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-    html.dark .tab-btn.active { background: var(--accent-main); color: #fff;}
+    :root {
+        --brand: #3b82f6; --brand-dark: #2563eb; --brand-soft: rgba(59, 130, 246, 0.1);
+        --success: #10b981; --success-soft: rgba(16, 185, 129, 0.1);
+        --warning: #f59e0b; --warning-soft: rgba(245, 158, 11, 0.1);
+        --danger: #ef4444; --danger-soft: rgba(239, 68, 68, 0.1);
+        
+        --bg-main: #f8fafc; --card-bg: #ffffff; --border-color: #e2e8f0;
+        --text-main: #0f172a; --text-muted: #64748b;
+        
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 15px -5px rgba(0,0,0,0.05);
+        --shadow-hover: 0 15px 35px -10px rgba(0,0,0,0.08);
+        --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-    .tab-content { display: none; animation: slideFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .swal2-container { z-index: 10000 !important; }
+    .swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .ambient-glow { position: absolute; top: -150px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%); z-index: 0; pointer-events: none;}
+    html.dark .ambient-glow { background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%); }
+
+    .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px; position: relative; z-index: 1;}
+    .page-title { display: flex; align-items: center; gap: 16px; }
+    .title-icon { width: 56px; height: 56px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4); }
+    .title-text h1 { font-size: 30px; font-weight: 900; color: var(--text-main); margin: 0; letter-spacing: -1px; line-height: 1.1;}
+    .title-text p { font-size: 13px; color: var(--text-muted); font-weight: 600; margin: 4px 0 0 0; letter-spacing: -0.2px;}
+    
+    .tab-nav { display: inline-flex; background: var(--card-bg); padding: 8px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 25px; box-shadow: var(--shadow-sm); position: relative; z-index: 1;}
+    .tab-btn { padding: 12px 24px; font-size: 14px; font-weight: 800; border-radius: 12px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;}
+    .tab-btn:hover { color: var(--text-main); }
+    .tab-btn.active { background: var(--text-main); color: var(--card-bg); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+    html.dark .tab-btn.active { background: var(--brand); color: #fff;}
+
+    .tab-content { display: none; animation: slideFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1;}
     .tab-content.active { display: block; }
     @keyframes slideFadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -31,27 +55,28 @@
     .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 900; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px -6px rgba(245, 158, 11, 0.5); transition: 0.3s;}
     .btn-warning:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -6px rgba(245, 158, 11, 0.6);}
 
-    .asset-summary { font-size: 13px; color: var(--text-muted); font-weight: 800; background: var(--bg-surface); padding: 14px 24px; border-radius: 16px; border: 1px solid var(--border-subtle); display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 900; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 8px 20px -6px rgba(239, 68, 68, 0.5); transition: 0.3s;}
+    .btn-danger:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -6px rgba(239, 68, 68, 0.6);}
+
+    .asset-summary { font-size: 13px; color: var(--text-muted); font-weight: 800; background: var(--card-bg); padding: 14px 24px; border-radius: 16px; border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);}
     .asset-val { color: var(--text-main); font-size: 18px; font-weight: 900; font-family: 'Space Mono', monospace; letter-spacing: -0.5px;}
 
     /* =========================================================
-       TABLE DESIGN (STRICT BORDERS & COMPACT)
+       TABLE DESIGN
        ========================================================= */
-    .table-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: var(--shadow-card); overflow: hidden; margin-top: 20px;}
+    .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: var(--shadow-md); overflow: hidden; margin-top: 20px; transition: var(--transition-smooth);}
+    .table-card:hover { box-shadow: var(--shadow-hover); }
     table { width: 100%; border-collapse: collapse; white-space: nowrap; }
     
-    th { text-align: center; padding: 16px 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); background: var(--bg-base); letter-spacing: 0.5px;}
-    td { text-align: center; padding: 16px 20px; border-bottom: 1px dashed var(--border-subtle); border-right: 1px solid var(--border-subtle); font-size: 13px; font-weight: 600; color: var(--text-main); vertical-align: middle; transition: 0.2s;}
+    th { text-align: center; padding: 16px 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--border-color); background: rgba(248, 250, 252, 0.5); letter-spacing: 0.5px;}
+    td { text-align: center; padding: 16px 20px; border-bottom: 1px dashed var(--border-color); font-size: 13px; font-weight: 600; color: var(--text-main); vertical-align: middle; transition: 0.2s;}
     
     th:first-child, td:first-child { text-align: left; }
-    th:nth-child(2), td:nth-child(2) { text-align: left; } /* Nama Produk Rata Kiri */
-    th:last-child, td:last-child { border-right: none; }
+    th:nth-child(2), td:nth-child(2) { text-align: left; } 
     tr:last-child td { border-bottom: none; }
-    
-    tr:hover td { background: rgba(59, 130, 246, 0.02); }
-    html.dark tr:hover td { background: rgba(255,255,255,0.02); }
+    tr:hover td { background: var(--brand-soft); }
 
-    /* BADGES (PRD & MAT) */
+    /* BADGES */
     .sku-badge { padding: 6px 12px; border-radius: 8px; font-family: 'Space Mono', monospace; font-weight: 900; font-size: 12px; display: inline-block; border: 1px dashed transparent; letter-spacing: -0.5px;}
     .sku-prd { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);}
     .sku-mat { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);}
@@ -60,299 +85,507 @@
     .stock-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); animation: pulseDanger 2s infinite;}
     @keyframes pulseDanger { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-    .btn-delete { color: #ef4444; background: rgba(239, 68, 68, 0.05); font-size: 18px; transition: 0.3s; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid transparent;}
+    /* ACTION BUTTONS IN TABLE */
+    .action-group { display: flex; justify-content: center; gap: 8px; }
+    .btn-edit { color: #3b82f6; background: rgba(59, 130, 246, 0.1); font-size: 18px; transition: 0.3s; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid transparent; text-decoration: none;}
+    .btn-edit:hover { color: #fff; background: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transform: translateY(-2px);}
+    
+    .btn-delete { color: #ef4444; background: rgba(239, 68, 68, 0.1); font-size: 18px; transition: 0.3s; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid transparent; text-decoration: none;}
     .btn-delete:hover { color: #fff; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transform: translateY(-2px);}
 
     /* Empty State */
     .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-    .empty-state i { font-size: 56px; color: var(--border-subtle); margin-bottom: 15px; display: block; }
+    .empty-state i { font-size: 56px; color: var(--border-color); margin-bottom: 15px; display: block; }
     .empty-state p { font-size: 14px; font-weight: 500; margin: 0;}
 
     /* =========================================================
-       MODAL PURE CSS (REDESIGNED)
+       MODAL PURE CSS 
        ========================================================= */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s;}
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(8px); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; padding: 20px; }
     .modal-overlay.active { display: flex; opacity: 1; }
     
-    .modal-box { background: var(--bg-surface); border-radius: 28px; width: 100%; max-width: 520px; padding: 40px; transform: scale(0.95) translateY(20px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);}
+    .modal-box { background: var(--card-bg); border-radius: 28px; width: 100%; max-width: 580px; padding: 40px; transform: scale(0.95) translateY(20px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); max-height: 95vh; overflow-y: auto;}
     .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
     
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
     .modal-title { font-size: 20px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 12px;}
     
-    .btn-close { background: var(--bg-base); border: 1px solid var(--border-subtle); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
-    .btn-close:hover { background: #ef4444; color: #fff; border-color: #ef4444; transform: rotate(90deg);}
+    .btn-close { background: var(--bg-main); border: 1px solid var(--border-color); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+    .btn-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); transform: rotate(90deg);}
     
-    /* Form Elements */
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; font-size: 11px; font-weight: 900; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
-    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 14px 18px; border-radius: 12px; font-size: 14px; color: var(--text-main); font-weight: 600; outline: none; transition: 0.3s;}
+    .form-control { width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 12px; font-size: 14px; color: var(--text-main); font-weight: 700; outline: none; transition: 0.3s;}
     
-    .focus-blue:focus { border-color: #3b82f6; background: var(--bg-surface); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);}
-    .focus-orange:focus { border-color: #f59e0b; background: var(--bg-surface); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);}
+    .focus-blue:focus { border-color: var(--brand); background: var(--card-bg); box-shadow: 0 0 0 4px var(--brand-soft);}
+    .focus-orange:focus { border-color: var(--warning); background: var(--card-bg); box-shadow: 0 0 0 4px var(--warning-soft);}
+    .focus-red:focus { border-color: var(--danger); background: var(--card-bg); box-shadow: 0 0 0 4px var(--danger-soft);}
     
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-    .input-money { display: flex; align-items: center; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; transition: 0.3s;}
-    .input-money.im-blue:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background: var(--bg-surface);}
-    .input-money.im-orange:focus-within { border-color: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15); background: var(--bg-surface);}
-    .input-money span { padding: 14px 16px; background: rgba(0,0,0,0.03); font-size: 13px; font-weight: 900; color: var(--text-muted); border-right: 1px solid var(--border-subtle);}
+    .input-money { display: flex; align-items: center; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: 0.3s;}
+    .input-money.im-blue:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); background: var(--card-bg);}
+    .input-money.im-orange:focus-within { border-color: var(--warning); box-shadow: 0 0 0 4px var(--warning-soft); background: var(--card-bg);}
+    .input-money span { padding: 14px 16px; background: rgba(0,0,0,0.03); font-size: 13px; font-weight: 900; color: var(--text-muted); border-right: 1px solid var(--border-color);}
     .input-money input { border: none; padding: 14px 16px; font-size: 15px; font-weight: 800; width: 100%; outline: none; background: transparent; color: var(--text-main); font-family: 'Space Mono', monospace;}
 
-    .auto-sku-info { padding: 16px 20px; border-radius: 14px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 14px; margin-bottom: 25px; line-height: 1.5;}
-    .info-blue { background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.3); color: #3b82f6;}
-    .info-orange { background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.3); color: #f59e0b;}
-
-    .btn-submit-modal { width: 100%; color: #fff; border: none; padding: 18px; border-radius: 16px; font-size: 15px; font-weight: 900; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; }
-    .btn-submit-modal.btn-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.5); }
-    .btn-submit-modal.btn-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 20px -5px rgba(245, 158, 11, 0.5); }
+    .btn-submit-modal { width: 100%; color: #fff; border: none; padding: 18px; border-radius: 16px; font-size: 15px; font-weight: 900; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; }
+    .btn-submit-modal.btn-blue { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.5); }
+    .btn-submit-modal.btn-orange { background: linear-gradient(135deg, var(--warning), #d97706); box-shadow: 0 8px 20px -5px rgba(245, 158, 11, 0.5); }
+    .btn-submit-modal.btn-red { background: linear-gradient(135deg, var(--danger), #dc2626); box-shadow: 0 8px 20px -5px rgba(239, 68, 68, 0.5); }
     .btn-submit-modal:hover { transform: translateY(-3px); filter: brightness(1.1); }
+    
+    optgroup { font-weight: 900; color: var(--text-muted); background: var(--bg-main); font-style: normal; }
+    optgroup option { color: var(--text-main); font-weight: 600; background: var(--card-bg); padding: 4px; }
+    
+    .cat-selector { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; cursor: pointer; }
+
+    .modal-group-box { padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); background: var(--bg-main); }
+    .modal-group-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; }
+    
+    /* REASON CHIPS */
+    .reason-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;}
+    .chip { font-size: 11px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 1px dashed rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 100px; cursor: pointer; transition: 0.2s;}
+    .chip:hover { background: var(--danger); color: #fff;}
 </style>
 
-<div class="page-header">
-    <div class="page-title">
-        <h1>
-            <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 8px; border-radius: 12px; display: flex;">
-                <i class="ph-fill ph-database"></i>
+<div class="ambient-glow"></div>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <div class="page-title">
+            <div class="title-icon"><i class="ph-fill ph-database"></i></div>
+            <div class="title-text">
+                <h1>Master Inventaris Pabrik</h1>
+                <p>Kelola data induk Produk Jadi (PRD), Material Dasar (MAT), dan Penyesuaian Stok.</p>
             </div>
-            Master Inventaris Pabrik
-        </h1>
-        <p>Kelola data induk Produk Jadi (PRD) dan Material Dasar (MAT) dalam satu dasbor cerdas.</p>
-    </div>
-</div>
-
-<div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('fg')"><i class="ph-fill ph-motorcycle"></i> Produk Jadi (PRD)</button>
-    <button class="tab-btn" onclick="switchTab('rm')"><i class="ph-fill ph-nut"></i> Material Mentah (MAT)</button>
-</div>
-
-<div id="tab-fg" class="tab-content active">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <div class="asset-summary">
-            <div style="background: rgba(59, 130, 246, 0.1); padding: 6px; border-radius: 8px; display: flex;"><i class="ph-fill ph-vault" style="color: #3b82f6;"></i></div>
-            Aset Produk (PRD): <span class="asset-val">Rp <?= number_format($totalValueFG, 0, ',', '.') ?></span>
         </div>
-        <button class="btn-primary" onclick="openModal('modalFG')">
-            <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Registrasi Produk Baru
-        </button>
     </div>
 
-    <div class="table-card">
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Kode SKU Produk</th>
-                        <th>Nama Knalpot / Produk</th>
-                        <th style="text-align: right;">HPP (Modal)</th>
-                        <th>Stok Tersedia</th>
-                        <th>Tindakan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(empty($finishedGoods)): ?>
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('fg')"><i class="ph-fill ph-motorcycle"></i> Produk & Komponen (PRD)</button>
+        <button class="tab-btn" onclick="switchTab('rm')"><i class="ph-fill ph-nut"></i> Material Mentah (MAT)</button>
+        <button class="tab-btn" onclick="switchTab('adj')"><i class="ph-fill ph-scales"></i> Penyesuaian / Opname</button>
+    </div>
+
+    <div id="tab-fg" class="tab-content active">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div class="asset-summary">
+                <div style="background: var(--brand-soft); padding: 6px; border-radius: 8px; display: flex;"><i class="ph-fill ph-vault" style="color: var(--brand);"></i></div>
+                Aset Produk (PRD): <span class="asset-val">Rp <?= number_format($totalValueFG, 0, ',', '.') ?></span>
+            </div>
+            <button class="btn-primary" onclick="openCreateModalFG()">
+                <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Registrasi Produk Baru
+            </button>
+        </div>
+
+        <div class="table-card">
+            <div style="overflow-x: auto;">
+               <table>
+                    <thead>
                         <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <i class="ph-fill ph-package"></i>
-                                    <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 16px;">Belum ada Produk Jadi</h3>
-                                    <p>Klik tombol registrasi di sudut kanan atas.</p>
+                            <th>Kode SKU Produk</th>
+                            <th>Nama Produk (Tipe)</th>
+                            <th style="text-align: right;">HPP (Modal)</th>
+                            <th style="text-align: right;">Harga Retail</th>
+                            <th style="text-align: right;">Harga Grosir</th>
+                            <th>Stok Tersedia</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(empty($finishedGoods)): ?>
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <i class="ph-fill ph-package"></i>
+                                        <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 16px;">Belum ada Produk (PRD)</h3>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php foreach($finishedGoods as $fg): ?>
+                        <tr>
+                            <td><span class="sku-badge sku-prd"><?= esc($fg['sku']) ?></span></td>
+                            <td>
+                                <div style="font-weight: 800; margin-bottom: 4px; font-size: 14px;"><?= esc($fg['item_name']) ?></div>
+                                <span style="font-size: 10px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;"><?= esc($fg['item_type']) ?></span>
+                            </td>
+                            
+                            <td style="text-align: right; font-family: 'Space Mono', monospace; font-weight: 900; color: var(--danger); font-size: 14px;">
+                                Rp <?= number_format($fg['hpp'], 0, ',', '.') ?>
+                            </td>
+                            
+                            <td style="text-align: right;">
+                                <div style="font-family: 'Space Mono', monospace; font-weight: 900; color: var(--success); font-size: 14px;">
+                                    Rp <?= number_format($fg['retail_price'] ?? 0, 0, ',', '.') ?>
+                                </div>
+                                <?php $marginRetail = ($fg['retail_price'] ?? 0) - $fg['hpp']; ?>
+                                <div style="font-size: 10px; color: var(--text-muted); font-weight: 800; margin-top: 4px;">
+                                    Laba: <span style="color: var(--success);">+Rp <?= number_format($marginRetail, 0, ',', '.') ?></span>
+                                </div>
+                            </td>
+
+                            <td style="text-align: right;">
+                                <div style="font-family: 'Space Mono', monospace; font-weight: 900; color: var(--brand); font-size: 14px;">
+                                    Rp <?= number_format($fg['wholesale_price'] ?? 0, 0, ',', '.') ?>
+                                </div>
+                                <?php $marginGrosir = ($fg['wholesale_price'] ?? 0) - $fg['hpp']; ?>
+                                <div style="font-size: 10px; color: var(--text-muted); font-weight: 800; margin-top: 4px;">
+                                    Laba: <span style="color: var(--brand);">+Rp <?= number_format($marginGrosir, 0, ',', '.') ?></span>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="stock-box <?= ($fg['physical_stock'] <= $fg['min_stock']) ? 'stock-danger' : '' ?>" title="Minimum Stok: <?= $fg['min_stock'] ?>">
+                                    <?= $fg['physical_stock'] ?>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <a href="#" onclick="openEditModalFG(<?= $fg['id'] ?>)" class="btn-edit" title="Edit Data">
+                                        <i class="ph-bold ph-pencil-simple"></i>
+                                    </a>
+                                    <a href="#" onclick="confirmDelete(event, '<?= base_url('/warehouse/delete_fg/'.$fg['id']) ?>')" class="btn-delete" title="Hapus Data">
+                                        <i class="ph-bold ph-trash"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
-                    <?php endif; ?>
-                    <?php foreach($finishedGoods as $fg): ?>
-                    <tr>
-                        <td><span class="sku-badge sku-prd"><?= esc($fg['sku']) ?></span></td>
-                        <td style="font-weight: 800;"><?= esc($fg['item_name']) ?></td>
-                        <td style="text-align: right; font-family: 'Space Mono', monospace; font-weight: 900; color: #10b981;">
-                            Rp <?= number_format($fg['hpp'], 0, ',', '.') ?>
-                        </td>
-                        <td>
-                            <div class="stock-box <?= ($fg['physical_stock'] <= $fg['min_stock']) ? 'stock-danger' : '' ?>" title="Minimum Stok: <?= $fg['min_stock'] ?>">
-                                <?= $fg['physical_stock'] ?>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="#" onclick="confirmDelete(event, '<?= base_url('/warehouse/delete_fg/'.$fg['id']) ?>')" class="btn-delete" title="Hapus Data">
-                                <i class="ph-bold ph-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="tab-rm" class="tab-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <div class="asset-summary">
-            <div style="background: rgba(245, 158, 11, 0.1); padding: 6px; border-radius: 8px; display: flex;"><i class="ph-fill ph-vault" style="color: #f59e0b;"></i></div>
-            Aset Material (MAT): <span class="asset-val">Rp <?= number_format($totalValueRM, 0, ',', '.') ?></span>
+    <div id="tab-rm" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div class="asset-summary">
+                <div style="background: var(--warning-soft); padding: 6px; border-radius: 8px; display: flex;"><i class="ph-fill ph-vault" style="color: var(--warning);"></i></div>
+                Aset Material (MAT): <span class="asset-val">Rp <?= number_format($totalValueRM, 0, ',', '.') ?></span>
+            </div>
+            <button class="btn-warning" onclick="openCreateModalRM()">
+                <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Registrasi Material Baru
+            </button>
         </div>
-        <button class="btn-warning" onclick="openModal('modalRM')">
-            <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Registrasi Material Baru
-        </button>
-    </div>
 
-    <div class="table-card">
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Kode SKU Material</th>
-                        <th>Nama Material Dasar</th>
-                        <th style="text-align: right;">Harga Beli Satuan</th>
-                        <th>Stok Tersedia</th>
-                        <th>Tindakan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(empty($rawMaterials)): ?>
+        <div class="table-card">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
                         <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <i class="ph-fill ph-nut"></i>
-                                    <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 16px;">Belum ada Bahan Baku</h3>
-                                    <p>Klik tombol registrasi di sudut kanan atas.</p>
+                            <th>Kode SKU Material</th>
+                            <th>Nama Material Dasar</th>
+                            <th style="text-align: right;">Harga Beli Satuan</th>
+                            <th>Stok Tersedia</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(empty($rawMaterials)): ?>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <i class="ph-fill ph-nut"></i>
+                                        <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 16px;">Belum ada Bahan Baku</h3>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php foreach($rawMaterials as $rm): ?>
+                        <tr>
+                            <td><span class="sku-badge sku-mat"><?= esc($rm['sku_material']) ?></span></td>
+                            <td style="font-weight: 800; font-size: 14px;"><?= esc($rm['material_name']) ?></td>
+                            <td style="text-align: right; font-family: 'Space Mono', monospace; font-weight: 900; color: var(--warning); font-size: 14px;">
+                                Rp <?= number_format($rm['hpp'], 0, ',', '.') ?> <span style="font-size:10px; color:var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif;">/ <?= esc($rm['unit']) ?></span>
+                            </td>
+                            <td>
+                                <div class="stock-box <?= ($rm['physical_stock'] <= $rm['min_stock']) ? 'stock-danger' : '' ?>" title="Minimum Stok: <?= $rm['min_stock'] ?>">
+                                    <?= floatval($rm['physical_stock']) ?> <span style="font-size:10px; margin-left:4px; font-family:'Plus Jakarta Sans', sans-serif;"><?= esc($rm['unit']) ?></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <a href="#" onclick="openEditModalRM(<?= $rm['id'] ?>)" class="btn-edit" title="Edit Data">
+                                        <i class="ph-bold ph-pencil-simple"></i>
+                                    </a>
+                                    <a href="#" onclick="confirmDelete(event, '<?= base_url('/warehouse/delete_rm/'.$rm['id']) ?>')" class="btn-delete" title="Hapus Data">
+                                        <i class="ph-bold ph-trash"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
-                    <?php endif; ?>
-                    <?php foreach($rawMaterials as $rm): ?>
-                    <tr>
-                        <td><span class="sku-badge sku-mat"><?= esc($rm['sku_material']) ?></span></td>
-                        <td style="font-weight: 800;"><?= esc($rm['material_name']) ?></td>
-                        <td style="text-align: right; font-family: 'Space Mono', monospace; font-weight: 900; color: #f59e0b;">
-                            Rp <?= number_format($rm['hpp'], 0, ',', '.') ?> 
-                            <span style="font-size:10px; color:var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif;">/ <?= esc($rm['unit']) ?></span>
-                        </td>
-                        <td>
-                            <div class="stock-box <?= ($rm['physical_stock'] <= $rm['min_stock']) ? 'stock-danger' : '' ?>" title="Minimum Stok: <?= $rm['min_stock'] ?>">
-                                <?= floatval($rm['physical_stock']) ?> <span style="font-size:10px; margin-left:4px; font-family:'Plus Jakarta Sans', sans-serif;"><?= esc($rm['unit']) ?></span>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="#" onclick="confirmDelete(event, '<?= base_url('/warehouse/delete_rm/'.$rm['id']) ?>')" class="btn-delete" title="Hapus Data">
-                                <i class="ph-bold ph-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-adj" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 13px; color: var(--text-muted); font-weight: 600; background: var(--bg-surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-color);">
+                <i class="ph-fill ph-info" style="color: var(--danger); font-size: 16px; vertical-align: middle; margin-right: 6px;"></i> Catat penyesuaian jika ada barang rusak (Scrap), cacat produksi, atau selisih fisik gudang.
+            </div>
+            <button class="btn-danger" onclick="openModal('modalAdj')">
+                <i class="ph-bold ph-scales" style="font-size: 18px;"></i> Lakukan Penyesuaian Stok
+            </button>
+        </div>
+
+        <div class="table-card">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Waktu & PIC</th>
+                            <th>Barang yang Disesuaikan</th>
+                            <th>Perubahan</th>
+                            <th style="text-align: right;">Valuasi Finansial</th>
+                            <th>Keterangan / Alasan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(empty($adjustments)): ?>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <i class="ph-fill ph-clipboard-text"></i>
+                                        <h3 style="margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 16px;">Belum ada Riwayat Penyesuaian</h3>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php foreach($adjustments as $adj): ?>
+                        <tr>
+                            <td>
+                                <div style="font-size: 11px; font-weight: 800; color: var(--text-muted);"><i class="ph-bold ph-calendar-blank"></i> <?= date('d M Y, H:i', strtotime($adj['created_at'])) ?></div>
+                                <div style="font-size: 13px; font-weight: 700; margin-top: 4px; color: var(--text-main);"><i class="ph-bold ph-user"></i> <?= esc($adj['pic_name']) ?></div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 800; font-size: 14px; margin-bottom: 6px;"><?= esc($adj['item_name']) ?></div>
+                                <span class="sku-badge <?= $adj['item_type'] == 'PRD' ? 'sku-prd' : 'sku-mat' ?>"><?= esc($adj['sku']) ?></span>
+                            </td>
+                            <td>
+                                <?php if($adj['adjustment_type'] == 'PLUS'): ?>
+                                    <span style="background: var(--success-soft); color: var(--success); padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">+<?= floatval($adj['qty']) ?></span>
+                                <?php else: ?>
+                                    <span style="background: var(--danger-soft); color: var(--danger); padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">-<?= floatval($adj['qty']) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align: right; font-family: 'Space Mono', monospace; font-weight: 800; font-size: 14px; <?= $adj['adjustment_type'] == 'PLUS' ? 'color: var(--success);' : 'color: var(--danger);' ?>">
+                                Rp <?= number_format($adj['financial_value'], 0, ',', '.') ?>
+                            </td>
+                            <td style="white-space: normal; line-height: 1.4; max-width: 250px; font-size: 12px; color: var(--text-muted); text-align: left;">
+                                <?= esc($adj['reason']) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modalFG">
-    <div class="modal-box" style="border-top: 8px solid #3b82f6;">
+    <div class="modal-box" style="border-top: 8px solid var(--brand);">
         <div class="modal-header">
-            <div class="modal-title">
-                <div style="background: rgba(59, 130, 246, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                    <i class="ph-fill ph-motorcycle"></i>
-                </div>
-                Input Produk Jadi Baru
+            <div class="modal-title" id="titleFG">
+                <div style="background: var(--brand-soft); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--brand);"><i class="ph-fill ph-motorcycle"></i></div>
+                Input Produk (PRD) Baru
             </div>
             <button class="btn-close" onclick="closeModal('modalFG')" type="button"><i class="ph-bold ph-x"></i></button>
         </div>
         <form id="formFG" action="<?= base_url('/warehouse/store_fg') ?>" method="post">
             <?= csrf_field() ?>
-            <div class="auto-sku-info info-blue">
-                <i class="ph-fill ph-magic-wand" style="font-size: 28px;"></i> 
-                <div>Sistem akan membuat SKU secara otomatis: <br><b style="font-family: monospace; font-size:14px;">PRD-0001, PRD-0002, dst.</b></div>
-            </div>            
             
-            <div class="form-group">
-                <label>Nama Lengkap Knalpot / Produk</label>
-                <input type="text" name="item_name" class="form-control focus-blue" placeholder="Cth: Knalpot Standar WR155 Noric" required autocomplete="off">
-            </div>
-            
-            <div class="form-group">
-                <label>Modal Dasar Produksi (HPP)</label>
-                <div class="input-money im-blue">
-                    <span>Rp</span>
-                    <input type="text" name="hpp" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off">
-                </div>
-            </div>
-            
-            <div class="grid-2">
+            <div class="modal-group-box" style="background: rgba(59, 130, 246, 0.02); border-color: rgba(59, 130, 246, 0.15);">
+                <div class="modal-group-title" style="color: var(--brand);"><i class="ph-fill ph-tag"></i> 1. Identitas & Kategori</div>
                 <div class="form-group">
-                    <label>Stok Fisik Saat Ini</label>
-                    <input type="number" name="initial_stock" class="form-control focus-blue" value="0" required min="0" style="font-family: monospace; font-size: 16px;">
+                    <label>Nama Lengkap Produk / Komponen</label>
+                    <input type="text" name="item_name" class="form-control focus-blue" placeholder="Cth: Knalpot WR155 Full" required autocomplete="off">
                 </div>
-                <div class="form-group">
-                    <label>Peringatan Stok Minimum</label>
-                    <input type="number" name="min_stock" class="form-control focus-blue" value="5" required min="1" style="font-family: monospace; font-size: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Kategori / Tipe Produk (Penting untuk BoM)</label>
+                    <select name="item_type" class="form-control focus-blue cat-selector" required>
+                        <option value="Full System">Full System (Utuh)</option>
+                        <option value="Silencer / Slip-on">Silencer / Slip-on</option>
+                        <option value="Header / Leheran">Header / Leheran</option>
+                        <option value="Aksesoris / Sparepart">Aksesoris / Sparepart Lainnya</option>
+                    </select>
                 </div>
             </div>
-            
-            <button type="submit" id="btnSubmitFG" class="btn-submit-modal btn-blue">
-                <i class="ph-bold ph-floppy-disk" style="font-size: 20px;"></i> <span>Simpan Produk (PRD)</span>
+
+            <div class="modal-group-box">
+                <div class="modal-group-title" style="color: var(--text-muted);"><i class="ph-fill ph-currency-circle-dollar"></i> 2. Pengaturan Nilai & Harga</div>
+                <div class="form-group">
+                    <label>HPP / Nilai Modal Pokok</label>
+                    <div class="input-money im-blue">
+                        <span>Rp</span>
+                        <input type="text" name="hpp" id="fg_hpp" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off">
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Harga Retail (Ecer)</label>
+                        <div class="input-money im-blue" style="border-color: rgba(16, 185, 129, 0.4);">
+                            <span style="border-right-color: rgba(16, 185, 129, 0.2); color: #10b981; background: rgba(16, 185, 129, 0.05);">Rp</span>
+                            <input type="text" name="retail_price" id="fg_retail" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off" style="color: #10b981;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Harga Grosir (B2B)</label>
+                        <div class="input-money im-blue" style="border-color: rgba(59, 130, 246, 0.4);">
+                            <span style="border-right-color: rgba(59, 130, 246, 0.2); color: #3b82f6; background: rgba(59, 130, 246, 0.05);">Rp</span>
+                            <input type="text" name="wholesale_price" id="fg_wholesale" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off" style="color: #3b82f6;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-group-box" style="margin-bottom: 0;">
+                <div class="modal-group-title" style="color: var(--text-muted);"><i class="ph-fill ph-stack"></i> 3. Parameter Stok Fisik</div>
+                <div class="grid-2" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Stok Fisik Saat Ini</label>
+                        <input type="number" name="initial_stock" id="initial_stock_fg" class="form-control focus-blue" value="0" required min="0" style="font-family: 'Space Mono', monospace; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Batas Peringatan Stok (Min)</label>
+                        <input type="number" name="min_stock" class="form-control focus-blue" value="5" required min="1" style="font-family: 'Space Mono', monospace; font-size: 16px; color: var(--danger);">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmitFG" class="btn-submit-modal btn-blue" style="margin-top: 25px;">
+                <i class="ph-bold ph-floppy-disk" style="font-size: 20px;"></i> <span>Simpan Data Produk (PRD)</span>
             </button>
         </form>
     </div>
 </div>
 
 <div class="modal-overlay" id="modalRM">
-    <div class="modal-box" style="border-top: 8px solid #f59e0b;">
+    <div class="modal-box" style="border-top: 8px solid var(--warning);">
         <div class="modal-header">
-            <div class="modal-title">
-                <div style="background: rgba(245, 158, 11, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
-                    <i class="ph-fill ph-nut"></i>
-                </div>
+            <div class="modal-title" id="titleRM">
+                <div style="background: var(--warning-soft); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--warning);"><i class="ph-fill ph-nut"></i></div>
                 Input Material Mentah
             </div>
             <button class="btn-close" onclick="closeModal('modalRM')" type="button"><i class="ph-bold ph-x"></i></button>
         </div>
         <form id="formRM" action="<?= base_url('/warehouse/store_rm') ?>" method="post">
             <?= csrf_field() ?>
-            <div class="auto-sku-info info-orange">
-                <i class="ph-fill ph-magic-wand" style="font-size: 28px;"></i> 
-                <div>Sistem akan membuat SKU secara otomatis: <br><b style="font-family: monospace; font-size:14px;">MAT-0001, MAT-0002, dst.</b></div>
-            </div>            
             
-            <div class="form-group">
-                <label>Nama Material (Pipa/Plat/Glaswool)</label>
-                <input type="text" name="material_name" class="form-control focus-orange" placeholder="Cth: Pipa Stainless 2 Inch SS304" required autocomplete="off">
-            </div>
-            
-            <div class="grid-2">
+            <div class="modal-group-box" style="background: rgba(245, 158, 11, 0.03); border-color: rgba(245, 158, 11, 0.15);">
+                <div class="modal-group-title" style="color: var(--warning);"><i class="ph-fill ph-tag"></i> 1. Identitas & Satuan</div>
                 <div class="form-group">
-                    <label>Harga Beli (Modal / HPP)</label>
-                    <div class="input-money im-orange">
-                        <span>Rp</span>
-                        <input type="text" name="hpp" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off">
-                    </div>
+                    <label>Nama Material (Pipa/Plat/Glaswool)</label>
+                    <input type="text" name="material_name" class="form-control focus-orange" placeholder="Cth: Pipa Stainless 2 Inch SS304" required autocomplete="off">
                 </div>
-                <div class="form-group">
-                    <label>Satuan (Unit)</label>
-                    <select name="unit" class="form-control focus-orange" required style="cursor: pointer;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Satuan Ukur (Unit)</label>
+                    <select name="unit" class="form-control focus-orange cat-selector" required>
                         <option value="Batang">Batang</option>
                         <option value="Lembar">Lembar</option>
                         <option value="Kg">Kilogram (Kg)</option>
-                        <option value="Liter">Liter</option>
+                        <option value="Meter">Meter</option>
                         <option value="Roll">Roll</option>
                         <option value="Pcs">Pcs</option>
                     </select>
                 </div>
             </div>
-            
-            <div class="grid-2">
+
+            <div class="modal-group-box" style="margin-bottom: 0;">
+                <div class="modal-group-title" style="color: var(--text-muted);"><i class="ph-fill ph-currency-circle-dollar"></i> 2. Harga Beli & Parameter Stok</div>
                 <div class="form-group">
-                    <label>Stok Fisik Saat Ini</label>
-                    <input type="number" step="0.1" name="initial_stock" class="form-control focus-orange" value="0" required min="0" style="font-family: monospace; font-size: 16px;">
+                    <label>Harga Beli Pokok (HPP / Modal)</label>
+                    <div class="input-money im-orange">
+                        <span>Rp</span>
+                        <input type="text" name="hpp" id="rm_hpp" placeholder="0" required onkeyup="formatRupiah(this)" autocomplete="off">
+                    </div>
                 </div>
+                <div class="grid-2" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Stok Fisik Saat Ini</label>
+                        <input type="number" step="0.1" name="initial_stock" id="initial_stock_rm" class="form-control focus-orange" value="0" required min="0" style="font-family: 'Space Mono', monospace; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Peringatan Stok Minimum</label>
+                        <input type="number" step="0.1" name="min_stock" class="form-control focus-orange" value="10" required min="1" style="font-family: 'Space Mono', monospace; font-size: 16px; color: var(--danger);">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmitRM" class="btn-submit-modal btn-orange" style="margin-top: 25px;">
+                <i class="ph-bold ph-floppy-disk" style="font-size: 20px;"></i> <span>Simpan Data Material (MAT)</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalAdj">
+    <div class="modal-box" style="border-top: 8px solid var(--danger);">
+        <div class="modal-header">
+            <div class="modal-title">
+                <div style="background: var(--danger-soft); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--danger);"><i class="ph-fill ph-scales"></i></div>
+                Penyesuaian Stok (Opname)
+            </div>
+            <button class="btn-close" onclick="closeModal('modalAdj')" type="button"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="formAdj" action="<?= base_url('/warehouse/store_adjustment') ?>" method="post">
+            <?= csrf_field() ?>
+            
+            <div class="modal-group-box" style="background: rgba(239, 68, 68, 0.03); border-color: rgba(239, 68, 68, 0.15);">
+                <div class="modal-group-title" style="color: var(--danger);"><i class="ph-fill ph-target"></i> 1. Target Barang & Jenis Opname</div>
                 <div class="form-group">
-                    <label>Peringatan Stok Minimum</label>
-                    <input type="number" step="0.1" name="min_stock" class="form-control focus-orange" value="10" required min="1" style="font-family: monospace; font-size: 16px;">
+                    <label>Pilih Barang yang Ingin Disesuaikan</label>
+                    <select name="sku" class="form-control focus-red cat-selector" required>
+                        <option value="">-- Pilih SKU Barang / Material --</option>
+                        <optgroup label="📦 Produk Jadi (Kategori PRD)">
+                            <?php foreach($finishedGoods as $fg): ?>
+                                <option value="<?= esc($fg['sku']) ?>">[<?= esc($fg['sku']) ?>] <?= esc($fg['item_name']) ?> (Sisa: <?= $fg['physical_stock'] ?>)</option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                        <optgroup label="⚙️ Material Mentah (Kategori MAT)">
+                            <?php foreach($rawMaterials as $rm): ?>
+                                <option value="<?= esc($rm['sku_material']) ?>">[<?= esc($rm['sku_material']) ?>] <?= esc($rm['material_name']) ?> (Sisa: <?= $rm['physical_stock'] ?> <?= esc($rm['unit']) ?>)</option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Jenis Arah Penyesuaian</label>
+                        <select name="adjustment_type" class="form-control focus-red cat-selector" required>
+                            <option value="MINUS">📉 Kurangi Stok (Hilang/Diambil)</option>
+                            <option value="PLUS">📈 Tambah Stok (Kelebihan Fisik)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Kuantitas Perubahan</label>
+                        <input type="number" step="0.01" name="qty" class="form-control focus-red" placeholder="Cth: 2" required min="0.01" style="font-family: 'Space Mono', monospace; font-size: 16px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-group-box" style="margin-bottom: 0;">
+                <div class="modal-group-title" style="color: var(--text-muted);"><i class="ph-fill ph-file-text"></i> 2. Keterangan Laporan</div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Alasan Penyesuaian (Wajib Diisi)</label>
+                    <textarea name="reason" id="adjReasonInput" class="form-control focus-red" rows="2" placeholder="Ketik alasan atau klik tombol cepat di bawah..." required></textarea>
+                    
+                    <div class="reason-chips" style="margin-top: 10px;">
+                        <span class="chip" onclick="setAdjReason('Barang diambil tim produksi ke bengkel')">Diambil Produksi</span>
+                        <span class="chip" onclick="setAdjReason('Barang rusak / cacat produksi (Scrap)')">Cacat / Rusak</span>
+                        <span class="chip" onclick="setAdjReason('Penyesuaian selisih hitung fisik gudang')">Selisih Opname</span>
+                    </div>
                 </div>
             </div>
             
-            <button type="submit" id="btnSubmitRM" class="btn-submit-modal btn-orange">
-                <i class="ph-bold ph-floppy-disk" style="font-size: 20px;"></i> <span>Simpan Material (MAT)</span>
+            <button type="submit" id="btnSubmitAdj" class="btn-submit-modal btn-red" style="margin-top: 25px;">
+                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 20px;"></i> <span>Eksekusi & Jurnal Otomatis</span>
             </button>
         </form>
     </div>
@@ -368,102 +601,163 @@
         document.getElementById('tab-' + tabName).classList.add('active');
     }
 
-    // Auto-Buka Tab jika ada parameter URL
     document.addEventListener("DOMContentLoaded", function() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('tab') === 'rm') {
-            document.querySelector('[onclick="switchTab(\'rm\')"]').click();
+            document.querySelectorAll('.tab-btn')[1].click();
+        } else if (urlParams.get('tab') === 'adj') {
+            document.querySelectorAll('.tab-btn')[2].click();
         }
     });
 
     // --- Modal Logic ---
     function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
-    window.onclick = function(e) { 
-        if (e.target.classList.contains('modal-overlay')) {
-            e.target.classList.remove('active'); 
-        }
+
+    function openCreateModalFG() {
+        document.getElementById('formFG').reset();
+        document.getElementById('titleFG').innerHTML = '<div style="background: rgba(59, 130, 246, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6;"><i class="ph-fill ph-motorcycle"></i></div> Input Produk (PRD) Baru';
+        document.getElementById('formFG').action = "<?= base_url('/warehouse/store_fg') ?>";
+        
+        let stockInput = document.getElementById('initial_stock_fg');
+        stockInput.readOnly = false; stockInput.style.backgroundColor = ""; stockInput.title = "";
+        openModal('modalFG');
     }
 
-    // --- Helper Format Rupiah ---
+    function openCreateModalRM() {
+        document.getElementById('formRM').reset();
+        document.getElementById('titleRM').innerHTML = '<div style="background: rgba(245, 158, 11, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #f59e0b;"><i class="ph-fill ph-nut"></i></div> Input Material Mentah';
+        document.getElementById('formRM').action = "<?= base_url('/warehouse/store_rm') ?>";
+        
+        let stockInput = document.getElementById('initial_stock_rm');
+        stockInput.readOnly = false; stockInput.style.backgroundColor = ""; stockInput.title = "";
+        openModal('modalRM');
+    }
+
+    function openEditModalFG(id) {
+        document.getElementById('formFG').reset();
+        document.getElementById('titleFG').innerHTML = '<div style="background: rgba(59, 130, 246, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6;"><i class="ph-fill ph-pencil-simple"></i></div> Edit Data Produk (PRD)';
+        document.getElementById('formFG').action = "<?= base_url('/warehouse/update_fg/') ?>" + id;
+        
+        let stockInput = document.getElementById('initial_stock_fg');
+        stockInput.readOnly = true; stockInput.style.backgroundColor = "rgba(0,0,0,0.05)"; stockInput.title = "Gunakan fitur Stock Opname di Tab 3 untuk mengubah stok fisik.";
+
+        if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Mengambil data...");
+
+        fetch("<?= base_url('/warehouse/get_fg/') ?>" + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector('#modalFG input[name="item_name"]').value = data.item_name;
+            document.querySelector('#modalFG select[name="item_type"]').value = data.item_type;
+            document.querySelector('#modalFG input[name="min_stock"]').value = data.min_stock;
+            stockInput.value = data.physical_stock; 
+            
+            let hpp = document.getElementById('fg_hpp');
+            let retail = document.getElementById('fg_retail');
+            let wholesale = document.getElementById('fg_wholesale');
+            
+            // FIX: Parsing ke Float lalu Rounding (membulatkan) untuk membuang ".00" dari database
+            hpp.value = Math.round(parseFloat(data.hpp || 0)); 
+            retail.value = Math.round(parseFloat(data.retail_price || 0)); 
+            wholesale.value = Math.round(parseFloat(data.wholesale_price || 0));
+            
+            formatRupiah(hpp); 
+            formatRupiah(retail); 
+            formatRupiah(wholesale);
+            
+            openModal('modalFG');
+        });
+    }
+
+    function openEditModalRM(id) {
+        document.getElementById('formRM').reset();
+        document.getElementById('titleRM').innerHTML = '<div style="background: rgba(245, 158, 11, 0.1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #f59e0b;"><i class="ph-fill ph-pencil-simple"></i></div> Edit Data Material';
+        document.getElementById('formRM').action = "<?= base_url('/warehouse/update_rm/') ?>" + id;
+        
+        let stockInput = document.getElementById('initial_stock_rm');
+        stockInput.readOnly = true; stockInput.style.backgroundColor = "rgba(0,0,0,0.05)"; stockInput.title = "Gunakan fitur Stock Opname di Tab 3 untuk mengubah stok fisik.";
+
+        if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Mengambil data...");
+
+        fetch("<?= base_url('/warehouse/get_rm/') ?>" + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector('#modalRM input[name="material_name"]').value = data.material_name;
+            document.querySelector('#modalRM select[name="unit"]').value = data.unit;
+            document.querySelector('#modalRM input[name="min_stock"]').value = data.min_stock;
+            stockInput.value = data.physical_stock; 
+            
+            let hpp = document.getElementById('rm_hpp');
+            
+            // FIX: Parsing ke Float lalu Rounding untuk membuang desimal .00
+            hpp.value = Math.round(parseFloat(data.hpp || 0));
+            
+            formatRupiah(hpp);
+            openModal('modalRM');
+        });
+    }
+
+    // --- Format Rupiah Terpusat ---
     function formatRupiah(angka) {
-        if (!angka) return;
+        if (!angka || !angka.value) return;
         let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
             split   = number_string.split(','),
             sisa    = split[0].length % 3,
             rupiah  = split[0].substr(0, sisa),
             ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
+            
         if (ribuan) {
             let separator = sisa ? '.' : '';
             rupiah += separator + ribuan.join('.');
         }
-        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-        angka.value = rupiah;
+        angka.value = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
     }
 
-    // --- AJAX FORM FG (PRD) ---
-    document.getElementById('formFG').addEventListener('submit', function(e) {
-        e.preventDefault(); 
-        const btn = document.getElementById('btnSubmitFG');
-        const btnText = btn.querySelector('span');
-        const btnIcon = btn.querySelector('i');
-        
-        btn.disabled = true;
-        btnText.innerText = "Menyimpan...";
-        btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
+    // --- AJAX FORM GENERIC HANDLER ---
+    function handleAjaxForm(formId, btnId, redirectTab) {
+        document.getElementById(formId).addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            // Hapus titik sebelum dikirim ke database backend
+            this.querySelectorAll('input[type="text"]').forEach(input => {
+                if(input.id.includes('hpp') || input.id.includes('retail') || input.id.includes('wholesale')) {
+                    input.value = input.value.replace(/\./g, '');
+                }
+            });
 
-        fetch(this.action, {
-            method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message);
-                this.reset();
-                closeModal('modalFG');
-                setTimeout(() => { window.location.href = window.location.pathname; }, 1200); 
-            } else {
-                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message, true);
-                btn.disabled = false; btnText.innerText = "Simpan Produk (PRD)"; btnIcon.className = "ph-bold ph-floppy-disk";
-            }
-        })
-        .catch(err => {
-            if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Koneksi Server Gagal", true);
-            btn.disabled = false; btnText.innerText = "Simpan Produk (PRD)"; btnIcon.className = "ph-bold ph-floppy-disk";
+            const btn = document.getElementById(btnId);
+            const btnText = btn.querySelector('span');
+            const btnIcon = btn.querySelector('i');
+            const originalText = btnText.innerText;
+            const originalIcon = btnIcon.className;
+            
+            btn.disabled = true; btnText.innerText = "Memproses..."; btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
+
+            fetch(this.action, {
+                method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message);
+                    this.reset();
+                    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+                    setTimeout(() => { window.location.replace("<?= base_url('/warehouse/local-inventory') ?>" + redirectTab); }, 1200); 
+                } else {
+                    if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message, true);
+                    btn.disabled = false; btnText.innerText = originalText; btnIcon.className = originalIcon;
+                }
+            })
+            .catch(err => {
+                if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Koneksi Server Gagal", true);
+                btn.disabled = false; btnText.innerText = originalText; btnIcon.className = originalIcon;
+            });
         });
-    });
+    }
 
-    // --- AJAX FORM RM (MAT) ---
-    document.getElementById('formRM').addEventListener('submit', function(e) {
-        e.preventDefault(); 
-        const btn = document.getElementById('btnSubmitRM');
-        const btnText = btn.querySelector('span');
-        const btnIcon = btn.querySelector('i');
-        
-        btn.disabled = true;
-        btnText.innerText = "Menyimpan...";
-        btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
-
-        fetch(this.action, {
-            method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message);
-                this.reset();
-                closeModal('modalRM');
-                setTimeout(() => { window.location.replace("<?= base_url('/warehouse/local-inventory') ?>?tab=rm"); }, 1200); 
-            } else {
-                if(typeof window.showGlobalToast === 'function') window.showGlobalToast(data.message, true);
-                btn.disabled = false; btnText.innerText = "Simpan Material (MAT)"; btnIcon.className = "ph-bold ph-floppy-disk";
-            }
-        })
-        .catch(err => {
-            if(typeof window.showGlobalToast === 'function') window.showGlobalToast("Koneksi Server Gagal", true);
-            btn.disabled = false; btnText.innerText = "Simpan Material (MAT)"; btnIcon.className = "ph-bold ph-floppy-disk";
-        });
-    });
+    handleAjaxForm('formFG', 'btnSubmitFG', '?tab=fg');
+    handleAjaxForm('formRM', 'btnSubmitRM', '?tab=rm');
+    handleAjaxForm('formAdj', 'btnSubmitAdj', '?tab=adj');
 
     // Delete Confirmation
     function confirmDelete(e, url) {
@@ -488,6 +782,10 @@
                 }
             }
         })
+    }
+
+    function setAdjReason(text) {
+        document.getElementById('adjReasonInput').value = text;
     }
 </script>
 

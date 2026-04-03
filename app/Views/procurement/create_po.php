@@ -2,315 +2,270 @@
 <?= $this->section('content') ?>
 
 <style>
-    /* =========================================================
-       1. PAGE HEADER & NAVIGATION
-       ========================================================= */
-    .page-header { margin-bottom: 30px; display: flex; flex-direction: column; gap: 12px; }
+    :root { --brand: #4f46e5; --brand-dark: #4338ca; --bg-soft: rgba(79, 70, 229, 0.05); }
+
+    .page-header { margin-bottom: 25px; display: flex; flex-direction: column; gap: 12px; }
+    .btn-back { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 999px; width: fit-content; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
+    .btn-back:hover { color: var(--brand); border-color: var(--brand); transform: translateX(-4px); box-shadow: 0 8px 15px var(--bg-soft);}
+
+    .page-title h1 { font-size: 32px; font-weight: 900; color: var(--text-main); margin: 0; letter-spacing: -1px; display: flex; align-items: center; gap: 12px;}
+    .page-title p { font-size: 14px; color: var(--text-muted); font-weight: 600; margin: 6px 0 0 0;}
+
+    .builder-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 25px; align-items: start; padding-bottom: 50px;}
+    @media (max-width: 1024px) { .builder-layout { grid-template-columns: 1fr; } }
+
+    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 30px; box-shadow: 0 15px 35px -10px rgba(0,0,0,0.05); }
+    .sticky-card { position: sticky; top: 25px; }
     
-    .btn-back { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 100px; width: fit-content; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
-    .btn-back:hover { color: #4f46e5; border-color: #4f46e5; transform: translateX(-4px); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);}
+    .section-title { font-size: 16px; font-weight: 900; color: var(--text-main); margin: 0 0 20px 0; padding-bottom: 15px; border-bottom: 1px dashed var(--border-subtle); display: flex; align-items: center; gap: 10px;}
+    .section-title i { background: var(--bg-soft); color: var(--brand); padding: 8px; border-radius: 10px; font-size: 20px;}
 
-    .page-title h1 { font-size: 30px; font-weight: 900; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px;}
-    .page-title p { font-size: 15px; color: var(--text-muted); margin: 5px 0 0 0; font-weight: 500;}
-
-    /* =========================================================
-       2. MAIN BUILDER CARD
-       ========================================================= */
-    .builder-wrapper { max-width: 1050px; margin: 0 auto; padding-bottom: 50px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px;}
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;}
+    .form-group label { font-size: 11px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     
-    .builder-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); transition: box-shadow 0.3s ease;}
-    @media (max-width: 768px) { .builder-card { padding: 25px; } }
+    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 14px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; color: var(--text-main); outline: none; transition: 0.3s; }
+    .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--bg-soft); }
+    select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; cursor: pointer;}
 
-    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px dashed var(--border-subtle); }
-    .section-header i { font-size: 24px; color: #4f46e5; background: rgba(79, 70, 229, 0.1); padding: 8px; border-radius: 10px; }
-    .section-header h2 { font-size: 18px; font-weight: 900; color: var(--text-main); margin: 0; }
+    .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1.5fr auto; gap: 15px; background: var(--bg-base); padding: 15px; border-radius: 18px; border: 1px solid var(--border-subtle); margin-bottom: 15px; align-items: center; transition: 0.3s;}
+    .item-row:hover { border-color: var(--brand); box-shadow: 0 8px 20px -8px var(--bg-soft); transform: translateY(-2px);}
+    @media (max-width: 640px) { .item-row { grid-template-columns: 1fr; position: relative; padding-top: 35px;} .item-row .btn-del { position: absolute; top: 10px; right: 10px; } }
 
-    /* =========================================================
-       3. FORM ELEMENTS
-       ========================================================= */
-    .grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 40px; }
-    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; gap: 15px; } }
+    .input-grp { display: flex; align-items: stretch; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; transition: 0.3s;}
+    .input-grp:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--bg-soft); }
+    .input-grp span { padding: 12px 14px; background: rgba(0,0,0,0.02); font-size: 12px; font-weight: 900; color: var(--text-muted); border-right: 1px solid var(--border-subtle); display: flex; align-items: center;}
+    .input-grp input { flex: 1; border: none; padding: 12px 14px; font-size: 13px; font-weight: 800; background: transparent; outline: none; font-family: 'Space Mono', monospace; text-align: right;}
 
-    .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-group label { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;}
-    
-    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 15px 18px; border-radius: 14px; font-size: 14px; font-weight: 600; color: var(--text-main); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); appearance: none;}
-    .form-control:focus { border-color: #4f46e5; background: var(--bg-surface); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); outline: none;}
-    .form-control:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-add { width: 100%; background: transparent; border: 2px dashed var(--brand); color: var(--brand); padding: 16px; border-radius: 16px; font-size: 13px; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s;}
+    .btn-add:hover { background: var(--bg-soft); transform: translateY(-2px); }
+    .btn-del { width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; font-size: 20px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;}
+    .btn-del:hover { background: #ef4444; color: #fff; transform: scale(1.05) rotate(5deg); }
 
-    /* =========================================================
-       4. DYNAMIC ROWS (ENTERPRISE LIST)
-       ========================================================= */
-    .po-row { display: grid; grid-template-columns: 2.5fr 1fr 1.5fr 1fr auto; gap: 15px; align-items: center; background: var(--bg-surface); padding: 15px 20px; border-radius: 16px; border: 1px solid var(--border-subtle); margin-bottom: 12px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.01);}
-    .po-row:hover { border-color: #a5b4fc; box-shadow: 0 5px 15px rgba(79, 70, 229, 0.08); transform: translateY(-2px);}
-    html.dark .po-row { background: var(--bg-base); }
-    
-    @media (max-width: 1024px) { 
-        .po-row { grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; position: relative;} 
-        .po-row > *:nth-child(1) { grid-column: 1 / -1; }
-        .po-row > .btn-remove { position: absolute; top: 20px; right: 20px; }
-    }
+    .sum-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 13px; font-weight: 800; color: var(--text-muted);}
+    .sum-line.grand { border-top: 2px solid var(--border-subtle); border-bottom: none; margin-top: 10px; padding-top: 15px; font-size: 18px; color: var(--text-main); font-weight: 900;}
+    .sum-val { font-family: 'Space Mono', monospace; color: var(--text-main); font-weight: 900;}
+    .sum-line.grand .sum-val { font-size: 24px; color: var(--brand); letter-spacing: -1px;}
 
-    .input-money { display: flex; align-items: center; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: 0.3s;}
-    .input-money:focus-within { border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); background: var(--bg-surface);}
-    .input-money span { padding: 15px; background: rgba(0,0,0,0.02); font-size: 13px; font-weight: 800; color: var(--text-muted); border-right: 1px solid var(--border-subtle);}
-    .input-money input { border: none; padding: 15px; font-size: 14px; font-weight: 700; width: 100%; outline: none; background: transparent; color: var(--text-main); font-family: 'Space Mono', monospace;}
+    .btn-submit { width: 100%; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; border: none; padding: 20px; border-radius: 18px; font-size: 15px; font-weight: 900; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px -8px rgba(79, 70, 229, 0.6); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px;}
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -8px rgba(79, 70, 229, 0.8); }
 
-    .row-subtotal { background: rgba(16, 185, 129, 0.08); color: #10b981; padding: 15px; border-radius: 14px; font-family: 'Space Mono', monospace; font-weight: 800; font-size: 14px; text-align: right; border: 1px dashed rgba(16, 185, 129, 0.3);}
-
-    .btn-remove { background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid transparent; width: 48px; height: 48px; border-radius: 14px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;}
-    .btn-remove:hover { background: #ef4444; color: #fff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); transform: scale(1.05) rotate(5deg);}
-
-    .btn-add { background: var(--bg-base); color: #4f46e5; border: 2px dashed #a5b4fc; width: 100%; padding: 20px; border-radius: 16px; font-weight: 800; font-size: 15px; cursor: pointer; margin: 10px 0 35px 0; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 10px;}
-    .btn-add:hover { background: rgba(79, 70, 229, 0.05); border-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);}
-
-    /* =========================================================
-       5. FOOTER & TOTAL
-       ========================================================= */
-    .grand-total-box { background: var(--text-main); color: var(--bg-base); padding: 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; box-shadow: 0 15px 30px -10px rgba(0,0,0,0.2);}
-    .total-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--border-subtle); display: flex; align-items: center; gap: 12px; letter-spacing: 1px;}
-    .total-val { font-size: 42px; font-weight: 900; font-family: 'Space Mono', monospace; line-height: 1; letter-spacing: -1px; color: #fff;}
-
-    .btn-save { width: 100%; background: #4f46e5; color: #fff; border: none; padding: 24px; border-radius: 20px; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 12px;}
-    .btn-save:hover { background: #4338ca; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(79, 70, 229, 0.4);}
-    .btn-save:active { transform: translateY(0); }
-    .btn-save:disabled { background: var(--border-subtle); color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none;}
-
-    /* AJAX Toast */
-    #ajaxToast {
-        position: fixed; top: 20px; right: -400px;
-        background: #10b981; color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 800;
-        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); display: flex; align-items: center; gap: 10px; z-index: 9999;
-        transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    #ajaxToast.show { right: 20px; }
-    #ajaxToast.error { background: #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); }
+    .desktop-labels { display: grid; grid-template-columns: 2.5fr 1fr 1.5fr auto; gap: 15px; padding: 0 15px 10px 15px; font-size: 11px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    @media (max-width: 1024px) { .desktop-labels { display: none !important; } }
 </style>
 
-<div id="ajaxToast"><i class="ph-bold ph-check-circle" style="font-size: 20px;"></i> <span id="toastMsg">Sukses!</span></div>
-
-<div class="builder-wrapper">
-    
-    <div class="page-header">
-        <a href="<?= base_url('/procurement') ?>" class="btn-back">
-            <i class="ph-bold ph-arrow-left"></i> Kembali ke Dasbor Logistik
-        </a>
-        <div class="page-title">
-            <h1><i class="ph-fill ph-file-text" style="color: #4f46e5;"></i> Buat Purchase Order</h1>
-            <p>Terbitkan dokumen pemesanan bahan baku resmi secara rapi dan profesional.</p>
-        </div>
-    </div>
-
-    <?php if(empty($rawMaterials)): ?>
-        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; padding: 25px; border-radius: 20px; margin-bottom: 30px; display: flex; align-items: flex-start; gap: 18px; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.1);">
-            <i class="ph-fill ph-warning-circle" style="font-size: 32px;"></i>
-            <div style="line-height: 1.6;">
-                <span style="font-size: 16px; font-weight: 900; display: block; margin-bottom: 5px;">Akses Ditolak: Master Bahan Baku Kosong!</span>
-                Sistem tidak mendeteksi adanya data bahan baku di gudang Anda. Silakan tambahkan data melalui menu <b>"Master Gudang Lokal"</b> terlebih dahulu.
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <div class="builder-card">
-        <form id="formPO" action="<?= base_url('/procurement/store_po') ?>" method="post">
-            <?= csrf_field() ?>
-
-            <div class="section-header">
-                <i class="ph-fill ph-buildings"></i>
-                <h2>Informasi Vendor & Waktu</h2>
-            </div>
-
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Pilih Vendor / Supplier Tujuan</label>
-                    <select name="supplier_id" class="form-control" required>
-                        <option value="">-- Pilih Supplier yang Terdaftar --</option>
-                        <?php foreach($suppliers as $sup): ?>
-                            <option value="<?= $sup['id'] ?>"><?= esc($sup['supplier_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Tanggal Pemesanan (PO Date)</label>
-                    <input type="date" name="po_date" class="form-control" value="<?= date('Y-m-d') ?>" required style="font-family: 'Space Mono', monospace;">
-                </div>
-            </div>
-
-            <div class="section-header" style="margin-top: 20px;">
-                <i class="ph-fill ph-package"></i>
-                <h2>Rincian Barang yang Dipesan</h2>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 2.5fr 1fr 1.5fr 1fr auto; gap: 15px; padding: 0 20px 10px 20px; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;" class="desktop-labels">
-                <div>Nama Material</div>
-                <div>Kuantitas</div>
-                <div>Harga Satuan</div>
-                <div style="text-align: right;">Subtotal Baris</div>
-                <div style="width: 48px;"></div>
-            </div>
-
-            <div id="item-container">
-                <div class="po-row">
-                    <select name="rm_sku[]" class="form-control" required <?= empty($rawMaterials) ? 'disabled' : '' ?>>
-                        <option value="">-- Cari Material di Gudang --</option>
-                        <?php foreach($rawMaterials as $rm): ?>
-                            <option value="<?= esc($rm['sku_material']) ?>">[<?= esc($rm['sku_material']) ?>] <?= esc($rm['material_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    
-                    <input type="number" name="qty[]" class="form-control qty-input" placeholder="Qty" step="0.01" required oninput="calculateTotal()" <?= empty($rawMaterials) ? 'disabled' : '' ?>>
-                    
-                    <div class="input-money">
-                        <span>Rp</span>
-                        <input type="number" name="price[]" class="price-input" placeholder="0" required oninput="calculateTotal()" <?= empty($rawMaterials) ? 'disabled' : '' ?>>
-                    </div>
-
-                    <div class="row-subtotal subtotal-display">Rp 0</div>
-                    
-                    <button type="button" class="btn-remove" onclick="this.parentElement.remove(); calculateTotal();" title="Hapus Baris" <?= empty($rawMaterials) ? 'disabled' : '' ?>>
-                        <i class="ph-bold ph-x"></i>
-                    </button>
-                </div>
-            </div>
-
-            <button type="button" class="btn-add" onclick="addItemRow()" <?= empty($rawMaterials) ? 'disabled' : '' ?>>
-                <i class="ph-bold ph-plus-circle"></i> Tambah Material Lainnya
-            </button>
-
-            <div class="grand-total-box">
-                <div class="total-title">
-                    <div style="background: rgba(255,255,255,0.1); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="ph-fill ph-calculator" style="color: #fff; font-size: 24px;"></i>
-                    </div>
-                    Total Estimasi Tagihan
-                </div>
-                <div class="total-val" id="displayTotal">Rp 0</div>
-            </div>
-
-            <button type="submit" id="btnSubmitPO" class="btn-save" <?= empty($rawMaterials) || empty($suppliers) ? 'disabled' : '' ?>>
-                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 24px;"></i> <span>Terbitkan Dokumen PO Sekarang</span>
-            </button>
-        </form>
+<div class="page-header">
+    <a href="<?= base_url('procurement') ?>" class="btn-back"><i class="ph-bold ph-arrow-left"></i> Kembali</a>
+    <div class="page-title">
+        <h1><i class="ph-fill ph-file-text" style="color: var(--brand);"></i> Buat Purchase Order</h1>
+        <p>Terbitkan dokumen pemesanan bahan baku resmi secara rapi dan profesional.</p>
     </div>
 </div>
 
+<form id="formPO" action="<?= base_url('procurement/store_po') ?>" method="post">
+    <?= csrf_field() ?>
+    
+    <div class="builder-layout">
+        <div class="left-col">
+            <div class="bento-card" style="margin-bottom: 25px;">
+                <div class="section-title"><i class="ph-fill ph-buildings"></i> Informasi Vendor & Waktu</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Vendor / Supplier Tujuan</label>
+                        <select name="supplier_id" class="form-control" required>
+                            <option value="" disabled selected>-- Pilih Vendor --</option>
+                            <?php foreach($suppliers as $sup): ?>
+                                <option value="<?= $sup['id'] ?>"><?= esc($sup['supplier_name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Dokumen</label>
+                        <input type="date" name="po_date" class="form-control" value="<?= date('Y-m-d') ?>" required style="font-family: 'Space Mono', monospace;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label>Metode & Termin Pembayaran</label>
+                    <select name="payment_term" class="form-control" required>
+                        <option value="Cash / Tunai">Cash / Tunai Keras</option>
+                        <option value="Bank Transfer (IDR)" selected>Bank Transfer (IDR)</option>
+                        <option value="Tempo 7 Hari">Hutang - Tempo 7 Hari</option>
+                        <option value="Tempo 14 Hari">Hutang - Tempo 14 Hari</option>
+                        <option value="Tempo 30 Hari">Hutang - Tempo 30 Hari</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <div class="section-title"><i class="ph-fill ph-package"></i> Rincian Material / Barang</div>
+                
+                <div class="item-builder">
+                    <div class="desktop-labels">
+                        <div>SKU / Material</div>
+                        <div>Kuantitas</div>
+                        <div>Harga Satuan</div>
+                        <div style="width: 44px;"></div>
+                    </div>
+
+                    <div id="item-container"></div>
+
+                    <button type="button" class="btn-add" onclick="addRow()"><i class="ph-bold ph-plus-square"></i> Tambah Baris Material</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="bento-card sticky-card">
+                <div class="section-title"><i class="ph-fill ph-calculator"></i> Kalkulasi Finansial</div>
+                
+                <div class="form-group">
+                    <label>PPN / Pajak Tambahan (Rp)</label>
+                    <div class="input-grp">
+                        <span>Rp</span>
+                        <input type="text" name="tax_amount" id="valTax" value="0" onkeyup="formatRupiah(this); calcTotal();" style="color:var(--brand);">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>Biaya Ongkir / Ekspedisi (Rp)</label>
+                    <div class="input-grp">
+                        <span>Rp</span>
+                        <input type="text" name="shipping_cost" id="valShip" value="0" onkeyup="formatRupiah(this); calcTotal();" style="color:var(--brand);">
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-base); padding: 20px; border-radius: 18px; border: 1px dashed var(--border-subtle);">
+                    <div class="sum-line"><span>Subtotal Barang</span> <span class="sum-val" id="dispSub">Rp 0</span></div>
+                    <div class="sum-line"><span>Pajak (Tax)</span> <span class="sum-val" id="dispTax">Rp 0</span></div>
+                    <div class="sum-line"><span>Ongkir</span> <span class="sum-val" id="dispShip">Rp 0</span></div>
+                    <div class="sum-line grand"><span>TOTAL</span> <span class="sum-val" id="dispGrand">Rp 0</span></div>
+                </div>
+
+                <button type="submit" id="btnSubmitPO" class="btn-submit">
+                    <i class="ph-bold ph-paper-plane-tilt" style="font-size: 20px;"></i> Terbitkan PO
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const rmData = <?= json_encode($rawMaterials) ?>;
 
-    // Toast Notification
-    function showToast(msg, isError = false) {
-        const toast = document.getElementById('ajaxToast');
-        document.getElementById('toastMsg').innerText = msg;
-        if(isError) {
-            toast.classList.add('error');
-            toast.innerHTML = `<i class="ph-bold ph-warning-circle" style="font-size: 20px;"></i> <span id="toastMsg">${msg}</span>`;
-        } else {
-            toast.classList.remove('error');
-            toast.innerHTML = `<i class="ph-bold ph-check-circle" style="font-size: 20px;"></i> <span id="toastMsg">${msg}</span>`;
+    function formatRupiah(angka) {
+        let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
+            split   = number_string.split(','),
+            sisa    = split[0].length % 3,
+            rupiah  = split[0].substr(0, sisa),
+            ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
+            
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
         }
-        toast.classList.add('show');
-        setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+        angka.value = rupiah;
     }
 
-    // Penambahan Baris
-    function addItemRow() {
-        if(rmData.length === 0) return;
+    function parseRupiah(rupiahString) {
+        if (!rupiahString) return 0;
+        let cleanString = rupiahString.replace(/\./g, '');
+        return parseFloat(cleanString) || 0;
+    }
 
-        let container = document.getElementById('item-container');
-        let options = '<option value="">-- Cari Material di Gudang --</option>';
-        rmData.forEach(rm => { 
-            options += `<option value="${rm.sku_material}">[${rm.sku_material}] ${rm.material_name}</option>`; 
+    function materialOptions() {
+        let html = `<option value="">-- Pilih Material --</option>`;
+        rmData.forEach(item => {
+            html += `<option value="${item.sku_material}">[${item.sku_material}] ${item.material_name}</option>`;
         });
-
-        let row = document.createElement('div');
-        row.className = 'po-row';
-        row.innerHTML = `
-            <select name="rm_sku[]" class="form-control" required>${options}</select>
-            <input type="number" name="qty[]" class="form-control qty-input" placeholder="Qty" step="0.01" required oninput="calculateTotal()">
-            <div class="input-money">
-                <span>Rp</span>
-                <input type="number" name="price[]" class="price-input" placeholder="0" required oninput="calculateTotal()">
-            </div>
-            <div class="row-subtotal subtotal-display">Rp 0</div>
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove(); calculateTotal();" title="Hapus Baris">
-                <i class="ph-bold ph-x"></i>
-            </button>
-        `;
-        
-        row.style.opacity = 0;
-        row.style.transform = "translateY(20px) scale(0.98)";
-        container.appendChild(row);
-        
-        setTimeout(() => {
-            row.style.opacity = 1;
-            row.style.transform = "translateY(0) scale(1)";
-        }, 10);
+        return html;
     }
 
-    // Kalkulator Otomatis
-    function calculateTotal() {
-        let qtys = document.querySelectorAll('.qty-input');
-        let prices = document.querySelectorAll('.price-input');
-        let subtotals = document.querySelectorAll('.subtotal-display');
-        let grandTotal = 0;
+    function addRow() {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+            <div style="margin:0;">
+                <select name="rm_sku[]" class="form-control material-select" required>
+                    ${materialOptions()}
+                </select>
+            </div>
+            <div style="margin:0;">
+                <input type="number" name="qty[]" class="form-control qty-input" step="0.01" value="1" required oninput="calcTotal()" style="text-align: center;">
+            </div>
+            <div style="margin:0;">
+                <div class="input-grp" style="border: 1px solid var(--border-subtle);">
+                    <span>Rp</span>
+                    <input type="text" name="unit_price[]" class="price-input" value="0" required onkeyup="formatRupiah(this); calcTotal();">
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; align-items:center;">
+                <button type="button" class="btn-del" onclick="this.parentElement.parentElement.remove(); calcTotal();" title="Hapus Baris"><i class="ph-bold ph-trash"></i></button>
+            </div>
+        `;
+        row.style.opacity = 0; row.style.transform = "translateY(15px)";
+        document.getElementById('item-container').appendChild(row);
+        setTimeout(() => { row.style.opacity = 1; row.style.transform = "translateY(0)"; }, 10);
+    }
 
+    function calcTotal() {
+        let subtotal = 0;
+        const qtys = document.querySelectorAll('.qty-input');
+        const prices = document.querySelectorAll('.price-input');
+        
         for(let i=0; i<qtys.length; i++) {
             let q = parseFloat(qtys[i].value) || 0;
-            let p = parseFloat(prices[i].value) || 0;
-            let sub = q * p;
-            
-            subtotals[i].innerText = 'Rp ' + sub.toLocaleString('id-ID');
-            grandTotal += sub;
+            let p = parseRupiah(prices[i].value);
+            subtotal += (q * p);
         }
 
-        document.getElementById('displayTotal').innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+        const tax = parseRupiah(document.getElementById('valTax').value);
+        const ship = parseRupiah(document.getElementById('valShip').value);
+        const grand = subtotal + tax + ship;
+
+        document.getElementById('dispSub').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+        document.getElementById('dispTax').innerText = 'Rp ' + tax.toLocaleString('id-ID');
+        document.getElementById('dispShip').innerText = 'Rp ' + ship.toLocaleString('id-ID');
+        document.getElementById('dispGrand').innerText = 'Rp ' + grand.toLocaleString('id-ID');
     }
 
-    // AJAX Form Submit
     document.getElementById('formPO').addEventListener('submit', function(e) {
         e.preventDefault(); 
         
-        const form = this;
-        const btn = document.getElementById('btnSubmitPO');
-        const btnText = btn.querySelector('span');
-        const btnIcon = btn.querySelector('i');
-        
-        btn.disabled = true;
-        btnText.innerText = "Memproses Dokumen...";
-        btnIcon.className = "ph-bold ph-spinner-gap ph-spin";
+        const rows = document.querySelectorAll('.item-row');
+        if (rows.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Kosong!', text: 'Tambahkan minimal 1 item material.', customClass: { popup: 'swal2-custom-radius' }});
+            return;
+        }
 
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
+        // Hapus titik sebelum submit ke controller
+        document.querySelectorAll('.price-input, #valTax, #valShip').forEach(input => {
+            input.value = input.value.replace(/\./g, '');
+        });
+
+        const btn = document.getElementById('btnSubmitPO');
+        btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin"></i> Menyimpan...';
+        
+        fetch(this.action, { method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                showToast(data.message);
-                
-                // Delay sebentar lalu pindah ke halaman index agar pengguna bisa melihat dokumen barunya
-                setTimeout(() => { window.location.href = "<?= base_url('/procurement') ?>"; }, 1500);
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: data.message, customClass: { popup: 'swal2-custom-radius' }});
+                setTimeout(() => { window.location.href = "<?= base_url('procurement') ?>"; }, 1500);
             } else {
-                showToast(data.message, true);
-                btn.disabled = false;
-                btnText.innerText = "Terbitkan Dokumen PO Sekarang";
-                btnIcon.className = "ph-bold ph-paper-plane-tilt";
+                Swal.fire({ icon: 'error', title: 'Gagal!', text: data.message, customClass: { popup: 'swal2-custom-radius' }});
+                btn.disabled = false; btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Terbitkan PO';
+                document.querySelectorAll('.price-input, #valTax, #valShip').forEach(input => formatRupiah(input));
             }
-        })
-        .catch(err => {
-            showToast("Koneksi Server Gagal", true);
-            btn.disabled = false;
-            btnText.innerText = "Terbitkan Dokumen PO Sekarang";
-            btnIcon.className = "ph-bold ph-paper-plane-tilt";
+        }).catch(() => {
+            Swal.fire({ icon: 'error', title: 'Error', text: "Koneksi terputus.", customClass: { popup: 'swal2-custom-radius' }});
+            btn.disabled = false; btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Terbitkan PO';
+            document.querySelectorAll('.price-input, #valTax, #valShip').forEach(input => formatRupiah(input));
         });
     });
-</script>
 
-<style>
-    @media (max-width: 1024px) {
-        .desktop-labels { display: none !important; }
-    }
-</style>
+    window.onload = function() { addRow(); };
+</script>
 
 <?= $this->endSection() ?>

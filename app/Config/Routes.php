@@ -39,9 +39,14 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->post('/setting/update_company', 'Setting::update_company');
     $routes->get('/setting/workshift_create', 'Setting::workshift_create');
     $routes->post('/setting/workshift_store', 'Setting::workshift_store');
+    
+    // --- RUTE PENGATURAN API FINGERSPOT ---
+    $routes->get('/device/settings', 'Device::settings');
+    $routes->post('/device/update_settings', 'Device::update_settings');
+    
     // Manajemen Katalog Landing Page
     $routes->post('/setting/store_catalog', 'Setting::store_catalog');
-    $routes->post('/setting/update_catalog/(:num)', 'Setting::update_catalog/$1'); // <-- TAMBAHKAN INI
+    $routes->post('/setting/update_catalog/(:num)', 'Setting::update_catalog/$1');
     $routes->get('/setting/delete_catalog/(:num)', 'Setting::delete_catalog/$1');
 
     // --- MODUL SDM & KARYAWAN (HRIS) ---
@@ -56,6 +61,7 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     // Integrasi Karyawan ke Mesin IoT
     $routes->get('/employee/push_to_machine/(:num)', 'Employee::push_to_machine/$1');
     $routes->get('/employee/sync_biometric/(:segment)', 'Employee::sync_biometric/$1');
+    $routes->get('/employee/pull_from_machine', 'Employee::pull_from_machine');
 
     // --- KONTROL HARDWARE (IOT DEVICE MAINTENANCE) ---
     $routes->get('/device', 'Device::index');
@@ -64,14 +70,25 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/device/audit_pins', 'Device::audit_pins');
 
     // --- MODUL ABSENSI & CUTI ---
-    $routes->get('/attendance', 'Attendance::index');
-    $routes->get('/attendance/sync', 'Attendance::syncData');
-    $routes->get('/attendance/manual', 'Attendance::manual');
-    $routes->post('/attendance/store_manual', 'Attendance::store_manual');
-    $routes->get('/attendance/delete/(:num)', 'Attendance::delete/$1');
+    $routes->group('attendance', function($routes) {
+        $routes->get('/', 'Attendance::index');
+        $routes->get('syncData', 'Attendance::syncData');
+        $routes->get('syncMachineTime', 'Attendance::syncMachineTime');
+        $routes->get('manual', 'Attendance::manual');
+        $routes->post('store_manual', 'Attendance::store_manual');
+        $routes->get('delete/(:num)', 'Attendance::delete/$1');
+        $routes->get('get_existing_log', 'Attendance::get_existing_log');
+        $routes->get('toggle_meal/(:num)', 'Attendance::toggle_meal/$1');
+        $routes->post('store_quick_kasbon', 'Attendance::store_quick_kasbon');
+    });
     
     $routes->get('/leave/approval', 'Leave::approval');
     $routes->get('/leave/process_action/(:num)/(:any)', 'Leave::process_action/$1/$2');
+    
+    // --- MODUL CASH ADVANCE ---
+    $routes->get('/cash_advance', 'CashAdvance::index');
+    $routes->post('/cash_advance/store', 'CashAdvance::store');
+    $routes->get('/cash_advance/delete/(:num)', 'CashAdvance::delete/$1');
 
     // --- MODUL PENGGAJIAN (PAYROLL ENGINE) ---
     $routes->get('/payroll', 'Payroll::index');
@@ -81,14 +98,20 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/payroll/delete/(:num)', 'Payroll::delete/$1');
     $routes->post('/payroll/push_to_finance', 'Payroll::push_to_finance');
 
-    // --- MODUL KEUANGAN & AKUNTANSI ---
-    $routes->get('/finance/cash_index', 'Finance::cash_index');
-    $routes->post('/finance/cash_store', 'Finance::cash_store');
-    $routes->get('/finance/cash_delete/(:num)', 'Finance::cash_delete/$1');
-
+    // ACCOUNTING
     $routes->get('/accounting', 'Accounting::index');
     $routes->get('/accounting/journal', 'Accounting::journal');
     $routes->post('/accounting/store_journal', 'Accounting::store_journal');
+    $routes->get('/accounting/void_journal/(:num)', 'Accounting::void_journal/$1');
+    $routes->get('/accounting/coa', 'Accounting::coa');
+    $routes->post('/accounting/store_account', 'Accounting::store_account');
+    $routes->get('/accounting/ledger', 'Accounting::ledger');
+    $routes->get('/accounting/print_report', 'Accounting::print_report');
+    
+    // FINANCE
+    $routes->get('/finance/cash_index', 'Finance::cash_index');
+    $routes->post('/finance/cash-store', 'Finance::cash_store');
+    $routes->get('/finance/cash-delete/(:num)', 'Finance::cash_delete/$1');
 
     // --- MODUL PENJUALAN KASIR (OFFLINE POS) ---
     $routes->get('/sales/offline', 'OfflineSales::index');
@@ -103,13 +126,21 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/wholesale/delete_customer/(:num)', 'Wholesale::delete_customer/$1');
     $routes->post('/wholesale/store_so', 'Wholesale::store_so');
     $routes->post('/wholesale/pay_installment/(:num)', 'Wholesale::pay_installment/$1');
+    $routes->get('/wholesale/ship_preorder/(:num)', 'Wholesale::ship_preorder/$1');
+    $routes->post('/wholesale/return_so/(:num)', 'Wholesale::return_so/$1');
 
-    // --- MODUL PRODUKSI & MANUFAKTUR (MES) ---
-    $routes->get('/production', 'Production::index');
-    $routes->get('/production/bom_builder', 'Production::bom_builder');
-    $routes->post('/production/store_bom', 'Production::store_bom');
-    $routes->post('/production/create_spk', 'Production::create_spk');
-    $routes->get('/production/complete_spk/(:num)', 'Production::complete_spk/$1');
+    // --- ROUTING MODUL PRODUKSI ---
+    $routes->get('production', 'Production::index');
+    $routes->get('production/bom_builder', 'Production::bom_builder');
+    $routes->post('production/store_bom', 'Production::store_bom');
+    $routes->post('production/create_spk', 'Production::create_spk');
+    $routes->post('production/add_production_log', 'Production::add_production_log');
+    $routes->get('production/print_spk/(:num)', 'Production::print_spk/$1');
+    
+    // 👇 TAMBAHKAN BARIS INI UNTUK MEMBUKA GERBANG AJAX TAHAPAN OPERASI 👇
+    $routes->get('production/get_operations/(:num)', 'Production::get_operations/$1');
+
+    
 
     // --- MODUL PEMBELIAN BARANG (PROCUREMENT) ---
     $routes->get('/procurement', 'Procurement::index');
@@ -119,19 +150,35 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->post('/procurement/store_po', 'Procurement::store_po');
     $routes->get('/procurement/receive_goods/(:num)', 'Procurement::receive_goods/$1');
     $routes->get('/procurement/delete_supplier/(:num)', 'Procurement::delete_supplier/$1');
+    $routes->get('/procurement/delete_po/(:num)', 'Procurement::delete_po/$1');
+    $routes->get('/procurement/get_supplier/(:num)', 'Procurement::get_supplier/$1');
+    $routes->post('/procurement/update_supplier/(:num)', 'Procurement::update_supplier/$1');
+    $routes->post('/procurement/pay_po/(:num)', 'Procurement::pay_po/$1');
+
 
     // --- MANAJEMEN ASET PABRIK ---
-    $routes->get('/asset', 'Asset::index');
-    $routes->post('/asset/store', 'Asset::store');
-    $routes->post('/asset/update_status/(:num)', 'Asset::update_status/$1');
-    $routes->get('/asset/delete/(:num)', 'Asset::delete/$1');
+    $routes->group('asset', function($routes) {
+        $routes->get('/', 'Asset::index');
+        $routes->post('store', 'Asset::store');
+        $routes->post('update_status/(:num)', 'Asset::update_status/$1');
+        $routes->post('delete/(:num)', 'Asset::delete/$1'); 
+    });
 
     // --- MANAJEMEN GUDANG (INVENTORY & WAREHOUSE) ---
     $routes->get('/warehouse/local-inventory', 'LocalWarehouse::index');
     $routes->post('/warehouse/store_fg', 'LocalWarehouse::store_fg');
     $routes->post('/warehouse/store_rm', 'LocalWarehouse::store_rm');
+    
+    // 👇 TAMBAHKAN 4 BARIS INI BOS 👇
+    $routes->get('/warehouse/get_fg/(:num)', 'LocalWarehouse::get_fg/$1');
+    $routes->post('/warehouse/update_fg/(:num)', 'LocalWarehouse::update_fg/$1');
+    $routes->get('/warehouse/get_rm/(:num)', 'LocalWarehouse::get_rm/$1');
+    $routes->post('/warehouse/update_rm/(:num)', 'LocalWarehouse::update_rm/$1');
+    // 👆 SAMPAI SINI 👆
+
     $routes->get('/warehouse/delete_fg/(:num)', 'LocalWarehouse::delete_fg/$1');
     $routes->get('/warehouse/delete_rm/(:num)', 'LocalWarehouse::delete_rm/$1');
+    $routes->post('/warehouse/store_adjustment', 'LocalWarehouse::store_adjustment');
     
     // Pemenuhan Pesanan Shopee
     $routes->get('/warehouse/orders', 'Warehouse::orders');
@@ -198,6 +245,8 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/marketing/shopee_discount', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
     $routes->get('/shopee/boost', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
     $routes->get('/shopee/voucher', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
+    
+    
 });
 
 // ====================================================================
@@ -222,3 +271,6 @@ $routes->get('/api/webhook/fingerspot', 'Api\Webhook::ping');
 
 // Endpoint Khusus Server Shopee (Real-Time Notification Push)
 $routes->post('/api/webhook/shopee', 'Api\ShopeeWebhook::receive');
+
+
+

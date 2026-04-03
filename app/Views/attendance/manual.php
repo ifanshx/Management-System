@@ -1,6 +1,8 @@
 <?= $this->extend('layout/template') ?>
 <?= $this->section('content') ?>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
     /* =========================================================
        1. PAGE HEADER
@@ -31,16 +33,17 @@
     .form-group { margin-bottom: 24px; }
     .form-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
     
-    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: all 0.3s; }
+    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: all 0.3s; position: relative;}
     .input-wrapper:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); background: var(--bg-surface);}
     
     .input-wrapper input, .input-wrapper select { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 14px 18px; font-size: 14px; font-weight: 700; outline: none; font-family: inherit; width: 100%; appearance: none; cursor: pointer;}
     .input-wrapper input[type="date"], .input-wrapper input[type="time"] { font-family: 'Space Mono', monospace; font-size: 15px; color: #3b82f6;}
     
-    /* Custom Select Arrow */
+    .input-loading { opacity: 0.5; pointer-events: none; }
+    .input-filled { background-color: rgba(16, 185, 129, 0.05) !important; color: #10b981 !important; border-color: #10b981 !important; transition: 0.5s; }
+
     select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 18px center; padding-right: 40px !important; }
     
-    /* Fix Calendar icon for dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s;}
     input[type="date"]::-webkit-calendar-picker-indicator:hover,
@@ -48,9 +51,6 @@
     html.dark input[type="date"]::-webkit-calendar-picker-indicator,
     html.dark input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
 
-    /* =========================================================
-       4. BUTTONS & ALERTS
-       ========================================================= */
     .btn-submit { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; padding: 18px 30px; border: none; border-radius: 16px; font-weight: 900; font-size: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.5); display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; margin-top: 10px;}
     .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -5px rgba(59, 130, 246, 0.6); }
     
@@ -83,13 +83,13 @@
             
             <div class="alert-info">
                 <i class="ph-fill ph-info" style="font-size: 20px; flex-shrink: 0; margin-top: 2px;"></i>
-                <div>Sistem akan otomatis menghitung denda keterlambatan dan durasi lembur berdasarkan jam yang Anda masukkan di bawah dan dicocokkan dengan <b>Aturan Shift</b> karyawan terkait.</div>
+                <div>Sistem akan otomatis menghitung denda keterlambatan dan durasi lembur berdasarkan jam yang Anda masukkan di bawah dan dicocokkan dengan Aturan Shift karyawan terkait.</div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Pilih Pekerja Terdaftar</label>
                 <div class="input-wrapper">
-                    <select name="employee_id" required>
+                    <select name="employee_id" id="empSelect" required onchange="fetchExistingData()">
                         <option value="" disabled selected>-- Pilih Karyawan --</option>
                         <?php foreach($employees as $emp): ?>
                             <option value="<?= esc($emp['employee_id']) ?>"><?= esc($emp['name']) ?> (<?= esc($emp['employee_id']) ?>)</option>
@@ -101,16 +101,16 @@
             <div class="form-group">
                 <label class="form-label">Tanggal Koreksi (Y-M-D)</label>
                 <div class="input-wrapper">
-                    <input type="date" name="date" value="<?= date('Y-m-d') ?>" required>
+                    <input type="date" name="date" id="dateSelect" value="<?= date('Y-m-d') ?>" required onchange="fetchExistingData()">
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">Status Kehadiran Akhir</label>
                 <div class="input-wrapper">
-                    <select name="status" required>
+                    <select name="status" id="statusSelect" required>
                         <option value="Hadir">Hadir (Kerja Normal)</option>
-                        <option value="Sakit">Sakit (Lampirkan Surat di Menu Cuti)</option>
+                        <option value="Sakit">Sakit (Lampirkan Surat di Menu Cuti)</option> 
                         <option value="Izin">Izin (Lampirkan Surat di Menu Cuti)</option>
                         <option value="Alpha">Alpha (Mangkir / Tanpa Kabar)</option>
                     </select>
@@ -121,20 +121,21 @@
         <div class="bento-card" style="border-top: 6px solid #3b82f6;">
             <div class="card-header">
                 <div class="icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="ph-bold ph-clock"></i></div>
-                <h3>Rincian Jam (Fase Scan)</h3>
+                <h3 style="flex: 1;">Rincian Jam (Fase Scan)</h3>
+                <span id="autoFillBadge" style="font-size: 10px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 6px; font-weight: 800; display: none; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="ph-bold ph-magic-wand"></i> DATA DITEMUKAN</span>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="form-group">
                     <label class="form-label">Jam Masuk</label>
-                    <div class="input-wrapper">
-                        <input type="time" name="time_in">
+                    <div class="input-wrapper" id="wrap-in">
+                        <input type="time" name="time_in" id="time_in">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Jam Pulang</label>
-                    <div class="input-wrapper">
-                        <input type="time" name="time_out">
+                    <div class="input-wrapper" id="wrap-out">
+                        <input type="time" name="time_out" id="time_out">
                     </div>
                 </div>
             </div>
@@ -146,14 +147,14 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Mulai Istirahat</label>
-                    <div class="input-wrapper">
-                        <input type="time" name="break_out">
+                    <div class="input-wrapper" id="wrap-bout">
+                        <input type="time" name="break_out" id="break_out">
                     </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Selesai Istirahat</label>
-                    <div class="input-wrapper">
-                        <input type="time" name="break_in">
+                    <div class="input-wrapper" id="wrap-bin">
+                        <input type="time" name="break_in" id="break_in">
                     </div>
                 </div>
             </div>
@@ -167,5 +168,58 @@
 
     </div>
 </form>
+
+<script>
+    function fetchExistingData() {
+        const empId = document.getElementById('empSelect').value;
+        const date  = document.getElementById('dateSelect').value;
+        
+        if (!empId || !date) return;
+
+        const inputs = ['time_in', 'time_out', 'break_out', 'break_in', 'statusSelect'];
+        inputs.forEach(id => document.getElementById(id).classList.add('input-loading'));
+
+        fetch(`<?= base_url('/attendance/get_existing_log') ?>?employee_id=${empId}&date=${date}`)
+            .then(response => response.json())
+            .then(result => {
+                inputs.forEach(id => document.getElementById(id).classList.remove('input-loading'));
+                
+                ['wrap-in', 'wrap-out', 'wrap-bout', 'wrap-bin'].forEach(id => document.getElementById(id).classList.remove('input-filled'));
+                document.getElementById('autoFillBadge').style.display = 'none';
+
+                if (result.success) {
+                    document.getElementById('autoFillBadge').style.display = 'inline-flex';
+
+                    document.getElementById('time_in').value = result.data.time_in;
+                    document.getElementById('time_out').value = result.data.time_out;
+                    document.getElementById('break_out').value = result.data.break_out;
+                    document.getElementById('break_in').value = result.data.break_in;
+                    
+                    const statusDropdown = document.getElementById('statusSelect');
+                    for(let i=0; i < statusDropdown.options.length; i++) {
+                        if(statusDropdown.options[i].value === result.data.status) {
+                            statusDropdown.selectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    if(result.data.time_in) document.getElementById('wrap-in').classList.add('input-filled');
+                    if(result.data.time_out) document.getElementById('wrap-out').classList.add('input-filled');
+                    if(result.data.break_out) document.getElementById('wrap-bout').classList.add('input-filled');
+                    if(result.data.break_in) document.getElementById('wrap-bin').classList.add('input-filled');
+                } else {
+                    document.getElementById('time_in').value = '';
+                    document.getElementById('time_out').value = '';
+                    document.getElementById('break_out').value = '';
+                    document.getElementById('break_in').value = '';
+                    document.getElementById('statusSelect').value = 'Hadir';
+                }
+            })
+            .catch(error => {
+                console.error("Gagal menarik data:", error);
+                inputs.forEach(id => document.getElementById(id).classList.remove('input-loading'));
+            });
+    }
+</script>
 
 <?= $this->endSection() ?>

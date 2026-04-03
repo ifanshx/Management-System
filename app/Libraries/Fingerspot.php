@@ -10,27 +10,38 @@ class Fingerspot
 
     public function __construct()
     {
-        $this->apiUrl   = getenv('FINGERSPOT_API_URL');
-        $this->apiToken = getenv('FINGERSPOT_API_TOKEN');
-        $this->cloudId  = getenv('FINGERSPOT_CLOUD_ID');
+        // --- MENGAMBIL DATA LANGSUNG DARI DATABASE ---
+        $db = \Config\Database::connect();
+        
+        // Kita panggil tabel fingerspot_api yang baru saja kamu buat di phpMyAdmin
+        $fsConfig = $db->table('fingerspot_api')->where('id', 1)->get()->getRowArray();
+
+        // Masukkan data ke variabel library (Jika di DB kosong, dia akan otomatis pakai default)
+        $this->apiUrl   = $fsConfig['api_url'] ?? 'https://developer.fingerspot.io/api/';
+        $this->apiToken = $fsConfig['api_token'] ?? '';
+        $this->cloudId  = $fsConfig['cloud_id'] ?? '';
     }
 
     protected function sendRequest($endpoint, $payload = [])
     {
         $client = \Config\Services::curlrequest();
         
-        $payload['cloud_id'] = $this->cloudId;
+        // Sesuai Dokumentasi: trans_id dan cloud_id diletakkan di root JSON
+        $payload['cloud_id'] = (string)$this->cloudId;
         $payload['trans_id'] = (string)time(); 
 
+        $url = rtrim($this->apiUrl, '/') . '/' . ltrim($endpoint, '/');
+
         try {
-            $response = $client->post($this->apiUrl . $endpoint, [
+            $response = $client->post($url, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->apiToken,
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json'
                 ],
-                'json'   => $payload,
-                'verify' => false 
+                'json'        => $payload,
+                'verify'      => false,
+                'http_errors' => false 
             ]);
 
             return json_decode($response->getBody(), true);
@@ -50,15 +61,29 @@ class Fingerspot
 
     public function setUserInfo($pin, $name, $privilege = "1", $password = "", $rfid = "")
     {
+        // 1. Potong nama maksimal 24 karakter agar memori mesin tidak error
+        $safeName = substr(trim($name), 0, 24);
+
+        // 2. Terjemahkan Privilege: 0/14 (Web) menjadi 1/2 (Mesin)
+        $mappedPrivilege = "1"; 
+        if ($privilege == "14" || $privilege == "2") {
+            $mappedPrivilege = "2"; // Admin
+        } elseif ($privilege == "0" || $privilege == "1") {
+            $mappedPrivilege = "1"; // User
+        }
+
+        // 3. SUSUNAN JSON WAJIB (Semua harus di-cast ke (string) sesuai format API)
         $payload = [
             'data' => [
                 'pin'       => (string)$pin,
-                'name'      => $name,
-                'privilege' => (string)$privilege,
-                'password'  => $password,
-                'rfid'      => $rfid
+                'name'      => (string)$safeName,
+                'privilege' => (string)$mappedPrivilege,
+                'password'  => (string)$password,
+                'rfid'      => (string)$rfid,
+                'template'  => "" // <--- INI DIA BIANG KEROKNYA! WAJIB ADA MESKIPUN KOSONG
             ]
         ];
+        
         return $this->sendRequest('set_userinfo', $payload);
     }
 
@@ -67,7 +92,6 @@ class Fingerspot
         return $this->sendRequest('delete_userinfo', ['pin' => (string)$pin]);
     }
 
-    // ---> INI ADALAH FUNGSI YANG HILANG DAN HARUS DITAMBAHKAN <---
     public function getAllPin()
     {
         return $this->sendRequest('get_all_pin');
@@ -75,13 +99,16 @@ class Fingerspot
 
     public function getAttlog($startDate, $endDate)
     {
-        return $this->sendRequest('get_attlog', ['start_date' => $startDate, 'end_date' => $endDate]);
+        return $this->sendRequest('get_attlog', [
+            'start_date' => (string)$startDate, 
+            'end_date'   => (string)$endDate
+        ]);
     }
 
     public function setTime($timezone = "Asia/Jakarta")
     {
         return $this->sendRequest('set_time', [
-            'timezone' => $timezone // Contoh: Asia/Jakarta, Asia/Makassar
+            'timezone' => (string)$timezone
         ]);
     }
 
