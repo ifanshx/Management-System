@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Controller;
+
 class Asset extends BaseController
 {
     protected $db;
@@ -137,7 +139,7 @@ class Asset extends BaseController
             }
 
             // =========================================================
-            // SIMPAN ASET FISIK
+            // SIMPAN ASET FISIK KE DATABASE
             // =========================================================
             $this->db->table('factory_assets')->insert([
                 'asset_code'           => $assetCode,
@@ -151,27 +153,34 @@ class Asset extends BaseController
             ]);
 
             // =========================================================
-            // AUTO JURNAL AKUNTANSI PEMBELIAN ASET
+            // AUTO JURNAL AKUNTANSI PEMBELIAN ASET (DOUBLE-ENTRY)
             // =========================================================
+            
+            // 1. Cek dan buat Akun Aset Tetap jika belum ada di CoA
             $asetAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-5000')->get()->getRowArray();
             if (!$asetAcc) {
                 $this->db->table('chart_of_accounts')->insert([
-                    'account_code' => '1-5000',
-                    'account_name' => 'Aset Tetap (Mesin, Gedung, Tanah)',
-                    'account_type' => 'ASET',
-                    'balance'      => 0
+                    'account_code'   => '1-5000',
+                    'account_name'   => 'Aset Tetap (Mesin, Gedung, Tanah)',
+                    'account_type'   => 'ASET',
+                    'normal_balance' => 'DEBIT', // Harus diisi sesuai desain DB
+                    'is_contra'      => 0,
+                    'is_active'      => 1
                 ]);
                 $asetAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-5000')->get()->getRowArray();
             }
 
+            // 2. Ambil Akun Kas / Bank tempat sumber uang keluar
             $bankAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray();
             if (!$bankAcc) {
                 throw new \Exception("Akun Bank (1-2000) tidak ditemukan di Chart of Accounts.");
             }
 
+            // 3. Masukkan Mutasi Jurnal
             if ($asetAcc && $bankAcc) {
                 $journalNumber = 'JRN-AST-' . date('YmdHis');
 
+                // Header Jurnal
                 $this->db->table('journals')->insert([
                     'journal_number'   => $journalNumber,
                     'transaction_date' => $purchaseDate,
@@ -182,32 +191,34 @@ class Asset extends BaseController
 
                 $journalId = $this->db->insertID();
 
+                // Detail Jurnal (Debit & Kredit)
                 $this->db->table('journal_items')->insertBatch([
                     [
                         'journal_id' => $journalId,
                         'account_id' => $asetAcc['id'],
-                        'debit'      => $purchasePrice,
+                        'debit'      => $purchasePrice, // Nilai aset bertambah
                         'credit'     => 0
                     ],
                     [
                         'journal_id' => $journalId,
                         'account_id' => $bankAcc['id'],
                         'debit'      => 0,
-                        'credit'     => $purchasePrice
+                        'credit'     => $purchasePrice  // Saldo bank berkurang
                     ]
                 ]);
-
-                $this->db->query("UPDATE chart_of_accounts SET balance = balance + ? WHERE id = ?", [$purchasePrice, $asetAcc['id']]);
-                $this->db->query("UPDATE chart_of_accounts SET balance = balance - ? WHERE id = ?", [$purchasePrice, $bankAcc['id']]);
             }
 
+            // Periksa jika ada kegagalan query selama proses transaksi
             if ($this->db->transStatus() === false) {
                 $this->db->transRollback();
-                throw new \Exception("Terjadi kegagalan saat menyimpan data aset dan jurnal akuntansi.");
+                throw new \Exception("Terjadi kegagalan koneksi database saat menyimpan data aset.");
             }
 
             $this->db->transCommit();
 
+            // =========================================================
+            // BERHASIL - KIRIM PESAN SUKSES
+            // =========================================================
             $msg = "Aset <b>{$assetName}</b> berhasil diregistrasi. Nilai perolehan <b>Rp " . number_format($purchasePrice, 0, ',', '.') . "</b> telah dicatat ke sistem akuntansi.";
 
             if ($assetCategory !== 'Tanah / Lahan') {
@@ -217,6 +228,7 @@ class Asset extends BaseController
             return redirect()->back()->with('success', $msg);
 
         } catch (\Throwable $e) {
+            // Rollback jika ada error agar data tidak setengah masuk
             if ($this->db->transStatus() !== false) {
                 $this->db->transRollback();
             }

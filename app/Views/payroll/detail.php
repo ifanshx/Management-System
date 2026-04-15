@@ -6,10 +6,14 @@ $totalCash = 0;
 $totalTransfer = 0;
 
 foreach($details as $d) {
-    if ($d['payment_method'] === 'Transfer') {
-        $totalTransfer += $d['net_salary'];
-    } else {
-        $totalCash += $d['net_salary'];
+    // Hanya hitung yang BUKAN anak buah (yang leader_id nya kosong)
+    // Karena anak buah gajinya sudah di-nol-kan dan ditransfer ke Mandor
+    if (empty($d['leader_id'])) {
+        if ($d['payment_method'] === 'Transfer') {
+            $totalTransfer += $d['net_salary'];
+        } else {
+            $totalCash += $d['net_salary'];
+        }
     }
 }
 ?>
@@ -69,6 +73,7 @@ foreach($details as $d) {
     .btn-disburse:hover { transform: translateY(-4px); box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5); }
     
     .detail-breakdown { font-size: 10px; color: var(--text-muted); margin-top: 6px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; line-height: 1.5;}
+    .team-badge { display: inline-block; font-size: 9px; background: var(--accent-light); color: var(--accent-main); padding: 3px 6px; border-radius: 4px; font-weight: 800; border: 1px solid rgba(37,99,235,0.2); margin-top: 6px;}
 </style>
 
 <div class="page-header">
@@ -110,14 +115,14 @@ foreach($details as $d) {
 
 <div class="bento-card" style="padding: 0;">
     <div style="padding: 20px 25px; border-bottom: 1px dashed var(--border-subtle); display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 15px; color: var(--text-main); background: rgba(0,0,0,0.01);">
-        <i class="ph-fill ph-list-numbers" style="color: var(--accent-main); font-size: 20px;"></i> Rincian Kalkulasi per Karyawan
+        <i class="ph-fill ph-list-numbers" style="color: var(--accent-main); font-size: 20px;"></i> Rincian Kalkulasi per Karyawan / Mandor
     </div>
     
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2" class="th-main" style="padding-left:25px;">Data Karyawan</th>
+                    <th rowspan="2" class="th-main" style="padding-left:25px;">Data Karyawan / Mandor</th>
                     <th rowspan="2" class="th-main" style="text-align: center;">Via</th>
                     <th rowspan="2" class="th-main" style="text-align: center;">Hadir</th>
                     <th colspan="3" class="th-green" style="text-align: center;">Pendapatan Utama & Tambahan (+)</th>
@@ -129,7 +134,7 @@ foreach($details as $d) {
                     <th class="th-green" style="text-align: right;">Upah Pokok/Prod</th>
                     <th class="th-green" style="text-align: right;">Tunjangan (All)</th>
                     <th class="th-green" style="text-align: right;">U. Lembur</th>
-                    <th class="th-red" style="text-align: right;">Kasbon (Pinjaman + Mkn)</th>
+                    <th class="th-red" style="text-align: right;">Kasbon (Team)</th>
                     <th class="th-red" style="text-align: right;">Denda Telat</th>
                     <th class="th-red" style="text-align: right;">BPJS</th>
                 </tr>
@@ -137,21 +142,36 @@ foreach($details as $d) {
             <tbody>
                 <?php foreach($details as $row): ?>
                 <?php
-                    $empMealRate = (float)$row['master_meal'];
+                    // SEMBUNYIKAN ANAK BUAH DARI TABEL! 
+                    // Karena gajinya sudah diakumulasi ke Mandor.
+                    if (!empty($row['leader_id'])) continue;
+
                     $netMealSaved = (float)$row['meal_allowance'];
-                    $grossMeal = $empMealRate * $row['total_present']; 
-                    $mealDeduction = $grossMeal - $netMealSaved; 
-                    $takenMealDays = ($empMealRate > 0) ? round($mealDeduction / $empMealRate) : 0;
+                    $totalTunjanganLengkap = $row['position_allowance'] + $netMealSaved + $row['transport_allowance'];
+                    $totalAllKasbon = $row['cash_advance'];
                     
-                    $totalTunjanganLengkap = $row['position_allowance'] + $grossMeal + $row['transport_allowance'];
-                    $totalAllKasbon = $row['cash_advance'] + $mealDeduction;
+                    // Cek apakah karyawan ini adalah seorang Mandor (punya anak buah)
+                    $isMandor = false;
+                    foreach($details as $sub) {
+                        if($sub['leader_id'] === $row['employee_id']) {
+                            $isMandor = true; break;
+                        }
+                    }
                 ?>
                 <tr>
                     <td style="padding-left:25px;">
-                        <div style="font-weight: 900; font-size: 14px; margin-bottom: 4px; color: var(--text-main);"><?= esc($row['name']) ?></div>
+                        <div style="font-weight: 900; font-size: 14px; margin-bottom: 4px; color: var(--text-main);">
+                            <?= esc($row['name']) ?>
+                            <?php if($isMandor): ?>
+                                <i class="ph-fill ph-users-three" style="color: #2563eb;" title="Ketua Regu / Mandor"></i>
+                            <?php endif; ?>
+                        </div>
                         <div style="font-size: 11px; color: var(--text-muted); font-family: 'Space Mono', monospace;">
                             <i class="ph-bold ph-identification-card"></i> <?= esc($row['employee_id']) ?>
                         </div>
+                        <?php if($isMandor): ?>
+                            <div class="team-badge">Slip Gaji Kumulatif (Team)</div>
+                        <?php endif; ?>
                     </td>
                     
                     <td style="text-align: center;">
@@ -172,7 +192,8 @@ foreach($details as $d) {
                         <span class="font-mono text-plus">+<?= number_format($totalTunjanganLengkap, 0, ',', '.') ?></span>
                         <div class="detail-breakdown">
                             <?php if($row['position_allowance'] > 0) echo "<div>Jab: ".number_format($row['position_allowance'], 0, ',', '.')."</div>"; ?>
-                            <?php if($grossMeal > 0) echo "<div>Mkn ({$row['total_present']}x): ".number_format($grossMeal, 0, ',', '.')."</div>"; ?>
+                            <?php if($netMealSaved > 0) echo "<div>Mkn(Sisa Bersih): ".number_format($netMealSaved, 0, ',', '.')."</div>"; ?>
+                            <?php if(isset($row['overtime_meal_allowance']) && $row['overtime_meal_allowance'] > 0) echo "<div style='color:#64748b;'>Mkn Lmbr (Telah Cair): ".number_format($row['overtime_meal_allowance'], 0, ',', '.')."</div>"; ?>
                             <?php if($row['transport_allowance'] > 0) echo "<div>Trnspt: ".number_format($row['transport_allowance'], 0, ',', '.')."</div>"; ?>
                         </div>
                     </td>
@@ -182,8 +203,7 @@ foreach($details as $d) {
                     <td style="text-align: right; <?= $totalAllKasbon > 0 ? 'background: rgba(239, 68, 68, 0.05);' : '' ?>">
                         <span class="font-mono text-min" style="<?= $totalAllKasbon > 0 ? 'font-weight: 900;' : '' ?>">-<?= number_format($totalAllKasbon, 0, ',', '.') ?></span>
                         <div class="detail-breakdown" style="color: #ef4444;">
-                            <?php if($row['cash_advance'] > 0) echo "<div>Pabrik: ".number_format($row['cash_advance'], 0, ',', '.')."</div>"; ?>
-                            <?php if($mealDeduction > 0) echo "<div>Makan ({$takenMealDays}x): ".number_format($mealDeduction, 0, ',', '.')."</div>"; ?>
+                            <?php if($row['cash_advance'] > 0) echo "<div>Kalkulasi Otomatis</div>"; ?>
                         </div>
                     </td>
 
@@ -208,7 +228,7 @@ foreach($details as $d) {
 
 <?php if($payroll['status'] == 'Draft'): ?>
     <div class="doc-info-label" style="margin-top: 30px; font-size: 13px;">Otorisasi Pencairan Dana (Otomatis Dipecah & Masuk Buku Besar)</div>
-    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; font-weight: 600;">Sistem telah mendeteksi profil pembayaran masing-masing karyawan dan akan otomatis memotong uang dari Kas Laci / Bank serta membuat Jurnal Akuntansi.</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; font-weight: 600;">Sistem akan memotong kas laci/bank dan otomatis memilah beban gaji dengan kasbon secara akurat (Balance).</div>
     
     <div class="split-grid">
         <div class="split-box">
@@ -268,7 +288,7 @@ foreach($details as $d) {
             title: `Otorisasi Pencairan Gaji?`,
             html: `Sistem akan memotong kas operasional Anda sejumlah:<br>
                    <b style="color: #10b981; font-size: 16px;">Rp ${cash} (Tunai Laci)</b> dan <b style="color: #8b5cf6; font-size: 16px;">Rp ${transfer} (Transfer ATM)</b>.<br><br>
-                   <span style="color:#ef4444; font-size: 12px; font-weight:700;"><i class="ph-bold ph-warning"></i> Dokumen akan terkunci dan masuk ke Buku Besar. Lanjutkan?</span>`,
+                   <span style="color:#ef4444; font-size: 12px; font-weight:700;"><i class="ph-bold ph-warning"></i> Dokumen akan terkunci dan otomatis melunasi Piutang Karyawan di Buku Besar. Lanjutkan?</span>`,
             icon: 'warning', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
             confirmButtonText: 'Ya, Cairkan Sekarang!', cancelButtonText: 'Batal',
             background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }

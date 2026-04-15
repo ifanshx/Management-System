@@ -1,11 +1,21 @@
 <?php
 
 namespace App\Controllers;
+
 use App\Models\LeaveModel;
 use App\Models\EmployeeModel;
 
 class Leave extends BaseController
 {
+    // Fungsi bantuan (Helper) untuk mengecek hak akses HRD/Admin
+    private function isAuthorized()
+    {
+        $role = session()->get('role');
+        $dept = strtolower(session()->get('department_name') ?? session()->get('department') ?? '');
+        $isHR = str_contains($dept, 'hrd') || str_contains($dept, 'manajemen');
+        return ($role === 'admin' || $isHR);
+    }
+
     // ==================================================
     // AREA KARYAWAN (ESS) - Mengajukan Cuti
     // ==================================================
@@ -70,8 +80,8 @@ class Leave extends BaseController
     // ==================================================
     public function approval()
     {
-        // Hanya Admin / HRD yang boleh masuk
-        if (!session()->get('isLoggedIn') || (session()->get('role') !== 'admin' && session()->get('department') !== 'Manajemen & HRD')) {
+        // PERBAIKAN: Cek otorisasi cerdas menggunakan fungsi Helper
+        if (!session()->get('isLoggedIn') || !$this->isAuthorized()) {
             return redirect()->to('/portal')->with('error', 'Akses ditolak.');
         }
 
@@ -86,6 +96,11 @@ class Leave extends BaseController
 
     public function process_action($id, $action)
     {
+        // PERBAIKAN KEMANAN: Mencegah eksekusi URL langsung oleh Karyawan Biasa
+        if (!session()->get('isLoggedIn') || !$this->isAuthorized()) {
+            return redirect()->to('/portal')->with('error', 'Akses ditolak.');
+        }
+
         $leaveModel = new LeaveModel();
         $empModel = new EmployeeModel();
         $db = \Config\Database::connect();

@@ -1,0 +1,291 @@
+[2026-02-03 07:51:47][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-03 07:51","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 07:51:51][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-03 07:51","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 07:52:25][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-03 07:52","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 07:52:51][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1022","scan":"2026-02-03 07:52","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 07:55:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-03 07:55","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:00:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1001","scan":"2026-02-03 07:59","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:01:00][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 08:00","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:01:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 08:00","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:02:15][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-03 08:02","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:02:31][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 08:02","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:04:46][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 08:04","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:07:44][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1021","scan":"2026-02-03 08:07","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:07:57][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1021","scan":"2026-02-03 08:07","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:08:15][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-03 08:08","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:09:54][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 08:09","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:09:57][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 08:09","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:10:02][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 08:09","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:12:06][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-03 08:11","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:13:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1003","scan":"2026-02-03 08:13","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:27:27][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-03 08:27","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:32:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 08:32","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:32:41][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 08:32","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:33:09][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 08:32","verify":99,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:33:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 08:33","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 08:33:24][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 08:33","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 09:15:45][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 09:15","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 09:38:40][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 09:38","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 09:38:46][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 09:38","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:29:18][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-03 11:29","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:30:32][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 11:30","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:30:39][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 11:30","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:30:46][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 11:30","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:30:56][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 11:30","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-03 11:30","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:23][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1023","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:38][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:44][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:50][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:31:57][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 11:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:32:11][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 11:32","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:32:23][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-03 11:32","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:33:33][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-03 11:33","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:34:11][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1022","scan":"2026-02-03 11:34","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:34:31][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-03 11:34","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:36:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 11:35","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 11:36:07][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 11:35","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:18:33][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-03 12:18","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:18:57][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1027","scan":"2026-02-03 12:18","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:20:35][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1008","scan":"2026-02-03 12:20","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:24:02][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 12:23","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:24:12][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 12:24","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:24:24][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 12:24","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:24:28][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 12:24","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:24:53][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 12:24","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:25:28][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-03 12:25","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:25:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-03 12:25","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:25:46][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-03 12:25","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:26:34][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-03 12:26","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:26:45][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 12:26","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:29:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1022","scan":"2026-02-03 12:29","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:30:48][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-03 12:30","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:31:56][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-03 12:31","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:32:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-03 12:32","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:33:38][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 12:33","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:33:49][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-03 12:33","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:33:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-03 12:33","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:39:47][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 12:39","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 12:39:50][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 12:39","verify":4,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:01:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1027","scan":"2026-02-03 16:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109268487.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:01:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1027","scan":"2026-02-03 16:01","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109275935.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:03:12][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-03 16:03","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109391846.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:03:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-03 16:03","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109399212.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:03:31][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-03 16:03","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109411074.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:03:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-03 16:03","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109417201.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:05:44][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 16:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109544403.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:05:48][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 16:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109548424.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:05:51][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 16:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109551852.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:05:59][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 16:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109559076.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:06:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-03 16:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109568577.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:07:01][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-03 16:06","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109621245.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:07:06][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-03 16:06","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109626902.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:07:10][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-03 16:06","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109629965.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:07:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-03 16:07","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109649582.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:08:30][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-03 16:08","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109710314.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:08:52][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 16:08","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109732618.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:09:04][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-03 16:08","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:09:59][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1008","scan":"2026-02-03 16:09","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109799033.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:10:02][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1008","scan":"2026-02-03 16:09","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109802672.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:12:27][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-03 16:12","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770109947155.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:16:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-03 16:16","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770110176676.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:18:48][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1003","scan":"2026-02-03 16:18","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770110328047.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:24:30][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1021","scan":"2026-02-03 16:24","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770110669955.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:33:22][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-03 16:33","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770111202479.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:34:31][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-03 16:34","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770111270923.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 16:36:59][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-03 16:36","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1770111418792.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-03 17:03:30][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1001","scan":"2026-02-03 17:03","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------

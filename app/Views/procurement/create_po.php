@@ -28,7 +28,7 @@
     .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--bg-soft); }
     select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; cursor: pointer;}
 
-    .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1.5fr auto; gap: 15px; background: var(--bg-base); padding: 15px; border-radius: 18px; border: 1px solid var(--border-subtle); margin-bottom: 15px; align-items: center; transition: 0.3s;}
+    .item-row { display: grid; grid-template-columns: 2.5fr 1.2fr 1.5fr auto; gap: 15px; background: var(--bg-base); padding: 15px; border-radius: 18px; border: 1px solid var(--border-subtle); margin-bottom: 15px; align-items: center; transition: 0.3s;}
     .item-row:hover { border-color: var(--brand); box-shadow: 0 8px 20px -8px var(--bg-soft); transform: translateY(-2px);}
     @media (max-width: 640px) { .item-row { grid-template-columns: 1fr; position: relative; padding-top: 35px;} .item-row .btn-del { position: absolute; top: 10px; right: 10px; } }
 
@@ -50,15 +50,17 @@
     .btn-submit { width: 100%; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; border: none; padding: 20px; border-radius: 18px; font-size: 15px; font-weight: 900; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px -8px rgba(79, 70, 229, 0.6); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px;}
     .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -8px rgba(79, 70, 229, 0.8); }
 
-    .desktop-labels { display: grid; grid-template-columns: 2.5fr 1fr 1.5fr auto; gap: 15px; padding: 0 15px 10px 15px; font-size: 11px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .desktop-labels { display: grid; grid-template-columns: 2.5fr 1.2fr 1.5fr auto; gap: 15px; padding: 0 15px 10px 15px; font-size: 11px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     @media (max-width: 1024px) { .desktop-labels { display: none !important; } }
+    
+    .unit-label { background: rgba(37,99,235,0.08) !important; color: var(--brand) !important; border-left: 1px solid var(--border-subtle); border-right: none !important; font-weight: 900 !important;}
 </style>
 
 <div class="page-header">
     <a href="<?= base_url('procurement') ?>" class="btn-back"><i class="ph-bold ph-arrow-left"></i> Kembali</a>
     <div class="page-title">
         <h1><i class="ph-fill ph-file-text" style="color: var(--brand);"></i> Buat Purchase Order</h1>
-        <p>Terbitkan dokumen pemesanan bahan baku resmi secara rapi dan profesional.</p>
+        <p>Terbitkan dokumen pemesanan bahan baku resmi secara rapi dan otomatis ke WhatsApp Supplier.</p>
     </div>
 </div>
 
@@ -75,7 +77,10 @@
                         <select name="supplier_id" class="form-control" required>
                             <option value="" disabled selected>-- Pilih Vendor --</option>
                             <?php foreach($suppliers as $sup): ?>
-                                <option value="<?= $sup['id'] ?>"><?= esc($sup['supplier_name']) ?></option>
+                                <?php $hasPhone = !empty(preg_replace('/[^0-9]/', '', $sup['phone'])); ?>
+                                <option value="<?= $sup['id'] ?>">
+                                    <?= esc($sup['supplier_name']) ?> <?= $hasPhone ? '' : '(WA Kosong)' ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -97,19 +102,19 @@
             </div>
 
             <div class="bento-card">
-                <div class="section-title"><i class="ph-fill ph-package"></i> Rincian Material / Barang</div>
+                <div class="section-title"><i class="ph-fill ph-package"></i> Rincian Material / Barang Penolong</div>
                 
                 <div class="item-builder">
                     <div class="desktop-labels">
                         <div>SKU / Material</div>
-                        <div>Kuantitas</div>
-                        <div>Harga Satuan</div>
+                        <div style="text-align: center;">Kuantitas (Qty)</div>
+                        <div style="text-align: center;">Harga Beli Satuan</div>
                         <div style="width: 44px;"></div>
                     </div>
 
                     <div id="item-container"></div>
 
-                    <button type="button" class="btn-add" onclick="addRow()"><i class="ph-bold ph-plus-square"></i> Tambah Baris Material</button>
+                    <button type="button" class="btn-add" onclick="addRow()"><i class="ph-bold ph-plus-square"></i> Tambah Baris Pembelian</button>
                 </div>
             </div>
         </div>
@@ -138,7 +143,7 @@
                     <div class="sum-line"><span>Subtotal Barang</span> <span class="sum-val" id="dispSub">Rp 0</span></div>
                     <div class="sum-line"><span>Pajak (Tax)</span> <span class="sum-val" id="dispTax">Rp 0</span></div>
                     <div class="sum-line"><span>Ongkir</span> <span class="sum-val" id="dispShip">Rp 0</span></div>
-                    <div class="sum-line grand"><span>TOTAL</span> <span class="sum-val" id="dispGrand">Rp 0</span></div>
+                    <div class="sum-line grand"><span>TOTAL PO</span> <span class="sum-val" id="dispGrand">Rp 0</span></div>
                 </div>
 
                 <button type="submit" id="btnSubmitPO" class="btn-submit">
@@ -177,9 +182,18 @@
     function materialOptions() {
         let html = `<option value="">-- Pilih Material --</option>`;
         rmData.forEach(item => {
-            html += `<option value="${item.sku_material}">[${item.sku_material}] ${item.material_name}</option>`;
+            // SINKRONISASI: Menggunakan purchase_uom karena kita membeli ke supplier
+            let uom = item.purchase_uom || item.unit || 'PCS';
+            html += `<option value="${item.sku_material}" data-unit="${uom}">[${item.sku_material}] ${item.material_name}</option>`;
         });
         return html;
+    }
+
+    function updateUnitLabel(selElement) {
+        let selectedOption = selElement.options[selElement.selectedIndex];
+        let unit = selectedOption.getAttribute('data-unit') || 'Unit';
+        let row = selElement.closest('.item-row');
+        row.querySelector('.unit-label').innerText = unit;
     }
 
     function addRow() {
@@ -187,12 +201,15 @@
         row.className = 'item-row';
         row.innerHTML = `
             <div style="margin:0;">
-                <select name="rm_sku[]" class="form-control material-select" required>
+                <select name="rm_sku[]" class="form-control material-select" required onchange="updateUnitLabel(this)">
                     ${materialOptions()}
                 </select>
             </div>
             <div style="margin:0;">
-                <input type="number" name="qty[]" class="form-control qty-input" step="0.01" value="1" required oninput="calcTotal()" style="text-align: center;">
+                <div class="input-grp" style="border: 1px solid var(--border-subtle);">
+                    <input type="number" name="qty[]" class="qty-input" step="0.01" value="1" required oninput="calcTotal()" style="text-align: center; font-size: 16px;">
+                    <span class="unit-label">Unit</span>
+                </div>
             </div>
             <div style="margin:0;">
                 <div class="input-grp" style="border: 1px solid var(--border-subtle);">
@@ -239,20 +256,43 @@
             return;
         }
 
-        // Hapus titik sebelum submit ke controller
         document.querySelectorAll('.price-input, #valTax, #valShip').forEach(input => {
             input.value = input.value.replace(/\./g, '');
         });
 
         const btn = document.getElementById('btnSubmitPO');
-        btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin"></i> Menyimpan...';
+        btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin"></i> Menerbitkan PO...';
         
         fetch(this.action, { method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                Swal.fire({ icon: 'success', title: 'Berhasil!', text: data.message, customClass: { popup: 'swal2-custom-radius' }});
-                setTimeout(() => { window.location.href = "<?= base_url('procurement') ?>"; }, 1500);
+                if(data.wa_link) {
+                    Swal.fire({
+                        title: 'PO Berhasil Diterbitkan!',
+                        text: 'Pemesanan sudah tercatat di ERP. Apakah Anda ingin langsung mengirim pesanan ini ke WhatsApp Supplier?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="ph-bold ph-whatsapp-logo" style="font-size:18px;"></i> Buka WhatsApp',
+                        cancelButtonText: 'Tutup Saja',
+                        confirmButtonColor: '#25D366', 
+                        cancelButtonColor: '#64748b',
+                        customClass: { popup: 'swal2-custom-radius' }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.open(data.wa_link, '_blank');
+                        }
+                        window.location.href = "<?= base_url('procurement') ?>"; 
+                    });
+                } else {
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'Berhasil!', 
+                        html: data.message + '<br><br><span style="font-size:12px; color:#ef4444;"><i class="ph-fill ph-warning-circle"></i> Info: Vendor ini tidak memiliki nomor HP valid. Tidak bisa kirim WA otomatis.</span>', 
+                        customClass: { popup: 'swal2-custom-radius' }
+                    });
+                    setTimeout(() => { window.location.href = "<?= base_url('procurement') ?>"; }, 2500);
+                }
             } else {
                 Swal.fire({ icon: 'error', title: 'Gagal!', text: data.message, customClass: { popup: 'swal2-custom-radius' }});
                 btn.disabled = false; btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Terbitkan PO';

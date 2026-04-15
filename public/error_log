@@ -23,3 +23,6 @@ Stack trace:
 #0 {main}
   thrown in /home/uwjqdfka/test.noric-management.my.id/index.php on line 51
 [01-Apr-2026 14:27:12 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Procurement::receive_goods() in /home/uwjqdfka/test/app/Controllers/Procurement.php on line 353
+[11-Apr-2026 10:40:11 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::sync_old_po() in /home/uwjqdfka/test/app/Controllers/Production.php on line 1246
+[11-Apr-2026 10:40:13 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::sync_old_po() in /home/uwjqdfka/test/app/Controllers/Production.php on line 1246
+[12-Apr-2026 04:02:15 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::add_production_log() in /home/uwjqdfka/test/app/Controllers/Production.php on line 936

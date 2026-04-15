@@ -1,0 +1,6 @@
+[2026-02-22 10:43:18][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-22 10:43","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771731797772.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-22 13:47:12][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-22 13:46","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771742831837.jpeg","work_code":null}}
+--------------------------------------------------------------------------------

@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers;
-use App\Controllers\Shopee;
 
 class Wholesale extends BaseController
 {
@@ -11,17 +10,52 @@ class Wholesale extends BaseController
     {
         $this->db = \Config\Database::connect();
         
-        // AUTO-PATCH: Mencegah error ENUM saat update status ke RETURNED
-        try {
-            $this->db->query("ALTER TABLE b2b_sales_orders MODIFY COLUMN status ENUM('PENDING','PARTIAL','PAID','RETURNED') DEFAULT 'PENDING'");
-        } catch (\Exception $e) {
-            // Abaikan jika sudah pernah dialter
-        }
+        // AUTO-PATCH SCHEMA
+        try { $this->db->query("ALTER TABLE b2b_sales_orders MODIFY COLUMN status ENUM('PENDING','PARTIAL','PAID','RETURNED') DEFAULT 'PENDING'"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_orders ADD COLUMN discount DECIMAL(15,2) DEFAULT 0 AFTER total_amount"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_orders ADD COLUMN discount_percent INT DEFAULT 0 AFTER discount"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN additional_fee DECIMAL(15,2) DEFAULT 0 AFTER price"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN additional_note VARCHAR(255) NULL AFTER additional_fee"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN shipped_qty INT DEFAULT 0 AFTER qty"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_returns MODIFY COLUMN refund_type ENUM('REDUCE_RECEIVABLE','CASH_REFUND','CUSTOMER_CREDIT','REPAIR_REPLACE') DEFAULT 'REDUCE_RECEIVABLE'"); } catch (\Exception $e) {}
+        
+        // Fix null values
+        try { $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = 0 WHERE shipped_qty IS NULL"); } catch (\Exception $e) {}
+        try { $this->db->query("UPDATE b2b_sales_orders SET shipping_status = 'PENDING' WHERE shipping_status = 'PRE-ORDER'"); } catch (\Exception $e) {}
+        
+        // AUTO PATCH UNTUK PRODUKSI & POIN LOYALTY
+        try { $this->db->query("ALTER TABLE work_orders ADD COLUMN so_id INT NULL AFTER id"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE work_orders ADD COLUMN production_notes VARCHAR(255) NULL AFTER planned_qty"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_customers ADD COLUMN reward_points INT DEFAULT 0 AFTER address"); } catch (\Exception $e) {}
     }
 
-    public function index()
+    private function normalizePhone(?string $phone): string
     {
-        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+        $phone = trim((string)$phone);
+        if ($phone === '') return '';
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if ($phone === '') return '';
+
+        if (substr($phone, 0, 1) === '0') {
+            $phone = '62' . substr($phone, 1);
+        } elseif (substr($phone, 0, 2) !== '62') {
+            if (substr($phone, 0, 1) === '8') {
+                $phone = '62' . $phone;
+            }
+        }
+
+        if (!preg_match('/^62[0-9]{8,15}$/', $phone)) {
+            return '';
+        }
+        return $phone;
+    }
+
+    public function index(): string
+    {
+        if (!session()->get('isLoggedIn')) {
+            header("Location: " . base_url('/portal'));
+            exit;
+        }
 
         $salesOrders = $this->db->table('b2b_sales_orders')
             ->select('b2b_sales_orders.*, b2b_customers.company_name')
@@ -42,51 +76,36 @@ class Wholesale extends BaseController
                     ->where('so_item_id', $item['id'])
                     ->get()->getRowArray();
 
+                $item['shipped_qty']    = (int)($item['shipped_qty'] ?? 0);
+                $item['unshipped_qty']  = max(0, (int)$item['qty'] - $item['shipped_qty']);
                 $item['returned_qty']   = (int)($returned['qty_return'] ?? 0);
                 $item['returnable_qty'] = max(0, (int)$item['qty'] - $item['returned_qty']);
             }
 
-            $returns = $this->db->table('b2b_sales_returns')
-                ->where('so_id', $so['id'])
-                ->orderBy('id', 'DESC')
-                ->get()->getResultArray();
-
+            $returns = $this->db->table('b2b_sales_returns')->where('so_id', $so['id'])->orderBy('id', 'DESC')->get()->getResultArray();
             $so['items']   = $items;
             $so['returns'] = $returns; 
         }
 
         $customers = $this->db->table('b2b_customers')->orderBy('company_name', 'ASC')->get()->getResultArray();
-        
-        $products  = $this->db->table('warehouse_inventory')
-                              ->select('sku, item_name, physical_stock, hpp, wholesale_price')
-                              ->like('sku', 'PRD-', 'after')
-                              ->get()->getResultArray();
+        $products  = $this->db->table('warehouse_inventory')->select('sku, item_name, physical_stock, hpp, wholesale_price')->like('sku', 'PRD-', 'after')->get()->getResultArray();
+        $company   = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
 
-        $data = [
-            'title'       => 'B2B Wholesale & Piutang',
-            'salesOrders' => $salesOrders,
-            'customers'   => $customers,
-            'products'    => $products
-        ];
-
+        $data = ['title' => 'B2B Wholesale & Piutang', 'salesOrders' => $salesOrders, 'customers' => $customers, 'products' => $products, 'company' => $company];
         return view('wholesale/index', $data);
     }
 
-    private function cleanRupiah($string)
+    private function cleanRupiah(?string $string): float
     {
-        if(empty($string)) return 0;
+        if (empty($string)) return 0.0;
         $cleanString = str_replace('.', '', $string);
         $cleanString = str_replace(',', '.', $cleanString);
         return (float) $cleanString;
     }
 
-    private function getReturnedQtyBySoItem($soItemId)
+    private function getReturnedQtyBySoItem(int $soItemId): int
     {
-        $row = $this->db->table('b2b_sales_return_items')
-            ->selectSum('qty_return')
-            ->where('so_item_id', $soItemId)
-            ->get()->getRowArray();
-
+        $row = $this->db->table('b2b_sales_return_items')->selectSum('qty_return')->where('so_item_id', $soItemId)->get()->getRowArray();
         return (int)($row['qty_return'] ?? 0);
     }
 
@@ -97,130 +116,148 @@ class Wholesale extends BaseController
 
             $customerId = $this->request->getPost('customer_id');
             $orderType  = $this->request->getPost('order_type') ?? 'READY'; 
-            
             $fgSkus     = $this->request->getPost('fg_sku'); 
             $qtys       = $this->request->getPost('qty');     
             $prices     = $this->request->getPost('unit_price'); 
-            
-            $dpRaw      = $this->request->getPost('dp_amount');
-            $dpAmount   = $this->cleanRupiah($dpRaw);
-            $dueDate    = $this->request->getPost('due_date');
+            $addFees    = $this->request->getPost('additional_fee');
+            $addNotes   = $this->request->getPost('additional_note');
+            $dpAmount    = $this->cleanRupiah($this->request->getPost('dp_amount'));
+            $discPercent = (int)$this->request->getPost('discount_percent');
+            $dueDate     = $this->request->getPost('due_date');
 
-            if(empty($fgSkus) || count($fgSkus) === 0) {
-                throw new \Exception("Anda harus memilih minimal 1 produk.");
-            }
+            if ($discPercent < 0) $discPercent = 0; if ($discPercent > 100) $discPercent = 100;
+            if (empty($fgSkus) || count($fgSkus) === 0) throw new \Exception("Anda harus memilih minimal 1 produk.");
 
-            $totalAmount = 0;
-            $totalHppCost = 0; 
-            $validItems = [];
+            $totalAmount  = 0; $totalHppCost = 0; $validItems   = [];
 
             for ($i = 0; $i < count($fgSkus); $i++) {
-                if(!empty($fgSkus[$i])) {
-                    $sku = $fgSkus[$i];
-                    $qty = (int)$qtys[$i];
-                    $price = $this->cleanRupiah($prices[$i]);
+                if (!empty($fgSkus[$i])) {
+                    $sku     = $fgSkus[$i]; $qty = (int)$qtys[$i]; $price = $this->cleanRupiah($prices[$i]);
+                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah($addFees[$i]) : 0;
+                    $addNote = $addNotes[$i] ?? '';
 
-                    if ($qty <= 0 || $price <= 0) continue;
+                    if ($qty <= 0 || ($price + $addFee) <= 0) continue;
 
                     $stock = $this->db->table('warehouse_inventory')->where('sku', $sku)->get()->getRowArray();
                     
                     if ($orderType === 'READY') {
-                        if(!$stock || $stock['physical_stock'] < $qty) {
-                            throw new \Exception("GAGAL! Pesanan ini bersifat Ready Stock, tapi sisa {$sku} di gudang tidak cukup. Pilih tipe Pre-Order.");
-                        }
-                    }
-
-                    $subtotal = $qty * $price;
-                    $totalAmount += $subtotal;
-                    
-                    if ($orderType === 'READY') {
+                        if (!$stock || $stock['physical_stock'] < $qty) throw new \Exception("GAGAL! Pesanan bersifat Ready Stock, sisa {$sku} di gudang tidak mencukupi.");
                         $totalHppCost += ($qty * ($stock['hpp'] ?? 0));
                     }
 
+                    $subtotal = $qty * ($price + $addFee);
+                    $totalAmount += $subtotal;
+                    
                     $validItems[] = [
-                        'sku' => $sku,
-                        'qty' => $qty,
-                        'price' => $price,
-                        'subtotal' => $subtotal
+                        'sku' => $sku, 'qty' => $qty, 'price' => $price,
+                        'additional_fee' => $addFee, 'additional_note' => $addNote, 'subtotal' => $subtotal
                     ];
                 }
             }
 
             if (count($validItems) === 0) throw new \Exception("Data produk tidak valid.");
-            if ($dpAmount > $totalAmount) throw new \Exception("DP (Rp " . number_format($dpAmount,0,',','.') . ") melebihi Grand Total.");
+            
+            $discAmount = $totalAmount * ($discPercent / 100);
+            $grandTotal = $totalAmount - $discAmount;
+            if ($grandTotal < 0) $grandTotal = 0;
+            if ($dpAmount > $grandTotal) throw new \Exception("DP melebihi Grand Total (setelah diskon).");
 
-            $status = ($dpAmount >= $totalAmount) ? 'PAID' : ($dpAmount > 0 ? 'PARTIAL' : 'PENDING');
-            $soNumber = "SO-" . date('Ymd') . "-" . rand(1000,9999);
-            $orderStatus = ($orderType === 'PREORDER') ? 'PRE-ORDER' : 'SHIPPED'; 
+            $status      = ($dpAmount >= $grandTotal) ? 'PAID' : ($dpAmount > 0 ? 'PARTIAL' : 'PENDING');
+            $soNumber    = "SO-" . date('Ymd') . "-" . rand(1000, 9999);
+            
+            $orderStatus = ($orderType === 'READY') ? 'SHIPPED' : 'PENDING'; 
 
             $this->db->table('b2b_sales_orders')->insert([
-                'so_number'    => $soNumber,
-                'customer_id'  => $customerId,
-                'order_date'   => date('Y-m-d'),
-                'due_date'     => $dueDate,
-                'total_amount' => $totalAmount,
-                'paid_amount'  => $dpAmount,
-                'status'       => $status,
+                'so_number' => $soNumber, 'customer_id' => $customerId, 'order_date' => date('Y-m-d'),
+                'due_date' => $dueDate, 'total_amount' => $grandTotal, 'discount' => $discAmount,
+                'discount_percent' => $discPercent, 'paid_amount' => $dpAmount, 'status' => $status,
                 'shipping_status' => $orderStatus
             ]);
             $soId = $this->db->insertID();
 
-            foreach($validItems as $item) {
+            // LOGIKA TAMBAH POIN: 1 Poin per Rp 100.000 transaksi
+            $pointsEarned = floor($grandTotal / 100000);
+            if ($pointsEarned > 0) {
+                $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsEarned, $customerId]);
+            }
+
+            $autoSpkCreated = 0; $missingBomSkus = [];
+
+            foreach ($validItems as $item) {
+                $shippedQty = ($orderType === 'READY') ? $item['qty'] : 0;
+                
                 $this->db->table('b2b_sales_order_items')->insert([
-                    'so_id'    => $soId,
-                    'fg_sku'   => $item['sku'],
-                    'qty'      => $item['qty'],
-                    'price'    => $item['price'],
-                    'subtotal' => $item['subtotal']
+                    'so_id' => $soId, 'fg_sku' => $item['sku'], 'qty' => $item['qty'],
+                    'shipped_qty' => $shippedQty, 'price' => $item['price'], 'additional_fee' => $item['additional_fee'],
+                    'additional_note' => $item['additional_note'], 'subtotal' => $item['subtotal']
                 ]);
                 
                 if ($orderType === 'READY') {
                     $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$item['qty'], $item['sku']]);
+                } 
+                else if ($orderType === 'PREORDER') {
+                    $bom = $this->db->table('bom_headers')->where('fg_sku', $item['sku'])->orderBy('id', 'DESC')->get()->getRowArray();
+                    if ($bom) {
+                        $dateStr = date('Ymd');
+                        $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                        if ($lastSpk) {
+                            $parts = explode('-', $lastSpk['spk_number']);
+                            $seq = intval(end($parts)) + 1;
+                        } else {
+                            $seq = 1;
+                        }
+                        $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+                        $this->db->table('work_orders')->insert([
+                            'so_id'            => $soId,
+                            'spk_number'       => $spkNumber,
+                            'bom_id'           => $bom['id'],
+                            'planned_qty'      => $item['qty'], 
+                            'production_notes' => $item['additional_note'],
+                            'status'           => 'IN_PROGRESS',
+                            'start_date'       => date('Y-m-d'),
+                            'source'           => 'PREORDER'
+                        ]);
+                        $autoSpkCreated++;
+                    } else {
+                        $missingBomSkus[] = $item['sku'];
+                    }
                 }
             }
 
-            // AUTO JURNAL PIUTANG
+            // Jurnal B2B
             $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
-            if(!$piutangAcc) {
+            if (!$piutangAcc) {
                 $this->db->table('chart_of_accounts')->insert(['account_code'=>'1-4000', 'account_name'=>'Piutang Usaha (B2B)', 'account_type'=>'ASET', 'balance'=>0]);
                 $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
             }
-
-            $kas = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray(); 
-            $rev = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
+            $kas    = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray(); 
+            $rev    = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
             $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
             $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
 
             $this->db->table('journals')->insert([
-                'journal_number'   => 'JRN-B2B-'.time(),
-                'transaction_date' => date('Y-m-d'),
+                'journal_number'   => 'JRN-B2B-'.time(), 'transaction_date' => date('Y-m-d'),
                 'description'      => "Penjualan Grosir B2B: $soNumber" . ($orderType === 'PREORDER' ? " [Pre-Order]" : " [Ready Stock]"),
-                'total_amount'     => $totalAmount,
-                'created_by'       => session()->get('name') ?? 'System'
+                'total_amount'     => $grandTotal, 'created_by'        => session()->get('name') ?? 'System'
             ]);
             $journalId = $this->db->insertID();
 
             if ($rev && $kas && $piutangAcc) {
-                $sisaPiutang = $totalAmount - $dpAmount;
-                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $rev['id'], 'debit' => 0, 'credit' => $totalAmount, 'line_description' => 'Pendapatan B2B']);
-
+                $sisaPiutang = $grandTotal - $dpAmount;
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $rev['id'], 'debit' => 0, 'credit' => $grandTotal, 'line_description' => 'Pendapatan B2B Bersih']);
                 if ($dpAmount > 0) {
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $kas['id'], 'debit' => $dpAmount, 'credit' => 0, 'line_description' => 'DP Kas B2B']);
-                    
-                    $dateCode = date('Ymd');
-                    $lastTrx = $this->db->table('operational_cash')->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                    $dateCode  = date('Ymd');
+                    $lastTrx   = $this->db->table('operational_cash')->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
                     $newNumber = $lastTrx ? str_pad((int) substr($lastTrx['transaction_code'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
                     $this->db->table('operational_cash')->insert([
                         'transaction_code' => "TRX-$dateCode-$newNumber", 'transaction_date' => date('Y-m-d'),
                         'type' => 'Cash In', 'metode' => 'ATM', 'category' => 'Uang Muka B2B',
-                        'amount' => $dpAmount, 'description' => "Uang Muka (DP) SO: $soNumber",
-                        'pic_name' => session()->get('name') ?? 'Sistem'
+                        'amount' => $dpAmount, 'description' => "Uang Muka (DP) SO: $soNumber", 'pic_name' => session()->get('name') ?? 'Sistem'
                     ]);
                 }
-
-                if ($sisaPiutang > 0) {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $sisaPiutang, 'credit' => 0, 'line_description' => 'Piutang B2B']);
-                }
+                if ($sisaPiutang > 0) $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $sisaPiutang, 'credit' => 0, 'line_description' => 'Piutang B2B']);
             }
 
             if ($orderType === 'READY' && $totalHppCost > 0 && $invAcc && $hppAcc) {
@@ -231,18 +268,24 @@ class Wholesale extends BaseController
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Gagal menyimpan ke database.");
 
-            return redirect()->back()->with('success', "Pesanan Grosir berhasil diterbitkan. Tipe: " . ($orderType === 'PREORDER' ? "Pre-Order" : "Ready Stock"));
+            $pesan = "Pesanan Grosir berhasil diterbitkan. <br>🎁 <b>Dapat $pointsEarned Poin Hadiah/THR.</b>";
+            if ($orderType === 'PREORDER') {
+                if ($autoSpkCreated > 0) $pesan .= "<br><br><span style='color:#10b981;'><i class='ph-fill ph-check-circle'></i> <b>Berhasil membuat $autoSpkCreated SPK Pabrik otomatis.</b></span>";
+                if (count($missingBomSkus) > 0) {
+                    $skus = implode(', ', $missingBomSkus);
+                    $pesan .= "<br><br><span style='color:#ef4444;'><i class='ph-fill ph-warning-circle'></i> <b>Peringatan:</b> Produk [$skus] belum memiliki Resep BOM. Harap buat SPK manual.</span>";
+                }
+            }
+            return redirect()->back()->with('success', $pesan);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    public function pay_installment($id)
+    public function pay_installment(string $id)
     {
         try {
-            $amountRaw = $this->request->getPost('amount');
-            $amount = $this->cleanRupiah($amountRaw);
-            
+            $amount = $this->cleanRupiah($this->request->getPost('amount'));
             if ($amount <= 0) throw new \Exception("Nominal bayaran cicilan tidak sah atau Kosong.");
 
             $this->db->transStart();
@@ -252,7 +295,7 @@ class Wholesale extends BaseController
 
             $sisaPiutang = $so['total_amount'] - $so['paid_amount'];
             if ($amount > $sisaPiutang) {
-                throw new \Exception("Bayaran (Rp ".number_format($amount,0,',','.').") melebihi sisa piutang (Rp ".number_format($sisaPiutang,0,',','.').").");
+                throw new \Exception("Bayaran (Rp ".number_format($amount,0,',','.').") melebihi sisa piutang.");
             }
 
             $this->db->query("UPDATE b2b_sales_orders SET paid_amount = paid_amount + ?, status = CASE WHEN paid_amount >= total_amount THEN 'PAID' ELSE 'PARTIAL' END WHERE id = ?", [$amount, $id]);
@@ -266,16 +309,16 @@ class Wholesale extends BaseController
             ]);
             $journalId = $this->db->insertID();
 
-            $kas = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray(); 
+            $kas        = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray(); 
             $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray(); 
 
-            if($kas && $piutangAcc) {
+            if ($kas && $piutangAcc) {
                 $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $kas['id'], 'debit' => $amount, 'credit' => 0, 'line_description' => 'Kas Masuk']); 
                 $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $amount, 'line_description' => 'Pembayaran Piutang']); 
             }
 
-            $dateCode = date('Ymd');
-            $lastTrx = $this->db->table('operational_cash')->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+            $dateCode  = date('Ymd');
+            $lastTrx   = $this->db->table('operational_cash')->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
             $newNumber = $lastTrx ? str_pad((int) substr($lastTrx['transaction_code'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
             
             $this->db->table('operational_cash')->insert([
@@ -288,77 +331,100 @@ class Wholesale extends BaseController
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Gagal mencatat pembayaran.");
 
-            return redirect()->back()->with('success', 'Pembayaran angsuran berhasil! Uang masuk ke Bank dan catatan Piutang pelanggan telah dikurangi.');
+            return redirect()->back()->with('success', 'Pembayaran angsuran berhasil dicatat!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    public function ship_preorder($id)
+    public function process_shipment(string $id)
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
         try {
             $this->db->transStart();
-
+            
             $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
-            if (!$so || $so['shipping_status'] !== 'PRE-ORDER') throw new \Exception("Pesanan tidak valid atau sudah dikirim.");
+            if (!$so || $so['shipping_status'] === 'SHIPPED') throw new \Exception("Pesanan tidak valid atau semua barang sudah terkirim 100%.");
 
-            $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+            $soItemIds = $this->request->getPost('so_item_id');
+            $shipQtys  = $this->request->getPost('ship_qty');
+
+            if (empty($soItemIds) || empty($shipQtys)) throw new \Exception("Tidak ada item yang dipilih untuk dikirim.");
+
             $totalHppCost = 0;
+            $hasShippedAnything = false;
 
-            foreach ($items as $item) {
+            foreach ($soItemIds as $index => $itemId) {
+                $shipQty = (int)($shipQtys[$index] ?? 0);
+                if ($shipQty <= 0) continue;
+
+                $hasShippedAnything = true;
+
+                $item = $this->db->table('b2b_sales_order_items')->where('id', $itemId)->get()->getRowArray();
+                if (!$item || (int)$item['so_id'] !== (int)$id) continue;
+
+                $unshipped = (int)$item['qty'] - (int)$item['shipped_qty'];
+                if ($shipQty > $unshipped) throw new \Exception("Kuantitas kirim melebihi batas sisa barang yang belum dikirim.");
+
                 $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
-                if (!$stock || $stock['physical_stock'] < $item['qty']) throw new \Exception("Gagal Kirim! Knalpot {$item['fg_sku']} belum selesai diproduksi pabrik.");
-                $totalHppCost += ($item['qty'] * ($stock['hpp'] ?? 0));
+                if (!$stock || $stock['physical_stock'] < $shipQty) {
+                    throw new \Exception("Stok Gudang fisik untuk knalpot {$item['fg_sku']} kurang (Tersedia: " . ($stock['physical_stock'] ?? 0) . "). Tidak bisa mengirim!");
+                }
+
+                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$shipQty, $item['fg_sku']]);
+                $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$shipQty, $itemId]);
+
+                $totalHppCost += ($shipQty * ($stock['hpp'] ?? 0));
             }
 
-            foreach ($items as $item) {
-                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$item['qty'], $item['fg_sku']]);
+            if (!$hasShippedAnything) throw new \Exception("Anda belum memasukkan kuantitas pengiriman apa pun.");
+
+            $allItems = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+            $allShipped = true;
+            foreach ($allItems as $i) {
+                if ((int)$i['shipped_qty'] < (int)$i['qty']) {
+                    $allShipped = false;
+                    break;
+                }
             }
 
-            $this->db->table('b2b_sales_orders')->where('id', $id)->update([
-                'shipping_status' => 'SHIPPED'
-            ]);
+            $newShipStatus = $allShipped ? 'SHIPPED' : 'PARTIAL-SHIPPED';
+            $this->db->table('b2b_sales_orders')->where('id', $id)->update(['shipping_status' => $newShipStatus]);
 
             if ($totalHppCost > 0) {
                 $this->db->table('journals')->insert([
                     'journal_number'   => 'JRN-SHP-'.time(),
                     'transaction_date' => date('Y-m-d'),
-                    'description'      => "Pengiriman & Pengakuan HPP PO: " . $so['so_number'],
+                    'description'      => "Pengiriman Parsial/Full PO: " . $so['so_number'],
                     'total_amount'     => $totalHppCost,
                     'created_by'       => session()->get('name') ?? 'System'
                 ]);
                 $journalId = $this->db->insertID();
-
+                
                 $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
                 $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
 
                 if ($invAcc && $hppAcc) {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $totalHppCost, 'credit' => 0, 'line_description' => 'HPP Pre-Order']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $totalHppCost, 'credit' => 0, 'line_description' => 'HPP Barang Keluar']);
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => 0, 'credit' => $totalHppCost, 'line_description' => 'Persediaan Keluar']);
                 }
             }
-
+            
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Gagal memproses pengiriman ke database.");
-
-            return redirect()->back()->with('success', 'Barang Pre-Order berhasil dikirim! Stok dipotong dari gudang dan Jurnal HPP telah diakui.');
+            
+            $msg = $allShipped ? "Semua barang untuk pesanan ini telah selesai dikirim 100%!" : "Pengiriman Parsial berhasil dicatat dan stok dipotong otomatis.";
+            return redirect()->back()->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // =========================================================================
-    // FITUR BARU: RETUR PARSIAL (B2B GROSIR)
-    // =========================================================================
-    public function return_so($id)
+    public function return_so(string $id)
     {
         try {
-            if (!session()->get('isLoggedIn')) {
-                return redirect()->to('/portal');
-            }
-
+            if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
             $this->db->transStart();
 
             $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
@@ -367,16 +433,13 @@ class Wholesale extends BaseController
             $returnDate = $this->request->getPost('return_date') ?: date('Y-m-d');
             $reason     = trim($this->request->getPost('reason') ?? '');
             $refundType = $this->request->getPost('refund_type') ?? 'REDUCE_RECEIVABLE';
-
             $soItemIds  = $this->request->getPost('so_item_id');
             $qtyReturns = $this->request->getPost('qty_return');
 
-            if (empty($soItemIds) || empty($qtyReturns)) {
-                throw new \Exception("Tidak ada item retur yang dikirim.");
-            }
+            if (empty($soItemIds) || empty($qtyReturns)) throw new \Exception("Tidak ada item retur yang dikirim.");
 
-            $returnItems = [];
-            $totalReturn = 0;
+            $returnItems    = [];
+            $totalReturn    = 0;
             $totalHppReturn = 0;
 
             foreach ($soItemIds as $index => $soItemId) {
@@ -384,177 +447,924 @@ class Wholesale extends BaseController
                 if ($qtyReturn <= 0) continue;
 
                 $soItem = $this->db->table('b2b_sales_order_items')->where('id', $soItemId)->get()->getRowArray();
-                if (!$soItem) continue;
-
-                if ((int)$soItem['so_id'] !== (int)$id) {
-                    throw new \Exception("Item retur tidak valid.");
-                }
+                if (!$soItem || (int)$soItem['so_id'] !== (int)$id) continue;
 
                 $alreadyReturned = $this->getReturnedQtyBySoItem($soItemId);
                 $maxReturnable   = (int)$soItem['qty'] - $alreadyReturned;
 
-                if ($qtyReturn > $maxReturnable) {
-                    throw new \Exception("Qty retur untuk SKU {$soItem['fg_sku']} melebihi batas. Maksimal: {$maxReturnable}");
+                if ($qtyReturn > $maxReturnable) throw new \Exception("Qty retur melebihi batas yang diizinkan.");
+
+                $addFee   = (float)($soItem['additional_fee'] ?? 0);
+                $subtotal = $qtyReturn * ((float)$soItem['price'] + $addFee);
+                
+                if ((float)$so['discount_percent'] > 0) {
+                    $subtotal = $subtotal - ($subtotal * ((float)$so['discount_percent'] / 100));
                 }
 
-                $subtotal = $qtyReturn * (float)$soItem['price'];
                 $totalReturn += $subtotal;
 
                 $stock = $this->db->table('warehouse_inventory')->where('sku', $soItem['fg_sku'])->get()->getRowArray();
-                $hpp = (float)($stock['hpp'] ?? 0);
+                $hpp   = (float)($stock['hpp'] ?? 0);
                 
-                // Jika pesanan sudah dikirim, kita harus tarik HPP nya kembali
-                if ($so['shipping_status'] === 'SHIPPED') {
-                    $totalHppReturn += ($qtyReturn * $hpp);
+                $shippedQty = (int)$soItem['shipped_qty'];
+                $hppToReverse = min($qtyReturn, max(0, $shippedQty - $alreadyReturned));
+                
+                if ($hppToReverse > 0) {
+                    $totalHppReturn += ($hppToReverse * $hpp);
+                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$hppToReverse, $soItem['fg_sku']]);
+                    
+                    if ($refundType === 'REPAIR_REPLACE') {
+                        $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty - ? WHERE id = ?", [$hppToReverse, $soItemId]);
+                    }
                 }
 
                 $returnItems[] = [
-                    'so_item_id'  => $soItem['id'],
-                    'fg_sku'      => $soItem['fg_sku'],
-                    'qty_return'  => $qtyReturn,
-                    'price'       => (float)$soItem['price'],
-                    'subtotal'    => $subtotal,
-                    'hpp'         => $hpp
+                    'so_item_id' => $soItem['id'],
+                    'fg_sku'     => $soItem['fg_sku'],
+                    'qty_return' => $qtyReturn,
+                    'price'      => ((float)$soItem['price'] + $addFee),
+                    'subtotal'   => $subtotal,
+                    'hpp'        => $hpp
                 ];
             }
 
-            if (count($returnItems) === 0) {
-                throw new \Exception("Kuantitas retur belum diisi.");
-            }
+            if (count($returnItems) === 0) throw new \Exception("Kuantitas retur belum diisi valid.");
 
-            // Generate Return Number
-            $dateCode = date('Ymd');
-            $lastReturn = $this->db->table('b2b_sales_returns')
-                ->like('return_number', "RET-$dateCode-", 'after')
-                ->orderBy('id', 'DESC')
-                ->get()->getRowArray();
-
-            $newNumber = $lastReturn ? str_pad((int)substr($lastReturn['return_number'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
+            $dateCode     = date('Ymd');
+            $lastReturn   = $this->db->table('b2b_sales_returns')->like('return_number', "RET-$dateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+            $newNumber    = $lastReturn ? str_pad((int)substr($lastReturn['return_number'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
             $returnNumber = "RET-$dateCode-$newNumber";
 
-            // Simpan header retur
             $this->db->table('b2b_sales_returns')->insert([
-                'return_number' => $returnNumber,
-                'so_id'         => $id,
-                'return_date'   => $returnDate,
-                'reason'        => $reason,
-                'total_return'  => $totalReturn,
-                'refund_type'   => $refundType,
-                'status'        => 'POSTED',
-                'created_by'    => session()->get('name') ?? 'System'
+                'return_number' => $returnNumber, 'so_id' => $id, 'return_date' => $returnDate,
+                'reason' => $reason, 'total_return' => ($refundType === 'REPAIR_REPLACE' ? 0 : $totalReturn),
+                'refund_type' => $refundType,
+                'status' => 'POSTED', 'created_by' => session()->get('name') ?? 'System'
             ]);
             $salesReturnId = $this->db->insertID();
 
-            // Simpan detail retur + Kembalikan stok ke gudang (Jika pesanan berstatus SHIPPED)
             foreach ($returnItems as $item) {
                 $this->db->table('b2b_sales_return_items')->insert([
-                    'sales_return_id' => $salesReturnId,
-                    'so_item_id'      => $item['so_item_id'],
-                    'fg_sku'          => $item['fg_sku'],
-                    'qty_return'      => $item['qty_return'],
-                    'price'           => $item['price'],
-                    'subtotal'        => $item['subtotal']
+                    'sales_return_id' => $salesReturnId, 'so_item_id' => $item['so_item_id'],
+                    'fg_sku' => $item['fg_sku'], 'qty_return' => $item['qty_return'],
+                    'price' => $item['price'], 'subtotal' => ($refundType === 'REPAIR_REPLACE' ? 0 : $item['subtotal'])
                 ]);
+            }
 
-                if ($so['shipping_status'] === 'SHIPPED') {
-                    $this->db->query(
-                        "UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?",
-                        [$item['qty_return'], $item['fg_sku']]
-                    );
+            // LOGIKA TARIK POIN KARENA RETUR (Batal Beli)
+            if ($refundType !== 'REPAIR_REPLACE' && $totalReturn > 0) {
+                $pointsDeducted = floor($totalReturn / 100000);
+                if ($pointsDeducted > 0) {
+                    $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsDeducted, $so['customer_id']]);
                 }
             }
 
-            // UPDATE B2B SALES ORDER TOTAL
-            $newTotalAmount = max(0, (float)$so['total_amount'] - $totalReturn);
-            $paidAmount     = (float)$so['paid_amount'];
-
-            if ($refundType === 'REDUCE_RECEIVABLE') {
-                $newPaidAmount = min($paidAmount, $newTotalAmount);
-            } elseif ($refundType === 'CUSTOMER_CREDIT') {
-                $newPaidAmount = $paidAmount;
-            } else { 
-                $newPaidAmount = max(0, $paidAmount - $totalReturn);
-            }
-
-            $newStatus = 'PENDING';
-            if ($newTotalAmount <= 0) {
-                $newStatus = 'RETURNED';
-            } elseif ($newPaidAmount >= $newTotalAmount) {
-                $newStatus = 'PAID';
-            } elseif ($newPaidAmount > 0) {
-                $newStatus = 'PARTIAL';
-            }
-
-            $this->db->table('b2b_sales_orders')->where('id', $id)->update([
-                'total_amount' => $newTotalAmount,
-                'paid_amount'  => $newPaidAmount,
-                'status'       => $newStatus
-            ]);
-
-            // JURNAL AKUNTANSI RETUR (AUTO-REVERSAL)
-            $returAcc   = $this->db->table('chart_of_accounts')->where('account_code', '4-1100')->get()->getRowArray();
-            $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
-            $bankAcc    = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray();
             $invAcc     = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray();
             $hppAcc     = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
 
-            $this->db->table('journals')->insert([
-                'journal_number'   => 'JRN-RET-'.time(),
-                'transaction_date' => $returnDate,
-                'description'      => "Retur Penjualan SO: {$so['so_number']} / {$returnNumber}",
-                'total_amount'     => $totalReturn,
-                'created_by'       => session()->get('name') ?? 'System'
-            ]);
-            $journalId = $this->db->insertID();
+            if ($refundType === 'REPAIR_REPLACE') {
+                $this->db->table('b2b_sales_orders')->where('id', $id)->update(['shipping_status' => 'PARTIAL-SHIPPED']);
 
-            if ($returAcc) {
-                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $returAcc['id'], 'line_description' => 'Retur Penjualan (Contra)', 'debit' => $totalReturn, 'credit' => 0]);
+                if ($totalHppReturn > 0 && $invAcc && $hppAcc) {
+                    $this->db->table('journals')->insert(['journal_number' => 'JRN-RMA-'.time(), 'transaction_date' => $returnDate, 'description' => "Retur Perbaikan Garansi SO: {$so['so_number']}", 'total_amount' => $totalHppReturn, 'created_by' => session()->get('name') ?? 'System']);
+                    $journalId = $this->db->insertID();
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'line_description' => 'Persediaan Masuk (Perbaikan)', 'debit' => $totalHppReturn, 'credit' => 0]);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'line_description' => 'Pembalik HPP', 'debit' => 0, 'credit' => $totalHppReturn]);
+                }
 
-                if ($refundType === 'CASH_REFUND' && $bankAcc) {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $bankAcc['id'], 'line_description' => 'Refund Kas Customer', 'debit' => 0, 'credit' => $totalReturn]);
+            } else {
+                $newTotalAmount = max(0, (float)$so['total_amount'] - $totalReturn);
+                $paidAmount     = (float)$so['paid_amount'];
 
-                    // Catat Kas Keluar
-                    $trxDateCode = date('Ymd');
-                    $lastTrx = $this->db->table('operational_cash')->like('transaction_code', "TRX-$trxDateCode-", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
-                    $trxNum = $lastTrx ? str_pad((int)substr($lastTrx['transaction_code'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
+                if ($refundType === 'REDUCE_RECEIVABLE') {
+                    $newPaidAmount = min($paidAmount, $newTotalAmount);
+                } elseif ($refundType === 'CUSTOMER_CREDIT') {
+                    $newPaidAmount = $paidAmount;
+                } else { 
+                    $newPaidAmount = max(0, $paidAmount - $totalReturn);
+                }
 
-                    $this->db->table('operational_cash')->insert([
-                        'transaction_code' => "TRX-$trxDateCode-$trxNum",
-                        'transaction_date' => $returnDate,
-                        'type'             => 'Cash Out',
-                        'metode'           => 'ATM',
-                        'category'         => 'Refund Retur Penjualan',
-                        'amount'           => $totalReturn,
-                        'description'      => "Refund retur penjualan SO: {$so['so_number']}",
-                        'pic_name'         => session()->get('name') ?? 'System'
-                    ]);
-                } else {
-                    if ($piutangAcc) {
-                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'line_description' => 'Pengurang Piutang Customer', 'debit' => 0, 'credit' => $totalReturn]);
+                $newStatus = 'PENDING';
+                if ($newTotalAmount <= 0) $newStatus = 'RETURNED';
+                elseif ($newPaidAmount >= $newTotalAmount) $newStatus = 'PAID';
+                elseif ($newPaidAmount > 0) $newStatus = 'PARTIAL';
+
+                $this->db->table('b2b_sales_orders')->where('id', $id)->update(['total_amount' => $newTotalAmount, 'paid_amount' => $newPaidAmount, 'status' => $newStatus]);
+
+                $returAcc   = $this->db->table('chart_of_accounts')->where('account_code', '4-1100')->get()->getRowArray();
+                $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
+                $bankAcc    = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray();
+
+                $this->db->table('journals')->insert(['journal_number' => 'JRN-RET-'.time(), 'transaction_date' => $returnDate, 'description' => "Retur Uang SO: {$so['so_number']} / {$returnNumber}", 'total_amount' => $totalReturn, 'created_by' => session()->get('name') ?? 'System']);
+                $journalId = $this->db->insertID();
+
+                if ($returAcc) {
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $returAcc['id'], 'line_description' => 'Retur Penjualan', 'debit' => $totalReturn, 'credit' => 0]);
+                    if ($refundType === 'CASH_REFUND' && $bankAcc) {
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $bankAcc['id'], 'line_description' => 'Refund Kas', 'debit' => 0, 'credit' => $totalReturn]);
+                    } elseif ($piutangAcc) {
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'line_description' => 'Pengurang Piutang', 'debit' => 0, 'credit' => $totalReturn]);
                     }
+                }
+
+                if ($totalHppReturn > 0 && $invAcc && $hppAcc) {
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'line_description' => 'Persediaan Masuk (Retur)', 'debit' => $totalHppReturn, 'credit' => 0]);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'line_description' => 'Pembalik HPP', 'debit' => 0, 'credit' => $totalHppReturn]);
                 }
             }
 
-            // Balik HPP (Hanya jika barang masuk gudang kembali)
-            if ($so['shipping_status'] === 'SHIPPED' && $invAcc && $hppAcc && $totalHppReturn > 0) {
-                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'line_description' => 'Persediaan Masuk (Retur)', 'debit' => $totalHppReturn, 'credit' => 0]);
-                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'line_description' => 'Pembalik Beban HPP', 'debit' => 0, 'credit' => $totalHppReturn]);
-            }
-
             $this->db->transComplete();
-
-            if ($this->db->transStatus() === false) {
-                throw new \Exception("Gagal memproses retur penjualan.");
-            }
-
-            return redirect()->back()->with('success', "Retur parsial berhasil diproses. Dokumen: <b>{$returnNumber}</b>.");
+            if ($this->db->transStatus() === false) throw new \Exception("Gagal memproses retur penjualan.");
+            
+            $msg = ($refundType === 'REPAIR_REPLACE') ? "Retur Garansi/Perbaikan berhasil! Silakan kirim ulang barangnya nanti via tombol Kirim." : "Retur parsial & Refund berhasil diproses. Poin mitra dipotong.";
+            return redirect()->back()->with('success', $msg);
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    public function store_customer() { /* Sama */ }
-    public function delete_customer($id) { /* Sama */ }
-    public function surat_jalan($id) { /* Sama */ }
+    public function get_customer(string $id)
+    {
+        if ($this->request->isAJAX()) {
+            $customer = $this->db->table('b2b_customers')->where('id', $id)->get()->getRowArray();
+            return $this->response->setJSON($customer);
+        }
+    }
+
+    public function store_customer()
+    {
+        try {
+            $phone = trim($this->request->getPost('phone'));
+            $normalizedPhone = $this->normalizePhone($phone);
+
+            if ($phone !== '' && $normalizedPhone === '') {
+                throw new \Exception("Nomor WhatsApp tidak valid. Gunakan format seperti <b>08123456789</b>.");
+            }
+
+            $data = [
+                'company_name' => $this->request->getPost('company_name'),
+                'contact_name' => $this->request->getPost('contact_name'),
+                'phone'        => $normalizedPhone,
+                'address'      => $this->request->getPost('address'),
+            ];
+
+            $this->db->table('b2b_customers')->insert($data);
+            return redirect()->back()->with('success', 'Data Mitra Reseller berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menambah mitra: ' . $e->getMessage());
+        }
+    }
+
+    public function update_customer(string $id)
+    {
+        try {
+            $phone = trim($this->request->getPost('phone'));
+            $normalizedPhone = $this->normalizePhone($phone);
+
+            if ($phone !== '' && $normalizedPhone === '') {
+                throw new \Exception("Nomor WhatsApp tidak valid. Gunakan format seperti <b>08123456789</b>.");
+            }
+
+            $data = [
+                'company_name' => $this->request->getPost('company_name'),
+                'contact_name' => $this->request->getPost('contact_name'),
+                'phone'        => $normalizedPhone,
+                'address'      => $this->request->getPost('address'),
+            ];
+            $this->db->table('b2b_customers')->where('id', $id)->update($data);
+            return redirect()->back()->with('success', 'Data Mitra Reseller berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengedit mitra: ' . $e->getMessage());
+        }
+    }
+
+    public function delete_customer(string $id)
+    {
+        try {
+            $check = $this->db->table('b2b_sales_orders')->where('customer_id', $id)->countAllResults();
+            if ($check > 0) {
+                return redirect()->back()->with('error', 'Gagal Dihapus! Mitra ini memiliki riwayat transaksi/pesanan.');
+            }
+
+            $this->db->table('b2b_customers')->where('id', $id)->delete();
+            return redirect()->back()->with('success', 'Data Mitra berhasil dihapus dari sistem.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus mitra: ' . $e->getMessage());
+        }
+    }
+
+    public function redeem_points(string $id)
+    {
+        try {
+            $pointsToRedeem = (int) $this->request->getPost('points');
+            if ($pointsToRedeem <= 0) throw new \Exception("Jumlah poin yang ditukar tidak valid.");
+
+            $customer = $this->db->table('b2b_customers')->where('id', $id)->get()->getRowArray();
+            if (!$customer) throw new \Exception("Mitra tidak ditemukan.");
+
+            if ($pointsToRedeem > (int)$customer['reward_points']) {
+                throw new \Exception("Poin tidak cukup. Sisa poin mitra: {$customer['reward_points']} Pts.");
+            }
+
+            $this->db->query("UPDATE b2b_customers SET reward_points = reward_points - ? WHERE id = ?", [$pointsToRedeem, $id]);
+            
+            return redirect()->back()->with('success', "Berhasil menukar <b>{$pointsToRedeem} Poin</b> dari toko {$customer['company_name']} untuk pencairan THR/Hadiah.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function surat_jalan(string $id)
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        $so = $this->db->table('b2b_sales_orders')
+            ->select('b2b_sales_orders.*, b2b_customers.company_name, b2b_customers.address, b2b_customers.phone, b2b_customers.contact_name')
+            ->join('b2b_customers', 'b2b_customers.id = b2b_sales_orders.customer_id')
+            ->where('b2b_sales_orders.id', $id)
+            ->get()->getRowArray();
+
+        if (!$so) return redirect()->back()->with('error', 'Dokumen Sales Order tidak ditemukan.');
+
+        $items = $this->db->table('b2b_sales_order_items')
+            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name')
+            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
+            ->where('so_id', $id)
+            ->get()->getResultArray();
+
+        $company = [];
+        if($this->db->tableExists('company_settings')) {
+            $company = $this->db->table('company_settings')->get()->getRowArray() ?? [];
+        }
+
+        $data = [
+            'title'   => 'Surat Jalan - ' . $so['so_number'],
+            'so'      => $so,
+            'items'   => $items,
+            'company' => $company
+        ];
+
+        return view('wholesale/surat_jalan', $data);
+    }
+
+    public function delete_so(string $id)
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+
+        try {
+            $this->db->transStart();
+
+            $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
+            if (!$so) throw new \Exception("Dokumen Sales Order tidak ditemukan.");
+
+            $soNumber = $so['so_number'];
+
+            $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+            foreach ($items as $item) {
+                if ((int)$item['shipped_qty'] > 0) {
+                    $this->db->query(
+                        "UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", 
+                        [$item['shipped_qty'], $item['fg_sku']]
+                    );
+                }
+            }
+
+            $pointsToDeduct = floor($so['total_amount'] / 100000);
+            if ($pointsToDeduct > 0) {
+                $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsToDeduct, $so['customer_id']]);
+            }
+
+            $journals = $this->db->table('journals')->like('description', $soNumber)->get()->getResultArray();
+            foreach ($journals as $j) {
+                $this->db->table('journal_items')->where('journal_id', $j['id'])->delete();
+                $this->db->table('journals')->where('id', $j['id'])->delete();
+            }
+
+            $this->db->table('operational_cash')->like('description', $soNumber)->delete();
+
+            $workOrders = $this->db->table('work_orders')->where('so_id', $id)->get()->getResultArray();
+            foreach ($workOrders as $wo) {
+                if ($wo['status'] !== 'COMPLETED') {
+                    $this->db->table('production_logs')->where('spk_number', $wo['spk_number'])->delete();
+                    $this->db->table('work_orders')->where('id', $wo['id'])->delete();
+                } else {
+                    $this->db->table('work_orders')->where('id', $wo['id'])->update(['so_id' => null, 'source' => 'MANUAL']);
+                }
+            }
+
+            $this->db->table('b2b_sales_order_items')->where('so_id', $id)->delete();
+            $this->db->table('b2b_sales_orders')->where('id', $id)->delete();
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Gagal membatalkan transaksi dan membalikkan jurnal.");
+            }
+
+            return redirect()->back()->with('success', "Dokumen SO <b>{$soNumber}</b> berhasil dihapus. Stok Gudang, Poin Mitra, dan SPK Pabrik ditarik kembali.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+    
+    public function get_pending_by_customer($customerId = null)
+    {
+        if (empty($customerId)) {
+            $customerId = $this->request->getUri()->getSegment(3);
+        }
+
+        if (empty($customerId)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Parameter Toko tidak valid.']);
+        }
+
+        $sql = "
+            SELECT 
+                i.id, 
+                i.so_id, 
+                i.fg_sku, 
+                i.qty, 
+                i.shipped_qty, 
+                o.so_number, 
+                o.order_date, 
+                o.shipping_status,
+                w.item_name 
+            FROM b2b_sales_order_items i
+            JOIN b2b_sales_orders o ON o.id = i.so_id
+            LEFT JOIN warehouse_inventory w ON w.sku = i.fg_sku
+            WHERE o.customer_id = ?
+            ORDER BY o.order_date ASC
+        ";
+        
+        $items = $this->db->query($sql, [$customerId])->getResultArray();
+        
+        $pendingItems = [];
+        foreach ($items as $itm) {
+            if ($itm['shipping_status'] === 'SHIPPED') continue;
+
+            $qtyOrder = (int)($itm['qty'] ?? 0);
+            $qtyShipped = (int)($itm['shipped_qty'] ?? 0);
+            
+            if ($qtyOrder > $qtyShipped) {
+                $pendingItems[] = $itm;
+            }
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success', 
+            'data' => $pendingItems
+        ]);
+    }
+
+    public function process_shipment_gabungan()
+    {
+        $this->db->transStart();
+        
+        $itemIds = $this->request->getPost('so_item_id') ?? [];
+        $shipQtys = $this->request->getPost('ship_qty') ?? [];
+        $soIdsToUpdate = [];
+        $totalHppCost = 0;
+
+        foreach ($itemIds as $index => $itemId) {
+            $shipQty = (int)$shipQtys[$index];
+            if ($shipQty <= 0) continue;
+
+            $item = $this->db->table('b2b_sales_order_items')->where('id', $itemId)->get()->getRowArray();
+            if (!$item) continue;
+            
+            $so = $this->db->table('b2b_sales_orders')->where('id', $item['so_id'])->get()->getRowArray();
+            if (!$so) continue;
+            
+            $soIdsToUpdate[] = $so['id'];
+            
+            $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
+            if (!$stock || (int)$stock['physical_stock'] < $shipQty) {
+                throw new \Exception("Gagal: Stok Gudang untuk {$item['fg_sku']} kurang dari {$shipQty}!");
+            }
+
+            $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$shipQty, $item['fg_sku']]);
+            $totalHppCost += ($shipQty * (float)$stock['hpp']);
+            
+            $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$shipQty, $itemId]);
+        }
+
+        $soIdsToUpdate = array_unique($soIdsToUpdate);
+        foreach ($soIdsToUpdate as $soId) {
+            $allItems = $this->db->table('b2b_sales_order_items')->where('so_id', $soId)->get()->getResultArray();
+            $allShipped = true;
+            $anyShipped = false;
+            foreach ($allItems as $it) {
+                if ((int)$it['shipped_qty'] < (int)$it['qty']) $allShipped = false;
+                if ((int)$it['shipped_qty'] > 0) $anyShipped = true;
+            }
+            
+            $shipStatus = 'PENDING';
+            if ($allShipped) $shipStatus = 'SHIPPED';
+            elseif ($anyShipped) $shipStatus = 'PARTIAL-SHIPPED';
+
+            $this->db->table('b2b_sales_orders')->where('id', $soId)->update(['shipping_status' => $shipStatus]);
+        }
+        
+        if ($totalHppCost > 0) {
+            $this->db->table('journals')->insert([
+                'journal_number'   => 'JRN-SHP-GBG-'.time(),
+                'transaction_date' => date('Y-m-d'),
+                'description'      => "Pengiriman Barang Gabungan B2B",
+                'total_amount'     => $totalHppCost,
+                'created_by'       => session()->get('name') ?? 'System'
+            ]);
+            $journalId = $this->db->insertID();
+            
+            $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
+            $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
+
+            if ($invAcc && $hppAcc) {
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $totalHppCost, 'credit' => 0, 'line_description' => 'HPP Barang Keluar (Gabungan)']);
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => 0, 'credit' => $totalHppCost, 'line_description' => 'Persediaan Keluar']);
+            }
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Gagal memproses pengiriman gabungan.');
+        }
+
+        $soIdsString = implode('-', $soIdsToUpdate);
+        return redirect()->back()
+            ->with('success', 'Pengiriman gabungan berhasil diproses dan stok telah dipotong!')
+            ->with('print_gabungan', $soIdsString);
+    }
+
+    public function print_sj_gabungan($soIdsStr)
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+        
+        $soIds = explode('-', $soIdsStr);
+        if (empty($soIds)) return redirect()->to('/wholesale');
+        
+        $sos = $this->db->table('b2b_sales_orders')->whereIn('id', $soIds)->get()->getResultArray();
+        $customer = $this->db->table('b2b_customers')->where('id', $sos[0]['customer_id'])->get()->getRowArray();
+        
+        $items = $this->db->table('b2b_sales_order_items')
+            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name, b2b_sales_orders.so_number')
+            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
+            ->join('b2b_sales_orders', 'b2b_sales_orders.id = b2b_sales_order_items.so_id')
+            ->whereIn('b2b_sales_order_items.so_id', $soIds)
+            ->get()->getResultArray();
+            
+        $company = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
+        
+        return view('wholesale/print_sj_gabungan', [
+            'sos' => $sos,
+            'customer' => $customer,
+            'items' => $items,
+            'company' => $company
+        ]);
+    }
+    
+    public function get_so(string $id)
+    {
+        if (!$this->request->isAJAX()) return;
+
+        $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
+        if (!$so) return $this->response->setJSON(['status' => 'error', 'message' => 'SO tidak ditemukan']);
+
+        $items = $this->db->table('b2b_sales_order_items')
+            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name')
+            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
+            ->where('so_id', $id)
+            ->get()->getResultArray();
+
+        $so['items'] = $items;
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data'   => $so
+        ]);
+    }
+
+    public function add_item_to_so()
+    {
+        try {
+            $this->db->transStart();
+
+            $soId = $this->request->getPost('so_id');
+            $fgSkus = $this->request->getPost('fg_sku'); 
+            $qtys = $this->request->getPost('qty');     
+            $prices = $this->request->getPost('unit_price'); 
+            $addFees = $this->request->getPost('additional_fee');
+            $addNotes = $this->request->getPost('additional_note');
+
+            if (empty($soId)) throw new \Exception("ID SO tidak valid.");
+            if (empty($fgSkus) || count($fgSkus) === 0) throw new \Exception("Anda harus memilih minimal 1 produk.");
+
+            $so = $this->db->table('b2b_sales_orders')->where('id', $soId)->get()->getRowArray();
+            if (!$so) throw new \Exception("Pesanan (SO) tidak ditemukan.");
+            
+            if ($so['shipping_status'] === 'SHIPPED') {
+                throw new \Exception("Gagal: Semua barang pada Pesanan ini telah terkirim 100% (SHIPPED). Silakan buat SO baru.");
+            }
+            if ($so['status'] === 'RETURNED') {
+                throw new \Exception("Gagal: Pesanan ini sudah berstatus Diretur (RETURNED).");
+            }
+
+            // PERBAIKAN LOGIKA: Semua yang bisa diedit di sini PASTI pesanan PREORDER.
+            // Karena jika READY, statusnya langsung SHIPPED, dan sudah diblokir di atas.
+            $orderType = 'PREORDER';
+
+            $totalAdditionalAmount = 0;
+            $totalHppCost = 0;
+            $autoSpkCreated = 0;
+
+            for ($i = 0; $i < count($fgSkus); $i++) {
+                if (!empty($fgSkus[$i])) {
+                    $sku     = $fgSkus[$i]; 
+                    $qty     = (int)$qtys[$i]; 
+                    $price   = $this->cleanRupiah($prices[$i]);
+                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah($addFees[$i]) : 0;
+                    $addNote = $addNotes[$i] ?? '';
+
+                    if ($qty <= 0 || ($price + $addFee) <= 0) continue;
+
+                    $stock = $this->db->table('warehouse_inventory')->where('sku', $sku)->get()->getRowArray();
+                    
+                    if ($orderType === 'READY') {
+                        if (!$stock || $stock['physical_stock'] < $qty) {
+                            throw new \Exception("GAGAL! Pesanan ini bersifat Ready Stock, sisa {$sku} di gudang tidak mencukupi untuk tambahan ini.");
+                        }
+                        $totalHppCost += ($qty * ($stock['hpp'] ?? 0));
+                    }
+
+                    $subtotal = $qty * ($price + $addFee);
+                    $totalAdditionalAmount += $subtotal;
+                    
+                    $shippedQty = ($orderType === 'READY') ? $qty : 0;
+                    
+                    $this->db->table('b2b_sales_order_items')->insert([
+                        'so_id' => $soId, 
+                        'fg_sku' => $sku, 
+                        'qty' => $qty,
+                        'shipped_qty' => $shippedQty, 
+                        'price' => $price, 
+                        'additional_fee' => $addFee,
+                        'additional_note' => $addNote, 
+                        'subtotal' => $subtotal
+                    ]);
+
+                    if ($orderType === 'READY') {
+                        $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$qty, $sku]);
+                    } 
+                    else if ($orderType === 'PREORDER') {
+                        $bom = $this->db->table('bom_headers')->where('fg_sku', $sku)->orderBy('id', 'DESC')->get()->getRowArray();
+                        if ($bom) {
+                            $dateStr = date('Ymd');
+                            $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                            if ($lastSpk) {
+                                $parts = explode('-', $lastSpk['spk_number']);
+                                $seq = intval(end($parts)) + 1;
+                            } else {
+                                $seq = 1;
+                            }
+                            $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+                            $this->db->table('work_orders')->insert([
+                                'so_id'            => $soId,
+                                'spk_number'       => $spkNumber,
+                                'bom_id'           => $bom['id'],
+                                'planned_qty'      => $qty, 
+                                'production_notes' => $addNote,
+                                'status'           => 'IN_PROGRESS',
+                                'start_date'       => date('Y-m-d'),
+                                'source'           => 'PREORDER'
+                            ]);
+                            $autoSpkCreated++;
+                        }
+                    }
+                }
+            }
+
+            if ($totalAdditionalAmount == 0) {
+                 throw new \Exception("Tidak ada produk valid yang ditambahkan.");
+            }
+
+            $discPercent = (float)$so['discount_percent'];
+            $oldTotalRaw = (float)$so['total_amount'] + (float)$so['discount'];
+            $newTotalRaw = $oldTotalRaw + $totalAdditionalAmount;
+            
+            $newDiscAmount = $newTotalRaw * ($discPercent / 100);
+            $newGrandTotal = $newTotalRaw - $newDiscAmount;
+            
+            $paidAmount = (float)$so['paid_amount'];
+            $newStatus = ($paidAmount >= $newGrandTotal) ? 'PAID' : ($paidAmount > 0 ? 'PARTIAL' : 'PENDING');
+
+            $this->db->table('b2b_sales_orders')->where('id', $soId)->update([
+                'total_amount' => $newGrandTotal,
+                'discount' => $newDiscAmount,
+                'status' => $newStatus,
+                'shipping_status' => ($so['shipping_status'] === 'SHIPPED' && $orderType === 'PREORDER') ? 'PARTIAL-SHIPPED' : $so['shipping_status'] 
+            ]);
+
+            $netAdditionalRevenue = $newGrandTotal - (float)$so['total_amount'];
+
+            $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
+            $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
+            $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
+            $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
+
+            if ($netAdditionalRevenue > 0) {
+                $this->db->table('journals')->insert([
+                    'journal_number'   => 'JRN-ADD-'.time(), 
+                    'transaction_date' => date('Y-m-d'),
+                    'description'      => "Penambahan Item SO: {$so['so_number']}",
+                    'total_amount'     => $netAdditionalRevenue, 
+                    'created_by'       => session()->get('name') ?? 'System'
+                ]);
+                $journalId = $this->db->insertID();
+
+                if ($revAcc && $piutangAcc) {
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => 0, 'credit' => $netAdditionalRevenue, 'line_description' => 'Pendapatan B2B Tambahan']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $netAdditionalRevenue, 'credit' => 0, 'line_description' => 'Piutang B2B Tambahan']);
+                }
+
+                if ($orderType === 'READY' && $totalHppCost > 0 && $invAcc && $hppAcc) {
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $totalHppCost, 'credit' => 0, 'line_description' => 'HPP B2B Tambahan']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => 0, 'credit' => $totalHppCost, 'line_description' => 'Persediaan Keluar Tambahan']);
+                }
+
+                $pointsEarned = floor($netAdditionalRevenue / 100000);
+                if ($pointsEarned > 0) {
+                    $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsEarned, $so['customer_id']]);
+                }
+            }
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Sistem gagal menyimpan perubahan database.");
+            }
+
+            $pesan = "Berhasil menambahkan item ke Pesanan <b>{$so['so_number']}</b>.";
+            if ($orderType === 'PREORDER' && $autoSpkCreated > 0) {
+                $pesan .= "<br>Diterbitkan <b>$autoSpkCreated SPK Pabrik</b> otomatis untuk item baru.";
+            }
+
+            return redirect()->back()->with('success', $pesan);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function delete_item_from_so($itemId)
+    {
+        try {
+            if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+            $this->db->transStart();
+
+            $item = $this->db->table('b2b_sales_order_items')->where('id', $itemId)->get()->getRowArray();
+            if (!$item) throw new \Exception("Item tidak ditemukan.");
+
+            $so = $this->db->table('b2b_sales_orders')->where('id', $item['so_id'])->get()->getRowArray();
+            if ($so['shipping_status'] === 'SHIPPED') throw new \Exception("Gagal: Orderan sudah terkirim Full (SHIPPED). Tidak bisa hapus barang.");
+            if ($so['status'] === 'RETURNED') throw new \Exception("Gagal: Orderan sudah Diretur.");
+
+            $qtyToReturn = (int)$item['shipped_qty'];
+            if ($qtyToReturn > 0) {
+                 $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$qtyToReturn, $item['fg_sku']]);
+            }
+
+            $pointsToDeduct = floor($item['subtotal'] / 100000);
+            if ($pointsToDeduct > 0) {
+                $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsToDeduct, $so['customer_id']]);
+            }
+
+            if ($so['shipping_status'] !== 'PENDING') {
+                 $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
+                 if($bom) {
+                     $spks = $this->db->table('work_orders')
+                                    ->where('so_id', $so['id'])
+                                    ->where('bom_id', $bom['id'])
+                                    ->where('status !=', 'COMPLETED')
+                                    ->get()->getResultArray();
+                     foreach($spks as $wo) {
+                         $this->db->table('work_orders')->where('id', $wo['id'])->delete();
+                     }
+                 }
+            }
+
+            $discPercent = (float)$so['discount_percent'];
+            $oldTotalRaw = (float)$so['total_amount'] + (float)$so['discount'];
+            $newTotalRaw = max(0, $oldTotalRaw - (float)$item['subtotal']);
+            
+            $newDiscAmount = $newTotalRaw * ($discPercent / 100);
+            $newGrandTotal = $newTotalRaw - $newDiscAmount;
+            
+            $paidAmount = (float)$so['paid_amount'];
+            $newStatus = ($paidAmount >= $newGrandTotal) ? 'PAID' : ($paidAmount > 0 ? 'PARTIAL' : 'PENDING');
+            if ($newGrandTotal <= 0) $newStatus = 'RETURNED';
+
+            $this->db->table('b2b_sales_orders')->where('id', $so['id'])->update([
+                'total_amount' => $newGrandTotal,
+                'discount' => $newDiscAmount,
+                'status' => $newStatus
+            ]);
+
+            $this->db->table('b2b_sales_order_items')->where('id', $itemId)->delete();
+
+            $netReduction = (float)$so['total_amount'] - $newGrandTotal;
+            if ($netReduction > 0) {
+                $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
+                $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
+                
+                $this->db->table('journals')->insert([
+                    'journal_number'   => 'JRN-DEL-'.time(), 
+                    'transaction_date' => date('Y-m-d'),
+                    'description'      => "Revisi/Hapus Item SO: {$so['so_number']}",
+                    'total_amount'     => $netReduction, 
+                    'created_by'       => session()->get('name') ?? 'System'
+                ]);
+                $journalId = $this->db->insertID();
+
+                if ($revAcc && $piutangAcc) {
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => $netReduction, 'credit' => 0, 'line_description' => 'Pembatalan Pendapatan (Hapus Item)']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $netReduction, 'line_description' => 'Pengurangan Piutang (Hapus Item)']);
+                }
+            }
+
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false) throw new \Exception("Sistem gagal memproses penghapusan item.");
+
+            return redirect()->back()->with('success', 'Item berhasil dihapus dari orderan. Total tagihan dan jurnal telah disesuaikan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function update_item_qty($itemId)
+    {
+        try {
+            if (!session()->get('isLoggedIn')) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi habis, silakan login ulang', 'csrf_token' => csrf_hash()]);
+            }
+            $this->db->transStart();
+
+            $newQty = (int)$this->request->getPost('new_qty');
+            if ($newQty <= 0) throw new \Exception("Kuantitas minimal adalah 1.");
+
+            $item = $this->db->table('b2b_sales_order_items')->where('id', $itemId)->get()->getRowArray();
+            if (!$item) throw new \Exception("Item tidak ditemukan.");
+
+            $so = $this->db->table('b2b_sales_orders')->where('id', $item['so_id'])->get()->getRowArray();
+            if ($so['shipping_status'] === 'SHIPPED') throw new \Exception("Gagal: Orderan sudah terkirim Full (SHIPPED).");
+            if ($so['status'] === 'RETURNED') throw new \Exception("Gagal: Orderan sudah Diretur.");
+
+            $oldQty = (int)$item['qty'];
+            if ($newQty == $oldQty) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'Tidak ada perubahan jumlah barang.', 'csrf_token' => csrf_hash()]);
+            }
+
+            $diffQty = $newQty - $oldQty; // Positif = nambah qty, Negatif = ngurangin qty
+            $shippedQty = (int)$item['shipped_qty'];
+
+            if ($newQty < $shippedQty) {
+                throw new \Exception("Gagal: Qty baru ($newQty) tidak boleh lebih kecil dari barang yang sudah telanjur dikirim ($shippedQty).");
+            }
+
+            // PERBAIKAN LOGIKA PENTING: Semua yang lolos masuk ke block edit ini adalah PRE-ORDER
+            // Order bertipe READY tidak akan bisa diedit karena sudah 100% SHIPPED (terblokir oleh validasi baris 614)
+            $orderType = 'PREORDER';
+
+            $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
+            $hpp = (float)($stock['hpp'] ?? 0);
+
+            // 1. UPDATE STOK & SPK PABRIK
+            if ($orderType === 'READY') {
+                if ($diffQty > 0) {
+                    if (!$stock || $stock['physical_stock'] < $diffQty) {
+                        throw new \Exception("Stok Gudang fisik kurang untuk ditambah. (Hanya sisa " . ($stock['physical_stock']??0) . " di gudang)");
+                    }
+                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$diffQty, $item['fg_sku']]);
+                } else {
+                    $absDiff = abs($diffQty);
+                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$absDiff, $item['fg_sku']]);
+                }
+                $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$diffQty, $itemId]);
+            } else {
+                // JIKA PRE-ORDER -> UPDATE SPK (Work Orders) PABRIK
+                $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
+                if ($bom) {
+                    $spk = $this->db->table('work_orders')
+                        ->where('so_id', $so['id'])
+                        ->where('bom_id', $bom['id'])
+                        ->where('status !=', 'COMPLETED')
+                        ->get()->getRowArray();
+
+                    if ($spk) {
+                        $newSpkQty = (int)$spk['planned_qty'] + $diffQty;
+                        if ($newSpkQty < (int)$spk['completed_qty']) {
+                            throw new \Exception("Gagal: Target SPK produksi tidak bisa dikurangi jadi $newSpkQty karena barang sudah selesai dirakit sejumlah {$spk['completed_qty']}.");
+                        }
+                        $this->db->table('work_orders')->where('id', $spk['id'])->update(['planned_qty' => $newSpkQty]);
+                    }
+                }
+            }
+
+            // 2. UPDATE ITEM SUBTOTAL
+            $itemPrice = (float)$item['price'] + (float)$item['additional_fee'];
+            $newSubtotal = $newQty * $itemPrice;
+            $diffAmount = $newSubtotal - (float)$item['subtotal'];
+
+            $this->db->table('b2b_sales_order_items')->where('id', $itemId)->update([
+                'qty' => $newQty,
+                'subtotal' => $newSubtotal
+            ]);
+
+            // 3. UPDATE SO HEADER
+            $discPercent = (float)$so['discount_percent'];
+            $oldTotalRaw = (float)$so['total_amount'] + (float)$so['discount'];
+            $newTotalRaw = max(0, $oldTotalRaw + $diffAmount);
+
+            $newDiscAmount = $newTotalRaw * ($discPercent / 100);
+            $newGrandTotal = $newTotalRaw - $newDiscAmount;
+
+            $paidAmount = (float)$so['paid_amount'];
+            $newStatus = ($paidAmount >= $newGrandTotal) ? 'PAID' : ($paidAmount > 0 ? 'PARTIAL' : 'PENDING');
+
+            $this->db->table('b2b_sales_orders')->where('id', $so['id'])->update([
+                'total_amount' => $newGrandTotal,
+                'discount' => $newDiscAmount,
+                'status' => $newStatus
+            ]);
+
+            // 4. JURNAL AKUNTANSI & POIN REWARD
+            $netDiff = $newGrandTotal - (float)$so['total_amount'];
+            if ($netDiff != 0) {
+                // Poin
+                $pointsDiff = floor(abs($netDiff) / 100000);
+                if ($pointsDiff > 0) {
+                    if ($netDiff > 0) {
+                        $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsDiff, $so['customer_id']]);
+                    } else {
+                        $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsDiff, $so['customer_id']]);
+                    }
+                }
+
+                // Jurnal Akuntansi
+                $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
+                $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
+                $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray();
+                $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
+
+                $jurnalDesc = ($netDiff > 0) ? "Penambahan Qty Item SO: {$so['so_number']}" : "Pengurangan Qty Item SO: {$so['so_number']}";
+
+                $this->db->table('journals')->insert([
+                    'journal_number'   => 'JRN-QTY-'.time(),
+                    'transaction_date' => date('Y-m-d'),
+                    'description'      => $jurnalDesc,
+                    'total_amount'     => abs($netDiff),
+                    'created_by'       => session()->get('name') ?? 'System'
+                ]);
+                $journalId = $this->db->insertID();
+
+                if ($revAcc && $piutangAcc) {
+                    if ($netDiff > 0) {
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => 0, 'credit' => $netDiff, 'line_description' => 'Revisi Qty (Pendapatan Naik)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $netDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (Piutang Naik)']);
+                    } else {
+                        $absNetDiff = abs($netDiff);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => $absNetDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (Pendapatan Turun)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $absNetDiff, 'line_description' => 'Revisi Qty (Piutang Turun)']);
+                    }
+                }
+
+                if ($orderType === 'READY' && $hpp > 0 && $invAcc && $hppAcc) {
+                    $hppDiff = abs($diffQty) * $hpp;
+                    if ($diffQty > 0) { 
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $hppDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (HPP Bertambah)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => 0, 'credit' => $hppDiff, 'line_description' => 'Revisi Qty (Persediaan Keluar)']);
+                    } else { 
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => $hppDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (Persediaan Masuk)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => 0, 'credit' => $hppDiff, 'line_description' => 'Revisi Qty (Pembalik HPP)']);
+                    }
+                }
+            }
+
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false) throw new \Exception("Gagal menyimpan ke database.");
+
+            return $this->response->setJSON([
+                'status' => 'success', 
+                'message' => 'Qty berhasil diperbarui. Tagihan & SPK pabrik telah disesuaikan otomatis!', 
+                'csrf_token' => csrf_hash()
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => $e->getMessage(), 
+                'csrf_token' => csrf_hash()
+            ]);
+        }
+    }
 }

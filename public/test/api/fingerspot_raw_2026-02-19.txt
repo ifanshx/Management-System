@@ -1,0 +1,363 @@
+[2026-02-19 07:55:45][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 07:55","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462544903.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:56:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 07:56","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462579747.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:56:50][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 07:56","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462610742.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:56:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 07:56","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462618369.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:57:13][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 07:57","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462633027.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:57:24][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 07:57","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462644350.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:57:27][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 07:57","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462647836.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:57:32][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 07:57","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462652044.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 07:59:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 07:59","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462755898.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:00:20][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 08:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462820483.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:00:25][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 08:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462825826.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:00:38][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1029","scan":"2026-02-19 08:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462838593.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:01:15][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 08:01","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771462874905.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:02:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-19 08:02","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:02:27][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1001","scan":"2026-02-19 08:02","verify":1,"status_scan":0,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:04:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-19 08:04","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771463095189.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:07:28][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-19 08:07","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771463248056.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:21:38][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-19 08:21","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464098030.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:28:20][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 08:28","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464500668.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:29:43][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 08:29","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464583268.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:29:47][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 08:29","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464587151.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:30:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 08:29","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464603069.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:30:11][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 08:29","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464611308.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:33:32][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-19 08:33","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771464812097.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:38:10][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-19 08:37","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771465090623.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 08:55:28][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 08:55","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771466128216.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 09:04:39][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-19 09:04","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771466679692.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 09:26:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1028","scan":"2026-02-19 09:26","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771467989228.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:30:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 11:30","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475437614.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:30:47][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 11:30","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475447830.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:30:59][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 11:30","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475459056.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 11:30","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475463585.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:09][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 11:30","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475469442.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:24][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1029","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475484115.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475489738.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:35][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475495145.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:42][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475501964.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:45][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475504923.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:50][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475510563.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:31:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475518179.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:32:04][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475524468.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:32:11][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-19 11:31","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475531640.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:32:23][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 11:32","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475543756.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:32:56][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 11:32","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475576035.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:33:06][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 11:32","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475586009.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:33:10][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 11:32","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475590281.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:33:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-19 11:33","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475599250.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:33:27][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-19 11:33","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475607416.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 11:33:40][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 11:33","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771475620774.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:13:07][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-19 12:12","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771477986951.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:24:43][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 12:24","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478683390.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:25:00][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1027","scan":"2026-02-19 12:24","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478700205.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:25:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 12:25","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478716545.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:26:44][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 12:26","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478804499.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:01][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 12:26","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478821677.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 12:26","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478827914.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:17][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478836984.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:25][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478845645.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:36][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478855913.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:43][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1029","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478863054.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:27:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-19 12:27","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478875534.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:06][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478886269.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:10][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 12:27","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478890370.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:16][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-19 12:28","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478896475.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:22][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-19 12:28","verify":1,"status_scan":2,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:28][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-19 12:28","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478908187.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:42][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1003","scan":"2026-02-19 12:28","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478922785.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:28:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 12:28","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771478934933.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:30:57][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 12:30","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479057774.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:31:23][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 12:31","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479083118.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:31:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 12:31","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479089234.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:31:33][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 12:31","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479093493.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:31:45][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-19 12:31","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479105641.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:31:51][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-19 12:31","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479111541.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:32:52][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-19 12:32","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479172470.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:34:00][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-19 12:33","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479240419.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:36:11][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 12:35","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479370848.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:36:15][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 12:36","verify":4,"status_scan":2,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479375057.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 12:38:20][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1028","scan":"2026-02-19 12:38","verify":4,"status_scan":3,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771479499822.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 13:27:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 13:27","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771482473556.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 13:38:56][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1020","scan":"2026-02-19 13:38","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771483136382.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 13:46:41][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 13:46","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771483601094.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 14:01:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1021","scan":"2026-02-19 14:01","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771484489765.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 15:08:59][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1028","scan":"2026-02-19 15:08","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771488539472.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:00:23][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1027","scan":"2026-02-19 16:00","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491623194.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:00:49][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 16:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491649788.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:01:02][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 16:00","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491662563.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:01:30][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1007","scan":"2026-02-19 16:01","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491690328.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:01][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 16:01","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491720974.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:05][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 16:01","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491725358.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1030","scan":"2026-02-19 16:01","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491728106.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 16:02","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491757726.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:52][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 16:02","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491771975.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:02:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 16:02","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491775020.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:03:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1006","scan":"2026-02-19 16:02","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491781484.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:03:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1009","scan":"2026-02-19 16:03","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491799429.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:03:29][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1002","scan":"2026-02-19 16:03","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491809258.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:03:49][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1013","scan":"2026-02-19 16:03","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491829126.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:04:08][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1011","scan":"2026-02-19 16:03","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491848500.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:04:21][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 16:04","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491861302.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:04:25][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1032","scan":"2026-02-19 16:04","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491865872.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:05:19][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1003","scan":"2026-02-19 16:05","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771491919318.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:09:36][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1004","scan":"2026-02-19 16:09","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492176165.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:10:09][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1026","scan":"2026-02-19 16:09","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492209075.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:12:30][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1025","scan":"2026-02-19 16:12","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492350166.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:16:01][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 16:15","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492561147.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:16:22][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1033","scan":"2026-02-19 16:16","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492582574.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:20:12][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1018","scan":"2026-02-19 16:19","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771492812038.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:37:55][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1021","scan":"2026-02-19 16:37","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771493875357.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 16:51:22][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1024","scan":"2026-02-19 16:51","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771494682020.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:00:49][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1001","scan":"2026-02-19 17:00","verify":1,"status_scan":1,"photo_url":"-","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:08:15][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1019","scan":"2026-02-19 17:08","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771495695546.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:09:31][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-19 17:09","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771495771611.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:09:34][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1005","scan":"2026-02-19 17:09","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771495774363.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:09:46][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1028","scan":"2026-02-19 17:09","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771495785994.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:32:10][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1029","scan":"2026-02-19 17:31","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771497129771.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:33:37][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 17:33","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771497216954.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:33:40][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 17:33","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771497220518.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 17:34:00][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1015","scan":"2026-02-19 17:33","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771497240183.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 20:05:58][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 20:05","verify":4,"status_scan":0,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771506358019.jpeg","work_code":null}}
+--------------------------------------------------------------------------------
+[2026-02-19 20:06:03][Method: POST]
+Body: {"type":"attlog","cloud_id":"FZ1096818","data":{"pin":"1014","scan":"2026-02-19 20:05","verify":4,"status_scan":1,"photo_url":"https://fioapp.s3.ap-southeast-1.amazonaws.com/attendance/front-photo/developer-21763/FZ1096818_attendance_21763_1771506363668.jpeg","work_code":null}}
+--------------------------------------------------------------------------------

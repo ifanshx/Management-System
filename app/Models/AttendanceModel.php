@@ -1,32 +1,38 @@
 <?php
 
 namespace App\Models;
+
 use CodeIgniter\Model;
 
 class AttendanceModel extends Model
 {
     protected $table            = 'attendances';
     protected $primaryKey       = 'id';
+    protected $returnType       = 'array';
+    protected $useAutoIncrement = true;
     
-    // HAPUS 'cash_advance' dan PASTIKAN 'is_meal_taken' ada di sini
-    protected $allowedFields = [
-        'employee_id', 'date', 'time_in', 'time_out', 'status', 
-        'late_minutes', 'break_out', 'break_in', 'overtime_minutes', 
-        'work_duration_minutes', 'is_meal_taken', 'photo_url', 'verify_method' // <--- TAMBAHKAN INI
+    // PERBAIKAN: Masukkan is_overtime_taken dan overtime_meal_amount ke sini
+    protected $allowedFields    = [
+        'employee_id', 
+        'date', 
+        'time_in', 
+        'break_out', 
+        'break_in', 
+        'time_out', 
+        'status', 
+        'is_meal_taken', 
+        'is_overtime_taken',      // Ditambahkan
+        'overtime_meal_amount',   // Ditambahkan
+        'photo_url', 
+        'verify_method', 
+        'late_minutes', 
+        'overtime_minutes', 
+        'work_duration_minutes'
     ];
-    
-    protected $useTimestamps    = true;
 
-    // Fungsi khusus untuk mengambil rekap absen harian beserta nama dan divisinya
-    public function getDailyAttendance($date)
-    {
-        return $this->db->table($this->table)
-            ->select('attendances.*, employees.name, employees.department, employees.position')
-            ->join('employees', 'employees.employee_id = attendances.employee_id', 'right') // Right join agar yang alpa tetap muncul
-            ->where('attendances.date', $date)
-            ->orderBy('employees.department', 'ASC')
-            ->orderBy('employees.name', 'ASC')
-            ->get()
-            ->getResultArray();
-    }
+    // Dates
+    protected $useTimestamps = true;
+    protected $dateFormat    = 'datetime';
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
 }

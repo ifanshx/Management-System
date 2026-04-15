@@ -34,13 +34,11 @@ class Dashboard extends BaseController
         $revenue = 0; $expense = 0; $liquidAssets = 0;
 
         foreach($coa as $acc) {
-            // Amankan nilai saldo. (Coba tangkap dari kolom 'balance' atau 'saldo' jika ada)
             $bal = isset($acc['balance']) ? (float)$acc['balance'] : (isset($acc['saldo']) ? (float)$acc['saldo'] : 0);
 
             if($acc['account_type'] === 'PENDAPATAN') $revenue += $bal;
             if($acc['account_type'] === 'PERBELANJAAN') $expense += $bal;
             
-            // Hanya hitung Kas/Bank/Piutang dari CoA sebagai Aset Likuid
             if($acc['account_type'] === 'ASET' && !in_array($acc['account_code'], ['1-3000', '1-5000', '1-5001'])) {
                 $liquidAssets += $bal;
             }
@@ -57,10 +55,8 @@ class Dashboard extends BaseController
         // ==========================================
         // 4. VALUASI ASET TETAP (MESIN, GEDUNG)
         // ==========================================
-        // Amankan Perhitungan Aset Tetap
         $totalPurchasePrice = $db->query("SELECT SUM(purchase_price) as total FROM factory_assets WHERE status = 'ACTIVE'")->getRow()->total ?? 0;
         
-        // Ambil baris Akumulasi Penyusutan dengan aman, tidak peduli apakah ada kolom 'balance' atau tidak
         $accDepRow = $db->table('chart_of_accounts')->where('account_code', '1-5001')->get()->getRowArray();
         $accumulatedDepreciation = 0;
         if ($accDepRow) {
@@ -129,11 +125,12 @@ class Dashboard extends BaseController
         }
 
         // ==========================================
-        // 8. DATA ABSENSI KARYAWAN HARI INI
+        // 8. DATA ABSENSI KARYAWAN HARI INI (PERBAIKAN NORMALISASI)
         // ==========================================
         $recentAttendance = $db->table('attendances') 
-                       ->select('attendances.*, employees.name, employees.position') 
+                       ->select('attendances.*, employees.name, positions.name as position_name') 
                        ->join('employees', 'employees.employee_id = attendances.employee_id', 'left') 
+                       ->join('positions', 'positions.id = employees.position_id', 'left') 
                        ->where('date', $today)
                        ->orderBy('time_in', 'DESC')
                        ->limit(8)
@@ -150,7 +147,7 @@ class Dashboard extends BaseController
             'currentMonthName' => date('F Y'),
             'totalEmployees'   => $totalEmployees,
             'totalPayrollCost' => $totalPayrollCost,
-            'recentAttendance' => $recentAttendance, // Data absensi dikirim ke Views
+            'recentAttendance' => $recentAttendance, 
             'finance'          => [
                 'revenue'         => $revenue, 
                 'profit'          => $netProfit, 

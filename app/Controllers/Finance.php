@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\OperationalCashModel;
+use App\Services\AccountingService;
 
 class Finance extends BaseController
 {
@@ -15,9 +16,6 @@ class Finance extends BaseController
         $this->cashModel = new OperationalCashModel();
     }
 
-    // =========================================================
-    // 1. KAS OPERASIONAL
-    // =========================================================
     public function cash_index()
     {
         if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') {
@@ -26,13 +24,11 @@ class Finance extends BaseController
 
         $tgl_filter = $this->request->getGet('tgl') ?? date('Y-m-d');
 
-        // Ambil riwayat kas sesuai tanggal
         $transactions = $this->cashModel
             ->where('transaction_date', $tgl_filter)
             ->orderBy('created_at', 'ASC')
             ->findAll();
 
-        // Ambil saldo REAL-TIME dari Database View
         $akunKas = $this->db->query("SELECT calculated_balance FROM v_account_balances WHERE account_code = '1-1000'")->getRowArray();
         $akunBank = $this->db->query("SELECT calculated_balance FROM v_account_balances WHERE account_code = '1-2000'")->getRowArray();
 
@@ -44,7 +40,6 @@ class Finance extends BaseController
         $keluar_hari_ini = 0;
 
         foreach ($transactions as $trx) {
-            // Hanya hitung yang POSTED
             if (($trx['status'] ?? 'POSTED') === 'POSTED') {
                 if ($trx['type'] === 'Cash In') $masuk_hari_ini += $trx['amount'];
                 if ($trx['type'] === 'Cash Out') $keluar_hari_ini += $trx['amount'];
@@ -66,9 +61,6 @@ class Finance extends BaseController
         ]);
     }
 
-    // =========================================================
-    // 2. STORE KAS OPERASIONAL + AUTO JURNAL
-    // =========================================================
     public function cash_store()
     {
         if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') {
@@ -82,25 +74,34 @@ class Finance extends BaseController
             $pic_name   = session()->get('name') ?? 'Sistem';
 
             if ($nominal <= 0) {
-                throw new \Exception("Nominal harus lebih dari 0.");
+                throw new \Exception("Nominal transaksi harus lebih dari 0.");
             }
 
-            // Generate Kode TRX
             $dateCode = date('Ymd', strtotime($tgl));
-            $lastTrx = $this->cashModel->like('transaction_code', "TRX-$dateCode-", 'after')->orderBy('id', 'DESC')->first();
-            $newNumber = $lastTrx ? str_pad((int) substr($lastTrx['transaction_code'], -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
-            $trxCode = "TRX-$dateCode-$newNumber";
+            
+            $lastTrx = $this->db->table('operational_cash')
+                ->like('transaction_code', "TRX-$dateCode-", 'after')
+                ->orderBy('id', 'DESC')
+                ->get()
+                ->getRowArray();
+
+            $newNumber = 0;
+            if ($lastTrx) {
+                $parts = explode('-', $lastTrx['transaction_code']);
+                $newNumber = (int) end($parts);
+            }
 
             $receiptFile = null;
             $file = $this->request->getFile('receipt_file');
-
             if ($file && $file->isValid() && !$file->hasMoved()) {
                 $newName = $file->getRandomName();
-                $file->move(ROOTPATH . 'public/uploads/receipts/', $newName);
+                $file->move(FCPATH . 'uploads/receipts/', $newName);
                 $receiptFile = $newName;
             }
 
             $this->db->transStart();
+            
+            $accService = new \App\Services\AccountingService();
 
             if ($mode_input === 'transaksi') {
                 $type   = $this->request->getPost('type');
@@ -114,145 +115,128 @@ class Finance extends BaseController
                 $lawanAcc = $this->db->table('chart_of_accounts')->where('account_code', $lawanCode)->get()->getRowArray();
 
                 if (!$assetAcc || !$lawanAcc) {
-                    throw new \Exception("Akun jurnal tidak ditemukan.");
+                    throw new \Exception("Akun jurnal tidak ditemukan di Chart of Accounts.");
                 }
 
-                // Cek Saldo untuk Cash Out
                 if ($type === 'Cash Out') {
                     $saldoAkun = $this->db->query("SELECT calculated_balance FROM v_account_balances WHERE id = ?", [$assetAcc['id']])->getRowArray()['calculated_balance'] ?? 0;
-                    if ($saldoAkun < $nominal) throw new \Exception("Saldo {$metode} tidak mencukupi.");
+                    if ($saldoAkun < $nominal) throw new \Exception("Pencatatan ditolak! Saldo {$metode} Anda tidak mencukupi. (Sisa: Rp " . number_format($saldoAkun,0,',','.') . ")");
                 }
 
-                // 1. Simpan Header Jurnal
-                $journalNumber = 'JRN-' . date('Ym', strtotime($tgl)) . '-' . time();
+                $trxCode = "TRX-$dateCode-" . str_pad($newNumber + 1, 3, '0', STR_PAD_LEFT);
 
-                $this->db->table('journals')->insert([
-                    'journal_number'   => $journalNumber,
-                    'transaction_date' => $tgl,
-                    'description'      => "Kas Operasional: {$desc}",
-                    'reference_number' => $trxCode,
-                    'source_module'    => 'operational_cash',
-                    'total_amount'     => $nominal,
-                    'status'           => 'POSTED',
-                    'created_by'       => $pic_name
-                ]);
-                $journalId = $this->db->insertID();
-
-                // 2. Detail Jurnal
+                $journalItems = [];
                 if ($type === 'Cash In') {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $assetAcc['id'], 'line_description' => "Kas masuk {$metode}", 'debit' => $nominal, 'credit' => 0]);
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $lawanAcc['id'], 'line_description' => "Pendapatan", 'debit' => 0, 'credit' => $nominal]);
+                    $journalItems[] = ['account_id' => $assetAcc['id'], 'debit' => $nominal, 'credit' => 0, 'memo' => "Kas masuk {$metode}"];
+                    $journalItems[] = ['account_id' => $lawanAcc['id'], 'debit' => 0, 'credit' => $nominal, 'memo' => "Pendapatan Operasional"];
                 } else {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $lawanAcc['id'], 'line_description' => "Beban operasional", 'debit' => $nominal, 'credit' => 0]);
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $assetAcc['id'], 'line_description' => "Kas keluar {$metode}", 'debit' => 0, 'credit' => $nominal]);
+                    $journalItems[] = ['account_id' => $lawanAcc['id'], 'debit' => $nominal, 'credit' => 0, 'memo' => "Beban operasional"];
+                    $journalItems[] = ['account_id' => $assetAcc['id'], 'debit' => 0, 'credit' => $nominal, 'memo' => "Kas keluar {$metode}"];
                 }
 
-                // 3. Simpan operational cash
-                $this->cashModel->insert([
+                $journalId = $accService->createJournal($tgl, "Kas Operasional: {$desc}", 'operational_cash', $trxCode, $nominal, $journalItems, $pic_name);
+
+                $this->db->table('operational_cash')->insert([
                     'transaction_code' => $trxCode, 'transaction_date' => $tgl, 'type' => $type, 'metode' => $metode,
                     'category' => 'Operasional', 'amount' => $nominal, 'description' => $desc,
                     'pic_name' => $pic_name, 'receipt_file' => $receiptFile, 'journal_id' => $journalId, 'status' => 'POSTED'
                 ]);
 
-                $this->db->table('journals')->where('id', $journalId)->update(['source_id' => $this->db->insertID()]);
-            } 
-            elseif ($mode_input === 'mutasi') {
+                $cashId = $this->db->insertID();
+                $this->db->table('journals')->where('id', $journalId)->update(['source_id' => $cashId]);
+
+            } elseif ($mode_input === 'mutasi') {
                 $arah = $this->request->getPost('arah_mutasi');
+                $desc = strtoupper(trim($this->request->getPost('description')));
+                
                 $akunKas = $this->db->table('chart_of_accounts')->where('account_code', '1-1000')->get()->getRowArray();
                 $akunBank = $this->db->table('chart_of_accounts')->where('account_code', '1-2000')->get()->getRowArray();
                 
-                if(!$akunKas || !$akunBank) throw new \Exception("Akun Kas/Bank tidak ditemukan di sistem.");
+                if(!$akunKas || !$akunBank) throw new \Exception("Sistem Gagal: Akun Kas (1-1000) atau Bank (1-2000) tidak ditemukan.");
 
-                $journalNumber = 'JRN-' . date('Ym', strtotime($tgl)) . '-' . time();
+                $trxCode1 = "TRX-$dateCode-" . str_pad($newNumber + 1, 3, '0', STR_PAD_LEFT);
+                $trxCode2 = "TRX-$dateCode-" . str_pad($newNumber + 2, 3, '0', STR_PAD_LEFT);
 
-                $this->db->table('journals')->insert([
-                    'journal_number'   => $journalNumber, 'transaction_date' => $tgl,
-                    'description'      => ($arah === 'atm_to_cash') ? 'Tarik Tunai (ATM ke Laci)' : 'Setor Tunai (Laci ke ATM)',
-                    'total_amount'     => $nominal, 'status' => 'POSTED', 'created_by' => $pic_name
-                ]);
-                $jrnId = $this->db->insertID();
+                $journalItems = [];
 
                 if ($arah === 'atm_to_cash') {
                     $saldoBank = $this->db->query("SELECT calculated_balance FROM v_account_balances WHERE id = ?", [$akunBank['id']])->getRowArray()['calculated_balance'] ?? 0;
-                    if ($saldoBank < $nominal) throw new \Exception("Saldo Bank tidak cukup untuk ditarik.");
+                    if ($saldoBank < $nominal) throw new \Exception("Pencatatan Ditolak! Saldo Rekening Bank Anda tidak mencukupi untuk ditarik.");
 
-                    $this->cashModel->insert(['transaction_code' => "TRX-$dateCode-" . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT), 'transaction_date' => $tgl, 'type' => 'Cash Out', 'metode' => 'ATM', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => 'TARIK TUNAI (DARI ATM)', 'pic_name' => $pic_name, 'journal_id' => $jrnId]);
-                    $this->cashModel->insert(['transaction_code' => "TRX-$dateCode-" . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT), 'transaction_date' => $tgl, 'type' => 'Cash In', 'metode' => 'Cash', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => 'TERIMA TUNAI (KE LACI)', 'pic_name' => $pic_name, 'journal_id' => $jrnId]);
-                    
-                    $this->db->table('journal_items')->insert(['journal_id' => $jrnId, 'account_id' => $akunKas['id'], 'debit' => $nominal, 'credit' => 0]);
-                    $this->db->table('journal_items')->insert(['journal_id' => $jrnId, 'account_id' => $akunBank['id'], 'debit' => 0, 'credit' => $nominal]);
+                    $journalItems[] = ['account_id' => $akunKas['id'], 'debit' => $nominal, 'credit' => 0, 'memo' => 'Masuk Kas Laci'];
+                    $journalItems[] = ['account_id' => $akunBank['id'], 'debit' => 0, 'credit' => $nominal, 'memo' => 'Keluar dari ATM'];
+
+                    $journalId = $accService->createJournal($tgl, "Tarik Tunai: $desc", 'operational_cash', $trxCode1, $nominal, $journalItems, $pic_name);
+
+                    $this->db->table('operational_cash')->insert(['transaction_code' => $trxCode1, 'transaction_date' => $tgl, 'type' => 'Cash Out', 'metode' => 'ATM', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => "TARIK TUNAI (DARI ATM): $desc", 'pic_name' => $pic_name, 'journal_id' => $journalId, 'status' => 'POSTED']);
+                    $this->db->table('operational_cash')->insert(['transaction_code' => $trxCode2, 'transaction_date' => $tgl, 'type' => 'Cash In', 'metode' => 'Cash', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => "TERIMA TUNAI (KE LACI): $desc", 'pic_name' => $pic_name, 'journal_id' => $journalId, 'status' => 'POSTED']);
                 } else {
                     $saldoKas = $this->db->query("SELECT calculated_balance FROM v_account_balances WHERE id = ?", [$akunKas['id']])->getRowArray()['calculated_balance'] ?? 0;
-                    if ($saldoKas < $nominal) throw new \Exception("Saldo Kas Laci tidak cukup disetor.");
+                    if ($saldoKas < $nominal) throw new \Exception("Pencatatan Ditolak! Saldo Kas Laci Tunai tidak mencukupi untuk disetorkan.");
 
-                    $this->cashModel->insert(['transaction_code' => "TRX-$dateCode-" . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT), 'transaction_date' => $tgl, 'type' => 'Cash Out', 'metode' => 'Cash', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => 'SETOR TUNAI (DARI LACI)', 'pic_name' => $pic_name, 'journal_id' => $jrnId]);
-                    $this->cashModel->insert(['transaction_code' => "TRX-$dateCode-" . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT), 'transaction_date' => $tgl, 'type' => 'Cash In', 'metode' => 'ATM', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => 'DANA MASUK (KE ATM)', 'pic_name' => $pic_name, 'journal_id' => $jrnId]);
-                    
-                    $this->db->table('journal_items')->insert(['journal_id' => $jrnId, 'account_id' => $akunBank['id'], 'debit' => $nominal, 'credit' => 0]);
-                    $this->db->table('journal_items')->insert(['journal_id' => $jrnId, 'account_id' => $akunKas['id'], 'debit' => 0, 'credit' => $nominal]);
+                    $journalItems[] = ['account_id' => $akunBank['id'], 'debit' => $nominal, 'credit' => 0, 'memo' => 'Masuk Rekening Bank'];
+                    $journalItems[] = ['account_id' => $akunKas['id'], 'debit' => 0, 'credit' => $nominal, 'memo' => 'Keluar dari Kas Laci'];
+
+                    $journalId = $accService->createJournal($tgl, "Setor Tunai: $desc", 'operational_cash', $trxCode1, $nominal, $journalItems, $pic_name);
+
+                    $this->db->table('operational_cash')->insert(['transaction_code' => $trxCode1, 'transaction_date' => $tgl, 'type' => 'Cash Out', 'metode' => 'Cash', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => "SETOR TUNAI (DARI LACI): $desc", 'pic_name' => $pic_name, 'journal_id' => $journalId, 'status' => 'POSTED']);
+                    $this->db->table('operational_cash')->insert(['transaction_code' => $trxCode2, 'transaction_date' => $tgl, 'type' => 'Cash In', 'metode' => 'ATM', 'category' => 'Mutasi', 'amount' => $nominal, 'description' => "DANA MASUK (KE ATM): $desc", 'pic_name' => $pic_name, 'journal_id' => $journalId, 'status' => 'POSTED']);
                 }
             }
 
             $this->db->transComplete();
 
-            if ($this->db->transStatus() === false) throw new \Exception("Gagal menyimpan transaksi kas.");
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Perintah penyimpanan dibatalkan di tingkat database.");
+            }
 
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON(['status' => 'success', 'message' => 'Transaksi kas berhasil disimpan di tanggal ' . date('d M Y', strtotime($tgl)) . '.']);
             }
             return redirect()->back()->with('success', 'Transaksi kas berhasil disimpan.');
+            
         } catch (\Throwable $e) {
-            if ($this->request->isAJAX()) return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            if ($this->db->transStatus() !== false) {
+                $this->db->transRollback();
+            }
+            
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+            }
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // =========================================================
-    // 3. CANCEL TRANSAKSI KAS (DENGAN ZERO-OUT REVERSAL)
-    // =========================================================
     public function cash_delete($id)
     {
         try {
-            $trx = $this->cashModel->find($id);
-            if (!$trx) throw new \Exception("Transaksi tidak ditemukan.");
+            if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') {
+                throw new \Exception("Akses Ditolak.");
+            }
+
+            $trx = $this->db->table('operational_cash')->where('id', $id)->get()->getRowArray();
+            if (!$trx) throw new \Exception("Data Kas Operasional ini sudah tidak ditemukan di database.");
 
             $this->db->transStart();
 
             if (!empty($trx['journal_id'])) {
-                
-                // 1. VOID JURNAL & NOL-KAN TOTAL
-                $this->db->table('journals')->where('id', $trx['journal_id'])->update([
-                    'status'       => 'VOID',
-                    'total_amount' => 0,
-                    'void_reason'  => 'Dibatalkan dari kas operasional',
-                    'voided_at'    => date('Y-m-d H:i:s'),
-                    'voided_by'    => session()->get('name') ?? 'Sistem'
-                ]);
-
-                // 2. NOL-KAN RINCIAN JURNAL AGAR v_account_balances KEMBALI NORMAL (REVERSAL)
-                $this->db->table('journal_items')->where('journal_id', $trx['journal_id'])->update([
-                    'debit'  => 0,
-                    'credit' => 0
-                ]);
-
-                // 3. CANCEL SEMUA KAS YANG TERKAIT JURNAL INI (Berguna untuk Mutasi yang punya 2 baris)
-                $this->db->table('operational_cash')
-                         ->where('journal_id', $trx['journal_id'])
-                         ->update(['status' => 'CANCELLED']);
-                         
+                // Panggil Void Jurnal yang otomatis akan meng-CANCEL transaksi kas ini
+                $accService = new AccountingService();
+                $accService->voidJournal($trx['journal_id'], 'Dibatalkan langsung dari Kas Operasional', session()->get('name') ?? 'Sistem');
             } else {
-                $this->cashModel->update($id, ['status' => 'CANCELLED']);
+                // Fallback jika transaksi tersebut tidak memiliki jurnal
+                $this->db->table('operational_cash')->where('id', $id)->update(['status' => 'CANCELLED']);
             }
 
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                throw new \Exception("Gagal membatalkan transaksi pada sistem Database.");
+                throw new \Exception("Sistem menolak untuk membatalkan karena terdapat data yang terkunci.");
             }
 
-            return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan dan saldo dikembalikan.');
+            return redirect()->back()->with('success', 'Transaksi Kas berhasil di-VOID. Saldo Anda telah dikembalikan!');
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membatalkan: ' . $e->getMessage());
         }
     }
 }

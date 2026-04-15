@@ -1,0 +1,215 @@
+[05-Feb-2026 18:56:20 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:56:20 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:12 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:12 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:38 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:38 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:53 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 18:57:53 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 19:07:30 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[05-Feb-2026 19:07:30 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[06-Feb-2026 06:44:56 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[06-Feb-2026 06:44:56 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:33:07 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:33:07 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:33:10 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:33:10 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:23 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:23 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:25 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:25 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:26 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:35:26 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:42:40 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:42:40 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:42:48 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:42:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:53:00 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 02:53:00 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 06:46:10 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 06:46:10 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 06:46:12 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[10-Feb-2026 06:46:12 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 03:23:47 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 03:23:47 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 04:23:12 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 04:23:12 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 17:00:00 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 17:00:00 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 17:02:57 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 17:02:57 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 2
+[11-Feb-2026 17:03:12 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:12 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:13 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:13 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:14 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:15 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:16 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Warning:  require_once(../../config/database.php): Failed to open stream: No such file or directory in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3
+[11-Feb-2026 17:03:17 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../../config/database.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/uwjqdfka/public_html/pages/transaksi/cetak/cetak_bukti_keluar.php on line 3

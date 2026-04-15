@@ -443,10 +443,11 @@ if (!function_exists('fmt_compact_cash')) {
     });
 
     // Delete / Void Transaksi
+    // Delete / Void Transaksi
     function confirmCancel(url) {
         Swal.fire({
             title: 'Batalkan Transaksi?', 
-            text: 'Jurnal akuntansi terkait juga akan di-void secara otomatis.', 
+            text: 'Jurnal akuntansi dan status pembayaran terkait juga akan dibatalkan secara otomatis. Lanjutkan?', 
             icon: 'warning', 
             showCancelButton: true,
             confirmButtonColor: '#ef4444', 
@@ -457,10 +458,20 @@ if (!function_exists('fmt_compact_cash')) {
             customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({ title: 'Memproses...', allowOutsideClick: false, showConfirmButton: false, background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
+                Swal.fire({ 
+                    title: 'Memproses...', 
+                    text: 'Mohon tunggu sebentar, sistem sedang menyesuaikan saldo.',
+                    allowOutsideClick: false, 
+                    showConfirmButton: false, 
+                    background: swalBg, color: swalText, 
+                    customClass: { popup: 'swal2-custom-radius' }, 
+                    didOpen: () => { Swal.showLoading() }
+                });
+                
+                // Gunakan window.location agar Controller dapat melakukan redirect()->back()
                 window.location.href = url;
             }
-        })
+        });
     }
 
     // Refresh Halaman Berdasarkan Filter Tanggal

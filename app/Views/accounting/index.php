@@ -73,10 +73,42 @@
     }
 
     /* =========================
+       INFO ALERT (ACCRUAL BASIS)
+    ========================= */
+    .accrual-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        background: rgba(14, 165, 233, 0.05);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        padding: 16px 22px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+    }
+    .accrual-alert i {
+        color: var(--brand-blue);
+        font-size: 24px;
+        margin-top: 2px;
+    }
+    .accrual-alert h4 {
+        margin: 0 0 6px 0;
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--brand-blue);
+    }
+    .accrual-alert p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        font-weight: 600;
+    }
+
+    /* =========================
        HEADER
     ========================= */
     .page-header {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
@@ -280,10 +312,9 @@
     }
 
     .kpi-exact {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
         color: var(--text-muted);
-        font-family: 'Space Mono', monospace;
         margin-top: 14px;
         display: inline-flex;
         align-items: center;
@@ -464,24 +495,11 @@
     }
 
     @media (max-width: 768px) {
-        .header-toolbar {
-            flex-wrap: wrap;
-            width: 100%;
-            justify-content: center;
-        }
-        .btn-tb {
-            width: 100%;
-            justify-content: center;
-        }
-        .tb-divider {
-            display: none;
-        }
-        .page-title h1 {
-            font-size: 28px;
-        }
-        .kpi-val {
-            font-size: 28px;
-        }
+        .header-toolbar { flex-wrap: wrap; width: 100%; justify-content: center; }
+        .btn-tb { width: 100%; justify-content: center; }
+        .tb-divider { display: none; }
+        .page-title h1 { font-size: 28px; }
+        .kpi-val { font-size: 28px; }
     }
 </style>
 
@@ -493,7 +511,7 @@
             <div class="title-icon"><i class="ph-fill ph-chart-line-up"></i></div>
             <div>
                 <h1>Dasbor Finansial Eksekutif</h1>
-                <p>Ringkasan performa keuangan real-time berbasis jurnal akuntansi yang akurat.</p>
+                <p>Ringkasan performa keuangan real-time berbasis jurnal akuntansi (Accrual Basis).</p>
             </div>
         </div>
 
@@ -514,34 +532,40 @@
         </div>
     </div>
 
+    <div class="accrual-alert">
+        <i class="ph-fill ph-info"></i>
+        <div>
+            <h4>Informasi Standar Akuntansi</h4>
+            <p>Sistem ERP ini menggunakan standar <b>Akuntansi Berbasis Akrual (Accrual Basis)</b>. Artinya, <b>Pendapatan</b> langsung diakui pada saat pesanan (Sales Order) diterbitkan meskipun uang belum lunas (menjadi Piutang). Demikian pula <b>Beban/HPP</b> diakui pada saat fisik barang benar-benar dikirim keluar dari gudang.</p>
+        </div>
+    </div>
+
     <div class="kpi-grid">
         <div class="kpi-card c-aset">
             <div class="kpi-header">
                 <div class="kpi-title">
-                    Total Aset
-                    <strong>Keseluruhan Aset Perusahaan</strong>
+                    Aset & Kas
+                    <strong>Total Kekayaan Aktif</strong>
                 </div>
                 <div class="kpi-icon"><i class="ph-fill ph-wallet"></i></div>
             </div>
             <div class="kpi-val">Rp <?= format_compact($aset) ?></div>
             <div class="kpi-exact">
-                <i class="ph-fill ph-sparkle"></i>
-                Rp <?= number_format($aset, 0, ',', '.') ?>
+                <i class="ph-fill ph-sparkle"></i> Termasuk Piutang & Barang Gudang
             </div>
         </div>
 
         <div class="kpi-card c-rev">
             <div class="kpi-header">
                 <div class="kpi-title">
-                    Pendapatan
-                    <strong>Total Pemasukan Berjalan</strong>
+                    Pendapatan (Revenue)
+                    <strong>Omzet Terbukukan</strong>
                 </div>
                 <div class="kpi-icon"><i class="ph-fill ph-trend-up"></i></div>
             </div>
             <div class="kpi-val">Rp <?= format_compact($pendapatan) ?></div>
             <div class="kpi-exact">
-                <i class="ph-fill ph-chart-bar"></i>
-                Margin <?= number_format($profitMargin, 1, ',', '.') ?>%
+                <i class="ph-fill ph-chart-bar"></i> Laba Kotor: Rp <?= format_compact($laba_kotor) ?>
             </div>
         </div>
 
@@ -549,22 +573,21 @@
             <div class="kpi-header">
                 <div class="kpi-title">
                     Beban Operasional
-                    <strong>Total Pengeluaran Operasional</strong>
+                    <strong>Total Pengeluaran</strong>
                 </div>
                 <div class="kpi-icon"><i class="ph-fill ph-receipt-x"></i></div>
             </div>
             <div class="kpi-val">Rp <?= format_compact($beban_ops) ?></div>
             <div class="kpi-exact">
-                <i class="ph-fill ph-arrow-circle-down"></i>
-                HPP: Rp <?= format_compact($hpp) ?>
+                <i class="ph-fill ph-arrow-circle-down"></i> HPP Keluar: Rp <?= format_compact($hpp) ?>
             </div>
         </div>
 
         <div class="kpi-card c-profit">
             <div class="kpi-header">
                 <div class="kpi-title">
-                    Laba Bersih
-                    <strong>Profit Setelah Beban & HPP</strong>
+                    Laba Bersih (Net Profit)
+                    <strong>Profit Riil Berjalan</strong>
                 </div>
                 <div class="kpi-icon"><i class="ph-fill ph-currency-circle-dollar"></i></div>
             </div>
@@ -572,8 +595,7 @@
                 Rp <?= format_compact($laba_bersih) ?>
             </div>
             <div class="kpi-exact">
-                <i class="ph-fill ph-bank"></i>
-                Kotor: Rp <?= format_compact($laba_kotor) ?>
+                <i class="ph-fill ph-bank"></i> Profit Margin: <?= number_format($profitMargin, 1, ',', '.') ?>%
             </div>
         </div>
     </div>
@@ -582,7 +604,7 @@
         <div class="bento-card">
             <div class="card-title">
                 <i class="ph-fill ph-chart-pie-slice"></i>
-                Komposisi Finansial
+                Komposisi Finansial Berjalan
             </div>
             <div class="chart-wrap">
                 <canvas id="financeChart"></canvas>
@@ -592,26 +614,28 @@
         <div class="bento-card">
             <div class="card-title">
                 <i class="ph-fill ph-lightning"></i>
-                Ringkasan Cepat
+                Ringkasan Neraca Saldo
             </div>
 
             <div class="mini-stats">
                 <div class="mini-stat">
-                    <div class="label">Liabilitas</div>
+                    <div class="label">Liabilitas (Kewajiban)</div>
                     <div class="value">Rp <?= format_compact($kewajiban) ?></div>
-                    <div class="desc">Total kewajiban perusahaan saat ini.</div>
+                    <div class="desc">Total hutang/kewajiban perusahaan saat ini.</div>
                 </div>
 
                 <div class="mini-stat">
-                    <div class="label">Ekuitas</div>
+                    <div class="label">Ekuitas (Modal Saham)</div>
                     <div class="value">Rp <?= format_compact($ekuitas) ?></div>
                     <div class="desc">Kepemilikan bersih pemilik usaha.</div>
                 </div>
 
                 <div class="mini-stat">
-                    <div class="label">Health Score</div>
-                    <div class="value"><?= $laba_bersih >= 0 ? 'GOOD' : 'ALERT' ?></div>
-                    <div class="desc">Status kesehatan finansial berdasarkan profit.</div>
+                    <div class="label">Status Kesehatan Akun</div>
+                    <div class="value" style="color: <?= $laba_bersih >= 0 ? 'var(--brand-green)' : 'var(--brand-red)' ?>;">
+                        <?= $laba_bersih >= 0 ? 'SEHAT (PROFIT)' : 'AWAS (RUGI)' ?>
+                    </div>
+                    <div class="desc">Berdasarkan hasil akumulasi laba bersih berjalan.</div>
                 </div>
             </div>
         </div>
@@ -629,17 +653,17 @@
                     <tr>
                         <th>No. Jurnal</th>
                         <th>Tanggal</th>
-                        <th>Deskripsi</th>
-                        <th>Total</th>
+                        <th>Deskripsi Referensi</th>
+                        <th>Total Mutasi</th>
                         <th>Status</th>
-                        <th>Dibuat Oleh</th>
+                        <th>Dicatat Oleh</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if(empty($recent_journals)): ?>
                         <tr>
                             <td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">
-                                Belum ada data jurnal.
+                                Belum ada data jurnal tercatat.
                             </td>
                         </tr>
                     <?php else: ?>
@@ -671,21 +695,23 @@ const ctx = document.getElementById('financeChart');
 new Chart(ctx, {
     type: 'doughnut',
     data: {
-        labels: ['Aset', 'Liabilitas', 'Ekuitas', 'Pendapatan', 'Beban'],
+        labels: ['Aset', 'Liabilitas', 'Ekuitas', 'Pendapatan', 'Beban Ops', 'HPP'],
         datasets: [{
             data: [
                 <?= (float)$aset ?>,
                 <?= (float)$kewajiban ?>,
                 <?= (float)$ekuitas ?>,
-                <?= (float)$pendapatanTotal ?>,
-                <?= (float)$beban ?>
+                <?= (float)$pendapatan ?>,
+                <?= (float)$beban_ops ?>,
+                <?= (float)$hpp ?>
             ],
             backgroundColor: [
-                '#3b82f6',
-                '#f59e0b',
-                '#10b981',
-                '#8b5cf6',
-                '#ef4444'
+                '#3b82f6', // Aset (Blue)
+                '#f59e0b', // Liabilitas (Orange)
+                '#10b981', // Ekuitas (Green)
+                '#8b5cf6', // Pendapatan (Purple)
+                '#ef4444', // Beban (Red)
+                '#f43f5e'  // HPP (Pinkish Red)
             ],
             borderWidth: 0,
             hoverOffset: 12,
@@ -700,9 +726,9 @@ new Chart(ctx, {
             legend: {
                 position: 'bottom',
                 labels: {
-                    padding: 20,
+                    padding: 15,
                     usePointStyle: true,
-                    boxWidth: 10,
+                    boxWidth: 8,
                     font: {
                         family: 'Plus Jakarta Sans',
                         weight: '700'

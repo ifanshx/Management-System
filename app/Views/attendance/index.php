@@ -41,7 +41,7 @@
     .btn-filter { background: #38bdf8; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(56, 189, 248, 0.2);}
     .btn-filter:hover { background: #0284c7; transform: translateY(-2px);}
     
-    .toolbar-actions { display: flex; gap: 10px; }
+    .toolbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
     .btn-sync { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 6px; text-decoration: none;}
     .btn-manual { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);}
     .btn-manual:hover { background: #f59e0b; color: #fff; transform: translateY(-2px);}
@@ -49,6 +49,12 @@
     .btn-pull:hover { background: #38bdf8; color: #fff; transform: translateY(-2px);}
     .btn-time { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2);}
     .btn-time:hover { background: #10b981; color: #fff; transform: translateY(-2px);}
+
+    /* FITUR SEARCH BAR */
+    .search-box { position: relative; display: flex; align-items: center;}
+    .search-box i { position: absolute; left: 12px; color: var(--text-muted); font-size: 16px;}
+    .search-input { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 10px 10px 36px; border-radius: 10px; font-size: 12px; font-weight: 700; width: 220px; outline: none; transition: 0.3s;}
+    .search-input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);}
 
     /* =========================================================
        2. ANALYTICAL TABLE (COMPACT, GROUPED)
@@ -62,7 +68,7 @@
     th:first-child, td:first-child { text-align: left; padding-left: 20px;}
     th:last-child, td:last-child { border-right: none; padding-right: 20px;}
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(56, 189, 248, 0.02); }
+    tr.data-row:hover td { background: rgba(56, 189, 248, 0.02); }
 
     /* Group Header Styling */
     .group-header td { background: linear-gradient(to right, rgba(56, 189, 248, 0.08), transparent) !important; border-bottom: 2px solid rgba(56, 189, 248, 0.2) !important; border-right: none; padding: 12px 20px; }
@@ -116,22 +122,25 @@
     <form action="" method="get" class="filter-group">
         <div class="filter-label">Dari:</div>
         <input type="date" name="start_date" class="form-control-date" value="<?= esc($startDate) ?>">
-        
         <div class="filter-label" style="margin-left: 5px;">Sampai:</div>
         <input type="date" name="end_date" class="form-control-date" value="<?= esc($endDate) ?>">
-        
         <button type="submit" class="btn-filter" style="margin-left: 5px;"><i class="ph-bold ph-magnifying-glass"></i> Filter</button>
     </form>
 
     <div class="toolbar-actions">
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass"></i>
+            <input type="text" id="searchEmp" class="search-input" onkeyup="filterAttendance()" placeholder="Cari Nama Karyawan...">
+        </div>
+
         <a href="<?= base_url('/attendance/manual') ?>" class="btn-sync btn-manual">
             <i class="ph-bold ph-pencil-simple-line"></i> Koreksi Manual
         </a>
         <a href="#" onclick="confirmSyncTime(event, '<?= base_url('/attendance/syncMachineTime') ?>')" class="btn-sync btn-time" title="Sesuaikan waktu mesin absen dengan server">
-            <i class="ph-bold ph-clock"></i> Sinkron Jam Mesin
+            <i class="ph-bold ph-clock"></i> Jam Mesin
         </a>
         <a href="#" onclick="confirmSyncData(event, '<?= base_url('/attendance/syncData?start_date=' . $startDate . '&end_date=' . $endDate) ?>')" class="btn-sync btn-pull" title="Tarik data absen sesuai rentang tanggal">
-            <i class="ph-bold ph-cloud-arrow-down"></i> Tarik & Kalkulasi API IoT
+            <i class="ph-bold ph-cloud-arrow-down"></i> Tarik Data IoT
         </a>
     </div>
 </div>
@@ -148,7 +157,7 @@
 
 <div class="table-card">
     <div style="overflow-x: auto;">
-        <table>
+        <table id="attendanceTable">
             <thead>
                 <tr>
                     <th rowspan="2">Tanggal Scan</th>
@@ -169,7 +178,7 @@
             </thead>
             <tbody>
                 <?php if(empty($groupedAttendances)): ?>
-                    <tr>
+                    <tr class="empty-row">
                         <td colspan="9">
                             <div class="empty-state">
                                 <i class="ph-fill ph-calendar-x"></i>
@@ -191,7 +200,7 @@
                         <tr class="group-header">
                             <td colspan="9">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 14px; font-weight: 900; color: #0284c7; letter-spacing: -0.5px;">
+                                    <span class="searchable-name" style="font-size: 14px; font-weight: 900; color: #0284c7; letter-spacing: -0.5px;">
                                         <i class="ph-bold ph-user" style="margin-right: 6px;"></i> <?= esc($empName) ?>
                                         <?php if(($logs[0]['emp_status'] ?? '') === 'Borongan'): ?>
                                             <span style="font-size: 9px; background: #fff; color: #d97706; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3); margin-left: 6px;">BORONGAN</span>
@@ -205,7 +214,7 @@
                         </tr>
 
                         <?php foreach($logs as $row): ?>
-                        <tr>
+                        <tr class="data-row">
                             <td>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     
@@ -284,20 +293,28 @@
 
                             <td>
                                 <div style="display: flex; gap: 6px; justify-content: center;">
-                                    <?php if(isset($row['emp_status']) && $row['emp_status'] === 'Borongan'): ?>
+                                    <?php if(isset($row['emp_status']) && stripos($row['emp_status'], 'Borong') !== false): ?>
                                         <a href="#" onclick="openQuickKasbon(event, '<?= esc($row['employee_id']) ?>', '<?= esc($row['date']) ?>', '<?= esc($empName, 'js') ?>')" class="btn-action-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);" title="Kasbon Harian (Borongan)">
                                             <i class="ph-bold ph-hand-coins"></i>
                                         </a>
-                                    <?php else: ?>
-                                        <?php 
-                                            $mealTaken = (isset($row['is_meal_taken']) && $row['is_meal_taken'] == 1);
-                                            $mealTitle = $mealTaken ? 'Batalkan Uang Makan & Kembalikan Saldo Kas Laci?' : 'Tandai Uang Makan Diambil & Potong Saldo Kas Laci?';
-                                            $mealClass = $mealTaken ? 'color: #fff; background: #10b981; border: 1px solid #10b981;' : 'color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px dashed #cbd5e1;';
-                                        ?>
-                                        <a href="#" onclick="confirmMealToggle(event, '<?= base_url('/attendance/toggle_meal/' . $row['id']) ?>', '<?= $mealTitle ?>')" class="btn-action-icon" style="<?= $mealClass ?>" title="<?= $mealTaken ? 'Uang Makan Telah Diambil (Klik untuk Batal)' : 'Tandai Uang Makan Diambil (Kasbon)' ?>">
-                                            <i class="ph-bold ph-hamburger"></i>
-                                        </a>
                                     <?php endif; ?>
+                                        
+                                    <?php 
+                                        $mealTaken = (isset($row['is_meal_taken']) && $row['is_meal_taken'] == 1);
+                                        $mealTitle = $mealTaken ? 'Batalkan Uang Makan & Kembalikan Saldo Kas Laci?' : 'Tandai Uang Makan Diambil & Potong Saldo Kas Laci?';
+                                        $mealClass = $mealTaken ? 'color: #fff; background: #10b981; border: 1px solid #10b981;' : 'color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px dashed #cbd5e1;';
+                                    ?>
+                                    <a href="#" onclick="confirmMealToggle(event, '<?= base_url('/attendance/toggle_meal/' . $row['id']) ?>', '<?= $mealTitle ?>')" class="btn-action-icon" style="<?= $mealClass ?>" title="<?= $mealTaken ? 'Uang Makan Telah Diambil (Klik untuk Batal)' : 'Tandai Uang Makan Diambil (Kasbon)' ?>">
+                                        <i class="ph-bold ph-hamburger"></i>
+                                    </a>
+
+                                    <?php 
+                                        $otTaken = (isset($row['is_overtime_taken']) && $row['is_overtime_taken'] == 1);
+                                        $otClass = $otTaken ? 'color: #fff; background: #8b5cf6; border: 1px solid #8b5cf6;' : 'color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px dashed #cbd5e1;';
+                                    ?>
+                                    <a href="#" onclick="toggleOvertimeMeal(event, '<?= $otTaken ? 1 : 0 ?>', '<?= esc($row['emp_status'], 'js') ?>', '<?= $row['id'] ?>')" class="btn-action-icon" style="<?= $otClass ?>" title="<?= $otTaken ? 'Uang Lembur Telah Diambil (Batal)' : 'Cairkan Uang Makan Lembur Tunai' ?>">
+                                        <i class="ph-bold ph-moon-stars"></i>
+                                    </a>
 
                                     <a href="#" onclick="confirmDeleteLog(event, '<?= base_url('/attendance/delete/' . $row['id']) ?>')" class="btn-action-icon btn-delete" title="Hapus Log Kehadiran">
                                         <i class="ph-bold ph-trash"></i>
@@ -315,6 +332,40 @@
 </div>
 
 <script>
+    // --- SMART SEARCH FILTER KARYAWAN ---
+    function filterAttendance() {
+        let input = document.getElementById('searchEmp');
+        let filter = input.value.toLowerCase();
+        let tbody = document.querySelector('#attendanceTable tbody');
+        let trs = tbody.getElementsByTagName('tr');
+
+        let showCurrentGroup = false;
+
+        for (let i = 0; i < trs.length; i++) {
+            let tr = trs[i];
+            
+            if (tr.classList.contains('empty-row')) continue;
+
+            if (tr.classList.contains('group-header')) {
+                let empName = tr.querySelector('.searchable-name').textContent || tr.querySelector('.searchable-name').innerText;
+                
+                if (empName.toLowerCase().indexOf(filter) > -1) {
+                    showCurrentGroup = true;
+                    tr.style.display = "";
+                } else {
+                    showCurrentGroup = false;
+                    tr.style.display = "none";
+                }
+            } else {
+                if (showCurrentGroup) {
+                    tr.style.display = "";
+                } else {
+                    tr.style.display = "none";
+                }
+            }
+        }
+    }
+
     // --- SWEETALERT CONFIRMATIONS ---
     function confirmSyncData(e, url) {
         e.preventDefault();
@@ -323,14 +374,9 @@
             title: 'Tarik Data Mesin?',
             text: 'Sistem akan menyedot log absensi terbaru dari mesin IoT ke database ERP.',
             icon: 'info',
-            showCancelButton: true,
-            confirmButtonColor: '#38bdf8',
-            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
-            confirmButtonText: 'Ya, Tarik Sekarang',
-            cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
-            customClass: { popup: 'swal2-custom-radius' }
+            showCancelButton: true, confirmButtonColor: '#38bdf8', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
+            confirmButtonText: 'Ya, Tarik Sekarang', cancelButtonText: 'Batal',
+            background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.fire({ title: 'Menyinkronkan...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
@@ -346,14 +392,9 @@
             title: 'Sinkronisasi Waktu?',
             text: 'Jam pada mesin absensi (IoT) akan disesuaikan dengan waktu Server Pusat (WIB).',
             icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
-            confirmButtonText: 'Ya, Sinkronkan',
-            cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
-            customClass: { popup: 'swal2-custom-radius' }
+            showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
+            confirmButtonText: 'Ya, Sinkronkan', cancelButtonText: 'Batal',
+            background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.fire({ title: 'Menyinkronkan Jam...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
@@ -369,14 +410,9 @@
             title: titleMsg,
             text: 'Tindakan ini akan mengupdate Saldo Kas Laci & Jurnal Akuntansi secara otomatis (Sesuai jatah uang makan di Master Karyawan).',
             icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
-            confirmButtonText: 'Ya, Eksekusi',
-            cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
-            customClass: { popup: 'swal2-custom-radius' }
+            showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
+            confirmButtonText: 'Ya, Eksekusi', cancelButtonText: 'Batal',
+            background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.fire({ title: 'Memproses Keuangan...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
@@ -385,31 +421,79 @@
         });
     }
 
+    // --- POPUP UANG LEMBUR (TETAP = INFO SLIP | BORONGAN = KASBON) ---
+    function toggleOvertimeMeal(e, isTaken, empStatus, logId) {
+        e.preventDefault();
+        const isDark = document.documentElement.classList.contains('dark');
+        const isBorong = empStatus.toLowerCase().includes('borong');
+
+        if (isTaken == '1') {
+            Swal.fire({
+                title: 'Batalkan Uang Lembur?',
+                text: 'Kasbon/Catatan lembur akan dibatalkan dan saldo dikembalikan ke Kas Laci.',
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', 
+                confirmButtonText: 'Ya, Batalkan', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
+            }).then(res => {
+                if(res.isConfirmed) executeSubmitOT(logId, 0);
+            });
+        } else {
+            Swal.fire({
+                title: 'Uang Makan Lembur',
+                html: isBorong 
+                    ? '<span style="color:#f59e0b; font-size:12px; font-weight:bold;">Pekerja Borongan: Memotong <b>Kas Laci Tunai</b> hari ini (Nanti di Payroll jadi Potongan/Kasbon).</span>' 
+                    : '<span style="color:#10b981; font-size:12px; font-weight:bold;">Karyawan Tetap: Memotong <b>Kas Laci Tunai</b> hari ini (Nanti di Payroll hanya sbg Catatan, tidak merubah THP).</span>',
+                input: 'text', inputPlaceholder: 'Nominal (Contoh: 25.000)',
+                showCancelButton: true, confirmButtonColor: '#8b5cf6', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', 
+                confirmButtonText: '<i class="ph-bold ph-moon-stars"></i> Proses Lembur',
+                background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' },
+                inputAttributes: { style: 'font-family: "Space Mono", monospace; font-weight: 900; color: #8b5cf6; text-align: center;' },
+                didOpen: () => {
+                    const input = Swal.getInput();
+                    input.addEventListener('keyup', () => {
+                        let val = input.value.replace(/[^,\d]/g, '').toString(), split = val.split(','), sisa = split[0].length % 3, rupiah = split[0].substr(0, sisa), ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+                        if (ribuan) rupiah += (sisa ? '.' : '') + ribuan.join('.');
+                        input.value = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+                    });
+                },
+                preConfirm: (amount) => {
+                    let cleanAmt = amount.replace(/\./g, '');
+                    if (!cleanAmt || parseInt(cleanAmt) <= 0) Swal.showValidationMessage('Nominal harus diisi dengan benar!');
+                    return cleanAmt;
+                }
+            }).then(res => {
+                if(res.isConfirmed) executeSubmitOT(logId, res.value);
+            });
+        }
+    }
+
+    function executeSubmitOT(logId, amount) {
+        const isDark = document.documentElement.classList.contains('dark');
+        Swal.fire({ title: 'Memproses...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
+        
+        const form = document.createElement('form'); form.method = 'POST'; form.action = '<?= base_url("/attendance/toggle_overtime_meal") ?>';
+        form.innerHTML = `<input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+                          <input type="hidden" name="log_id" value="${logId}">
+                          <input type="hidden" name="amount" value="${amount}">`;
+        document.body.appendChild(form); form.submit();
+    }
+
     function confirmDeleteLog(e, url) {
         e.preventDefault();
         const isDark = document.documentElement.classList.contains('dark');
         Swal.fire({
             title: 'Hapus Log Absensi?',
             text: 'Data tap kartu/finger ini akan dihapus secara permanen. Lanjutkan?',
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
-            customClass: { popup: 'swal2-custom-radius' }
+            icon: 'error', showCancelButton: true, confirmButtonColor: '#ef4444',
+            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal',
+            background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) window.location.href = url;
         });
     }
 
-    // --- POPUP INPUT KASBON CEPAT (BORONGAN) ---
     function openQuickKasbon(e, empId, date, empName) {
         e.preventDefault();
         const isDark = document.documentElement.classList.contains('dark');
-        
         let d = new Date(date);
         let dateStr = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -417,50 +501,31 @@
             title: 'Kasbon Harian Borongan',
             html: `Masukkan nominal Kasbon untuk <b>${empName}</b><br><span style="font-size:11px; color:#64748b;">(Akan memotong Saldo Laci Kasir pada tanggal ${dateStr})</span>`,
             input: 'text',
-            inputAttributes: {
-                placeholder: 'Contoh: 50.000',
-                style: 'font-family: "Space Mono", monospace; font-weight: 900; color: #f59e0b; text-align: center;'
-            },
-            showCancelButton: true,
-            confirmButtonColor: '#f59e0b',
-            cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
-            confirmButtonText: '<i class="ph-bold ph-hand-coins"></i> Simpan & Potong Kas',
-            cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
-            customClass: { popup: 'swal2-custom-radius' },
+            inputAttributes: { placeholder: 'Contoh: 50.000', style: 'font-family: "Space Mono", monospace; font-weight: 900; color: #f59e0b; text-align: center;' },
+            showCancelButton: true, confirmButtonColor: '#f59e0b', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
+            confirmButtonText: '<i class="ph-bold ph-hand-coins"></i> Simpan & Potong Kas', cancelButtonText: 'Batal',
+            background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' },
             didOpen: () => {
                 const input = Swal.getInput();
                 input.addEventListener('keyup', () => {
-                    let val = input.value.replace(/[^,\d]/g, '').toString(),
-                        split = val.split(','), sisa = split[0].length % 3,
-                        rupiah = split[0].substr(0, sisa), ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+                    let val = input.value.replace(/[^,\d]/g, '').toString(), split = val.split(','), sisa = split[0].length % 3, rupiah = split[0].substr(0, sisa), ribuan = split[0].substr(sisa).match(/\d{3}/gi);
                     if (ribuan) rupiah += (sisa ? '.' : '') + ribuan.join('.');
                     input.value = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
                 });
             },
             preConfirm: (amount) => {
                 let cleanAmt = amount.replace(/\./g, '');
-                if (!cleanAmt || parseInt(cleanAmt) <= 0) {
-                    Swal.showValidationMessage('Silakan masukkan nominal kasbon yang valid!');
-                }
+                if (!cleanAmt || parseInt(cleanAmt) <= 0) Swal.showValidationMessage('Silakan masukkan nominal kasbon yang valid!');
                 return cleanAmt;
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                // Submit Form Dinamis (Hidden POST)
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '<?= base_url('/attendance/store_quick_kasbon') ?>';
-                
-                const csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = '<?= csrf_token() ?>'; csrf.value = '<?= csrf_hash() ?>';
-                const inputEmp = document.createElement('input'); inputEmp.type = 'hidden'; inputEmp.name = 'employee_id'; inputEmp.value = empId;
-                const inputDate = document.createElement('input'); inputDate.type = 'hidden'; inputDate.name = 'date'; inputDate.value = date;
-                const inputAmount = document.createElement('input'); inputAmount.type = 'hidden'; inputAmount.name = 'amount'; inputAmount.value = result.value;
-
-                form.appendChild(csrf); form.appendChild(inputEmp); form.appendChild(inputDate); form.appendChild(inputAmount);
+                const form = document.createElement('form'); form.method = 'POST'; form.action = '<?= base_url('/attendance/store_quick_kasbon') ?>';
+                form.innerHTML = `<input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+                                  <input type="hidden" name="employee_id" value="${empId}">
+                                  <input type="hidden" name="date" value="${date}">
+                                  <input type="hidden" name="amount" value="${result.value}">`;
                 document.body.appendChild(form);
-                
                 Swal.fire({ title: 'Mencatat Kasbon...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
                 form.submit();
             }

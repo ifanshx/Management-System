@@ -46,7 +46,8 @@ class Accounting extends BaseController
             AND account_code != '5-1000'
         ")->getRowArray()['total'] ?? 0;
 
-        $laba_kotor = $pendapatan - $hpp;
+        // Kalkulasi Laba
+        $laba_kotor  = $pendapatan - $hpp;
         $laba_bersih = $laba_kotor - $beban_ops;
 
         $recent_journals = $this->db->table('journals')
@@ -195,7 +196,7 @@ class Accounting extends BaseController
     }
 
     // =========================================================
-    // 4. VOID JURNAL
+    // 4. VOID JURNAL (SYNC PENUH KE KAS DAN PROCUREMENT)
     // =========================================================
     public function void_journal($id)
     {
@@ -207,14 +208,19 @@ class Accounting extends BaseController
                 throw new \Exception("Jurnal sudah di-void sebelumnya.");
             }
 
-            $this->db->table('journals')->where('id', $id)->update([
-                'status'      => 'VOID',
-                'void_reason' => 'Dibatalkan oleh user',
-                'voided_at'   => date('Y-m-d H:i:s'),
-                'voided_by'   => session()->get('name') ?? 'Sistem'
-            ]);
+            $this->db->transStart();
+            
+            // Panggil Service Sentral
+            $accService = new \App\Services\AccountingService();
+            $accService->voidJournal($id, 'Dibatalkan oleh user dari Buku Besar', session()->get('name') ?? 'Sistem');
+            
+            $this->db->transComplete();
 
-            return redirect()->back()->with('success', 'Jurnal berhasil di-void.');
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Sistem Gagal membatalkan jurnal.");
+            }
+
+            return redirect()->back()->with('success', 'Jurnal berhasil di-void! Mutasi terkait di Kas Operasional telah dihapus, dan status tagihan PO (jika ada) telah di-reset.');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

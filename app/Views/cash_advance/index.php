@@ -1,6 +1,9 @@
 <?= $this->extend('layout/template') ?>
 <?= $this->section('content') ?>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
@@ -11,6 +14,11 @@
         --shadow-md: 0 4px 20px -10px rgba(0,0,0,0.05);
         --shadow-hover: 0 10px 30px -10px rgba(0,0,0,0.08);
         --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html.dark {
+        --bg-main: #0f172a; --card-bg: #1e293b; --border-color: #334155;
+        --text-main: #f8fafc; --text-muted: #94a3b8;
     }
 
     .swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -39,7 +47,18 @@
     .input-wrapper input, .input-wrapper select { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 14px 16px; font-size: 13px; font-weight: 700; outline: none; font-family: inherit; width: 100%;}
     
     .prefix { background: var(--brand-soft); color: var(--brand); font-size: 16px; font-weight: 900; padding: 0 16px; display: flex; align-items: center; border-right: 1px solid rgba(239, 68, 68, 0.2); }
-    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px !important; cursor: pointer;}
+    
+    /* CUSTOM SELECT2 UI THEME MATCHING */
+    .select2-container--default .select2-selection--single { background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 14px; height: auto; padding: 11px 16px; outline: none; transition: var(--transition-smooth); }
+    .select2-container--open .select2-selection--single { border-color: var(--brand); background: var(--card-bg); box-shadow: 0 0 0 4px var(--brand-soft); }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--text-main); font-size: 13px; font-weight: 700; padding-left: 0; line-height: 1.5; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 100%; right: 15px; }
+    .select2-dropdown { background-color: var(--card-bg); border: 1px solid var(--brand); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 9999; overflow: hidden;}
+    .select2-search__field { background-color: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color) !important; border-radius: 8px; padding: 10px !important; font-family: 'Plus Jakarta Sans', sans-serif; outline: none;}
+    .select2-results__option { color: var(--text-main); font-weight: 600; font-size: 13px; padding: 12px 18px; transition: 0.2s;}
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: var(--brand-soft); color: var(--brand); font-weight: 800; }
+    .select2-container--default .select2-results__option[aria-selected=true] { background-color: rgba(0,0,0,0.03); color: var(--text-main); }
+    html.dark .select2-container--default .select2-results__option[aria-selected=true] { background-color: rgba(255,255,255,0.05); }
 
     .btn-submit { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; padding: 18px; border: none; border-radius: 16px; font-weight: 900; font-size: 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;}
     .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 14px 30px -5px rgba(239, 68, 68, 0.6); }
@@ -67,7 +86,7 @@
         <div class="title-icon"><i class="ph-fill ph-hand-coins"></i></div>
         <div>
             <h1>Kasbon & Pinjaman Karyawan</h1>
-            <p>Catat pengeluaran kasbon (potong uang laci) dan atur skema auto-potong gaji.</p>
+            <p>Catat pengeluaran kasbon (potong uang laci/bank) dan atur skema auto-potong gaji.</p>
         </div>
     </div>
 </div>
@@ -82,14 +101,12 @@
             <?= csrf_field() ?>
             <div class="form-group">
                 <label class="form-label">Pilih Karyawan Peminjam</label>
-                <div class="input-wrapper">
-                    <select name="employee_id" required>
-                        <option value="" disabled selected>-- Pilih Karyawan --</option>
-                        <?php foreach($employees as $emp): ?>
-                            <option value="<?= esc($emp['employee_id']) ?>"><?= esc($emp['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <select name="employee_id" class="select2-search" required style="width: 100%;">
+                    <option value=""></option>
+                    <?php foreach($employees as $emp): ?>
+                        <option value="<?= esc($emp['employee_id']) ?>"><?= esc($emp['name']) ?> (<?= esc($emp['position']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <div class="form-group">
@@ -102,33 +119,44 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
+                    <label class="form-label">Metode Pencairan</label>
+                    <div class="input-wrapper">
+                        <select name="payment_method" required style="cursor: pointer;">
+                            <option value="Cash">💵 Tunai (Kas Laci)</option>
+                            <option value="Transfer">💳 Transfer (Rekening Bank)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Keterangan / Keperluan</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="description" placeholder="Catatan singkat..." required autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
                     <label class="form-label">Dibagi Berapa Cicilan?</label>
                     <div class="input-wrapper">
-                        <select name="tenure" required>
+                        <select name="tenure" required style="cursor: pointer;">
                             <option value="1">1x Potongan Gaji</option>
-                            <option value="2">2x Potong Gaji (Cicil 2x)</option>
-                            <option value="3">3x Potong Gaji (Cicil 3x)</option>
-                            <option value="4">4x Potong Gaji (Cicil 4x)</option>
+                            <option value="2">2x Potong Gaji (Cicil 2 Bulan)</option>
+                            <option value="3">3x Potong Gaji (Cicil 3 Bulan)</option>
+                            <option value="4">4x Potong Gaji (Cicil 4 Bulan)</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tgl Potongan Pertama</label>
                     <div class="input-wrapper">
-                        <input type="date" name="first_tempo_date" value="<?= date('Y-m-d', strtotime('next saturday')) ?>" required style="font-family: 'Space Mono', monospace; font-size: 13px;">
+                        <input type="date" name="first_tempo_date" value="<?= date('Y-m-01', strtotime('+1 month')) ?>" required style="font-family: 'Space Mono', monospace; font-size: 13px;">
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Keterangan / Keperluan</label>
-                <div class="input-wrapper">
-                    <input type="text" name="description" placeholder="Catatan singkat (Opsional)..." required autocomplete="off">
-                </div>
-            </div>
-
             <button type="submit" class="btn-submit" id="btnSubmit">
-                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 20px;"></i> <span>Cairkan Kasbon & Potong Kas</span>
+                <i class="ph-bold ph-paper-plane-tilt" style="font-size: 20px;"></i> <span>Cairkan Kasbon Sekarang</span>
             </button>
         </form>
     </div>
@@ -144,7 +172,7 @@
                     <tr>
                         <th>Peminjam</th>
                         <th style="text-align: right;">Besaran (Rp)</th>
-                        <th style="text-align: center;">Jatuh Tempo</th>
+                        <th style="text-align: center;">Bulan Potongan</th>
                         <th>Keterangan</th>
                         <th style="text-align: center;">Status</th>
                         <th style="text-align: center;">Aksi</th>
@@ -155,7 +183,7 @@
                         <tr>
                             <td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
                                 <i class="ph-fill ph-check-circle" style="font-size: 56px; color: #10b981; margin-bottom: 12px; display: block; opacity: 0.4;"></i>
-                                <b style="font-size: 16px; color: var(--text-main);">Tidak ada hutang aktif.</b><br>Semua karyawan bebas dari kasbon.
+                                <b style="font-size: 16px; color: var(--text-main);">Tidak ada tagihan aktif.</b><br>Semua karyawan bebas dari kasbon.
                             </td>
                         </tr>
                     <?php else: ?>
@@ -170,7 +198,7 @@
                             </td>
                             <td style="text-align: center;">
                                 <span style="background: var(--bg-main); padding: 6px 10px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 12px; border: 1px solid var(--border-color); font-weight: 800;">
-                                    <?= date('d M Y', strtotime($kb['tempo_date'])) ?>
+                                    <?= date('M Y', strtotime($kb['tempo_date'])) ?>
                                 </span>
                             </td>
                             <td style="font-size: 12px; color: var(--text-muted); max-width: 150px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="<?= esc($kb['description']) ?>">
@@ -189,7 +217,7 @@
                                         <i class="ph-bold ph-trash"></i>
                                     </a>
                                 <?php else: ?>
-                                    <i class="ph-bold ph-lock-key" style="color: var(--text-muted); font-size: 18px;" title="Terkunci (Masuk Payroll)"></i>
+                                    <i class="ph-bold ph-lock-key" style="color: var(--text-muted); font-size: 18px;" title="Terkunci (Sudah Masuk Payroll)"></i>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -202,11 +230,20 @@
 </div>
 
 <script>
-    // SweetAlert Interceptor
+    // --- INIT SELECT2 PENCARIAN KARYAWAN ---
+    $(document).ready(function() {
+        $('.select2-search').select2({
+            placeholder: "-- Ketik & Pilih Nama Karyawan --",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+
+    // --- SWEETALERT INTERCEPTOR ---
     document.addEventListener("DOMContentLoaded", function() {
         const isDark = document.documentElement.classList.contains('dark');
-        const swalBg = isDark ? '#18181b' : '#ffffff';
-        const swalText = isDark ? '#f4f4f5' : '#09090b';
+        const swalBg = isDark ? '#1e293b' : '#ffffff';
+        const swalText = isDark ? '#f8fafc' : '#0f172a';
 
         <?php if(session()->getFlashdata('success')): ?>
             Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' } });
@@ -216,7 +253,7 @@
         <?php endif; ?>
     });
 
-    // Form Auto-Rupiah
+    // --- FORMAT RUPIAH ---
     function formatRupiah(angka) {
         let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
             split   = number_string.split(','),
@@ -228,35 +265,43 @@
         angka.value = rupiah;
     }
 
-    // Clean Dots Before Submit
+    // --- SUBMIT HANDLER (Mencegah Bypass Select2 & Membersihkan Titik) ---
     document.getElementById('formKasbon').addEventListener('submit', function(e) {
         let amountInput = this.querySelector('input[name="amount"]');
+        let empSelect = $('.select2-search').val(); // Ambil nilai dari select2
+        
+        if(!empSelect) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Data Belum Lengkap', text: 'Anda harus memilih Karyawan Peminjam terlebih dahulu.', customClass: { popup: 'swal2-custom-radius' } });
+            return;
+        }
+
         amountInput.value = amountInput.value.replace(/\./g, '');
 
         let btn = document.getElementById('btnSubmit');
         btn.disabled = true;
-        btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin" style="font-size: 20px;"></i> <span>MENCATAT...</span>';
+        btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin" style="font-size: 20px;"></i> <span>MEMPROSES...</span>';
     });
 
-    // Custom Delete Dialog
+    // --- CUSTOM DELETE DIALOG ---
     function confirmDelete(e, url) {
         e.preventDefault();
         const isDark = document.documentElement.classList.contains('dark');
         Swal.fire({
             title: 'Hapus Cicilan Ini?',
-            text: 'Catatan hutang ini akan dihapus. (PENTING: Jangan lupa VOID pengeluaran kasbon di menu Akuntansi/Keuangan jika uang batal dicairkan).',
+            text: 'Catatan hutang akan dihapus. PENTING: Jika uang sudah dicairkan fisik, Anda juga harus membatalkan (VOID) transaksi pengeluaran di menu Jurnal Akuntansi.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
             confirmButtonText: 'Ya, Hapus Data',
             cancelButtonText: 'Batal',
-            background: isDark ? '#18181b' : '#ffffff', 
-            color: isDark ? '#f4f4f5' : '#09090b',
+            background: isDark ? '#1e293b' : '#ffffff', 
+            color: isDark ? '#f8fafc' : '#0f172a',
             customClass: { popup: 'swal2-custom-radius' }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire({ title: 'Memproses...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
+                Swal.fire({ title: 'Memproses...', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#f8fafc' : '#0f172a', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading() }});
                 window.location.href = url;
             }
         });

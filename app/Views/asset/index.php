@@ -30,6 +30,34 @@
             }
         });
     }
+
+    // Auto Tampilkan SweetAlert Jika ada session success/error dari Controller
+    document.addEventListener("DOMContentLoaded", function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        <?php if(session()->getFlashdata('success')): ?>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                html: '<?= session()->getFlashdata('success') ?>',
+                confirmButtonColor: '#10b981',
+                background: isDark ? '#18181b' : '#ffffff',
+                color: isDark ? '#f4f4f5' : '#09090b',
+                customClass: { popup: 'swal2-custom-radius' }
+            });
+        <?php endif; ?>
+
+        <?php if(session()->getFlashdata('error')): ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Ditolak / Gagal!',
+                html: '<?= session()->getFlashdata('error') ?>',
+                confirmButtonColor: '#ef4444',
+                background: isDark ? '#18181b' : '#ffffff',
+                color: isDark ? '#f4f4f5' : '#09090b',
+                customClass: { popup: 'swal2-custom-radius' }
+            });
+        <?php endif; ?>
+    });
 </script>
 
 <style>
@@ -979,7 +1007,6 @@
     </div>
 </div>
 
-<!-- MODAL CREATE -->
 <div class="modal-overlay" id="modalCreateAsset">
     <div class="modal-box" style="border-top: 8px solid #f59e0b;">
         <div class="modal-header">
@@ -1009,6 +1036,11 @@
             </div>
 
             <div class="form-grid">
+                <div class="form-group full">
+                    <label>Nama Aset / Spesifikasi Singkat</label>
+                    <input type="text" name="asset_name" class="form-control" placeholder="Contoh: Mesin Bubut CNC / Mobil Box L300 / Gedung Workshop" required minlength="3" autocomplete="off">
+                </div>
+
                 <div class="form-group">
                     <label>Kategori Aset</label>
                     <select name="asset_category" id="assetCategory" class="form-control" onchange="toggleDepreciation()" required>
@@ -1022,11 +1054,6 @@
                 <div class="form-group">
                     <label>Tanggal Akuisisi</label>
                     <input type="date" name="purchase_date" class="form-control" value="<?= date('Y-m-d') ?>" required style="font-family: 'Space Mono', monospace;">
-                </div>
-
-                <div class="form-group full">
-                    <label>Nama Aset / Spesifikasi</label>
-                    <input type="text" name="asset_name" class="form-control" placeholder="Contoh: Mesin Bubut CNC / Mobil Box L300 / Gedung Workshop" required autocomplete="off">
                 </div>
 
                 <div class="form-group">

@@ -2,7 +2,6 @@
 <?= $this->section('content') ?>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const isDark = document.documentElement.classList.contains('dark');
@@ -10,40 +9,26 @@ document.addEventListener("DOMContentLoaded", function() {
     const textColor = isDark ? '#f4f4f5' : '#09090b';
 
     <?php if(session()->getFlashdata('success')): ?>
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            html: '<?= session()->getFlashdata('success') ?>',
-            confirmButtonColor: '#10b981',
-            background: bgColor,
-            color: textColor,
-            customClass: { popup: 'swal2-custom-radius' }
-        });
+        Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
-
     <?php if(session()->getFlashdata('error')): ?>
-        Swal.fire({
-            icon: 'error',
-            title: 'Gagal!',
-            html: '<?= session()->getFlashdata('error') ?>',
-            confirmButtonColor: '#ef4444',
-            background: bgColor,
-            color: textColor,
-            customClass: { popup: 'swal2-custom-radius' }
-        });
+        Swal.fire({ icon: 'error', title: 'Gagal!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
 
     togglePayrollFields();
     toggleBankFields();
+    toggleBpjsKs();
+    toggleBpjsTk();
+    toggleGradeLevel(); 
 
     document.getElementById('statusSelect').addEventListener('change', togglePayrollFields);
     document.getElementById('paymentMethodSelect').addEventListener('change', toggleBankFields);
+    document.getElementById('departmentSelect').addEventListener('change', toggleGradeLevel); 
 });
 
 function togglePayrollFields() {
     const status = document.getElementById('statusSelect').value;
     const salaryFields = document.querySelectorAll('.salary-fixed-only');
-
     salaryFields.forEach(el => {
         if (status === 'Borongan') {
             el.style.display = 'none';
@@ -57,7 +42,6 @@ function togglePayrollFields() {
 function toggleBankFields() {
     const payment = document.getElementById('paymentMethodSelect').value;
     const bankFields = document.getElementById('bankFields');
-
     if (payment === 'Transfer') {
         bankFields.style.display = '';
     } else {
@@ -67,24 +51,58 @@ function toggleBankFields() {
     }
 }
 
-
-    function formatRupiah(angka) {
-        if (!angka) return;
-        let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
-            split   = number_string.split(','),
-            sisa    = split[0].length % 3,
-            rupiah  = split[0].substr(0, sisa),
-            ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
-            
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
+function toggleGradeLevel() {
+    const deptSelect = document.getElementById('departmentSelect');
+    const selectedOption = deptSelect.options[deptSelect.selectedIndex];
+    
+    // Ambil nama departemen dari atribut custom
+    const deptName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+    const wrapGrade = document.getElementById('wrapGradeLevel');
+    const wrapSpecialty = document.getElementById('wrapSpecialty');
+    
+    // Jika mengandung kata 'Produksi', tampilkan grade level dan spesialisasi
+    if (deptName && deptName.toLowerCase().includes('produksi')) {
+        wrapGrade.style.display = 'block';
+        wrapSpecialty.style.display = 'block';
+    } else {
+        wrapGrade.style.display = 'none';
+        wrapSpecialty.style.display = 'none';
         
-        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-        angka.value = rupiah;
+        const gradeSelect = document.querySelector('select[name="grade_level"]');
+        if(gradeSelect) gradeSelect.value = ''; 
+        const specSelect = document.querySelector('select[name="specialty"]');
+        if(specSelect) specSelect.value = ''; 
     }
+}
 
+function toggleBpjsKs() {
+    const check = document.getElementById('checkBpjsKs');
+    const wrap = document.getElementById('wrapBpjsKs');
+    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
+}
+
+function toggleBpjsTk() {
+    const check = document.getElementById('checkBpjsTk');
+    const wrap = document.getElementById('wrapBpjsTk');
+    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
+}
+
+function formatRupiah(angka) {
+    if (!angka) return;
+    let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
+        split   = number_string.split(','),
+        sisa    = split[0].length % 3,
+        rupiah  = split[0].substr(0, sisa),
+        ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
+        
+    if (ribuan) {
+        let separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+    
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    angka.value = rupiah;
+}
 </script>
 
 <style>
@@ -94,7 +112,7 @@ function toggleBankFields() {
     .page-icon { width: 56px; height: 56px; border-radius: 20px; background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(59,130,246,.05)); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 25px; border: 1px solid rgba(37,99,235,.15); box-shadow: 0 14px 35px -18px rgba(37,99,235,.45); }
     .page-title h1 { font-size: 28px; font-weight: 900; margin: 0 0 5px 0; color: var(--text-main); letter-spacing: -0.7px; }
     .page-title p { margin: 0; font-size: 12px; color: var(--text-muted); font-weight: 600; }
-    
+
     .btn-back { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 16px; border-radius: 12px; font-weight: 800; text-decoration: none; font-size: 12px; transition: .25s ease; }
     .btn-back:hover { transform: translateY(-2px); }
 
@@ -113,6 +131,9 @@ function toggleBankFields() {
     .input-wrapper input, .input-wrapper select, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 12px 14px; font-size: 12px; font-weight: 700; outline: none; font-family: inherit; width: 100%; }
     .input-wrapper textarea { resize: vertical; min-height: 80px; }
     select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px !important; background-size: 10px; }
+
+    select optgroup { font-weight: 900; color: var(--text-muted); background: var(--bg-base-alt); text-transform: uppercase; font-size: 10px; }
+    select option { font-weight: 600; color: var(--text-main); background: var(--bg-surface); font-size: 12px; }
 
     .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
     .checkbox-label { position: relative; cursor: pointer; display: block; }
@@ -146,21 +167,27 @@ function toggleBankFields() {
             </div>
 
             <div class="form-group">
-                <label class="form-label">Nomor Induk (NIK)</label>
+                <label class="form-label">Nomor Induk (NIK ERP)</label>
                 <div class="input-wrapper" style="background: rgba(0,0,0,0.02); border-color: transparent;">
                     <input type="text" name="employee_id" value="<?= esc($autoNIK) ?>" readonly style="cursor:not-allowed; color:var(--text-muted); font-family:'Space Mono', monospace; font-size:13px; font-weight:900;">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Nama Lengkap</label>
-                <div class="input-wrapper"><input type="text" name="name" required value="<?= old('name') ?>"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Nama Lengkap</label>
+                    <div class="input-wrapper"><input type="text" name="name" required value="<?= old('name') ?>" style="text-transform: uppercase;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">NIK KTP (Identitas)</label>
+                    <div class="input-wrapper"><input type="number" name="nik_ktp" value="<?= old('nik_ktp') ?>" placeholder="16 Digit NIK KTP"></div>
+                </div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Nomor HP</label>
-                    <div class="input-wrapper"><input type="tel" name="phone" value="<?= old('phone') ?>"></div>
+                    <div class="input-wrapper"><input type="tel" name="phone" value="<?= old('phone') ?>" placeholder="0812..."></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Status Pernikahan</label>
@@ -176,7 +203,18 @@ function toggleBankFields() {
 
             <div class="form-group">
                 <label class="form-label">Alamat Domisili</label>
-                <div class="input-wrapper"><textarea name="address"><?= old('address') ?></textarea></div>
+                <div class="input-wrapper"><textarea name="address" placeholder="Alamat lengkap..."><?= old('address') ?></textarea></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Kontak Darurat (Nama)</label>
+                    <div class="input-wrapper"><input type="text" name="emergency_contact_name" value="<?= old('emergency_contact_name') ?>" placeholder="Nama Istri/Keluarga"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kontak Darurat (No HP)</label>
+                    <div class="input-wrapper"><input type="tel" name="emergency_contact_phone" value="<?= old('emergency_contact_phone') ?>" placeholder="0812..."></div>
+                </div>
             </div>
 
             <hr style="border:0; border-top:1px dashed var(--border-subtle); margin:18px 0;">
@@ -184,19 +222,76 @@ function toggleBankFields() {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Departemen</label>
-                    <div class="input-wrapper"><input type="text" name="department" required value="<?= old('department') ?>"></div>
+                    <div class="input-wrapper">
+                        <select name="department_id" required id="departmentSelect" onchange="toggleGradeLevel()">
+                            <option value="">-- Pilih Departemen --</option>
+                            <?php foreach($departments as $dept): ?>
+                                <option value="<?= $dept['id'] ?>" data-name="<?= esc($dept['name']) ?>" <?= old('department_id') == $dept['id'] ? 'selected' : '' ?>>
+                                    <?= esc($dept['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">Jabatan</label>
-                    <div class="input-wrapper"><input type="text" name="position" required value="<?= old('position') ?>"></div>
+                    <label class="form-label">Jabatan (Posisi)</label>
+                    <div class="input-wrapper">
+                        <select name="position_id" required>
+                            <option value="">-- Pilih Posisi --</option>
+                            <?php foreach($positions as $pos): ?>
+                                <option value="<?= $pos['id'] ?>" <?= old('position_id') == $pos['id'] ? 'selected' : '' ?>>
+                                    <?= esc($pos['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="form-group">
-                    <label class="form-label">Tanggal Bergabung</label>
-                    <div class="input-wrapper"><input type="date" name="join_date" value="<?= old('join_date') ?: date('Y-m-d') ?>" required></div>
+                <div class="form-group" id="wrapSpecialty" style="display:none;">
+                    <label class="form-label" style="color: #8b5cf6;">Spesialisasi Produksi</label>
+                    <div class="input-wrapper" style="border-color: rgba(139, 92, 246, 0.4);">
+                        <select name="specialty">
+                            <option value="">-- Spesialisasi --</option>
+                            <?php foreach($specialties as $spec): ?>
+                                <option value="<?= $spec ?>" <?= old('specialty') == $spec ? 'selected' : '' ?>><?= $spec ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
+                
+                <div class="form-group" id="wrapGradeLevel" style="display:none;">
+                    <label class="form-label" style="color: #f59e0b;">Level / Grade</label>
+                    <div class="input-wrapper" style="border-color: rgba(245, 158, 11, 0.4);">
+                        <select name="grade_level">
+                            <option value="">-- Pilih Grade --</option>
+                            <option value="A" <?= old('grade_level') == 'A' ? 'selected' : '' ?>>Grade A</option>
+                            <option value="B" <?= old('grade_level') == 'B' ? 'selected' : '' ?>>Grade B</option>
+                            <option value="C" <?= old('grade_level') == 'C' ? 'selected' : '' ?>>Grade C</option>
+                            <option value="Senior" <?= old('grade_level') == 'Senior' ? 'selected' : '' ?>>Senior</option>
+                            <option value="Junior" <?= old('grade_level') == 'Junior' ? 'selected' : '' ?>>Junior</option>
+                            <option value="Trainee" <?= old('grade_level') == 'Trainee' ? 'selected' : '' ?>>Trainee / Magang</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tanggal Bergabung</label>
+                <div class="input-wrapper"><input type="date" name="join_date" value="<?= old('join_date') ?: date('Y-m-d') ?>" required></div>
+            </div>
+
+        </div>
+
+        <div class="bento-card">
+            <div class="card-header">
+                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph-bold ph-wallet"></i></div>
+                <h3>Payroll, Login & Hak Akses</h3>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Shift Kerja</label>
                     <div class="input-wrapper">
@@ -210,34 +305,44 @@ function toggleBankFields() {
                         </select>
                     </div>
                 </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
                     <label class="form-label">Status Pekerja</label>
                     <div class="input-wrapper">
                         <select name="status" required id="statusSelect">
-                            <option value="Tetap" <?= old('status', 'Tetap') == 'Tetap' ? 'selected' : '' ?>>Tetap</option>
+                            <option value="Tetap" <?= old('status') == 'Tetap' ? 'selected' : '' ?>>Tetap</option>
                             <option value="Borongan" <?= old('status') == 'Borongan' ? 'selected' : '' ?>>Borongan</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Metode Pembayaran</label>
-                    <div class="input-wrapper">
-                        <select name="payment_method" required id="paymentMethodSelect">
-                            <option value="Cash" <?= old('payment_method', 'Cash') == 'Cash' ? 'selected' : '' ?>>Cash</option>
-                            <option value="Transfer" <?= old('payment_method') == 'Transfer' ? 'selected' : '' ?>>Transfer</option>
+                            <option value="Magang" <?= old('status') == 'Magang' ? 'selected' : '' ?>>Magang / PKL</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <div id="bankFields">
+            <div class="form-group">
+                <label class="form-label">Siklus Gaji</label>
+                <div class="input-wrapper">
+                    <select name="salary_type" required>
+                        <option value="Mingguan" <?= old('salary_type', 'Mingguan') == 'Mingguan' ? 'selected' : '' ?>>Mingguan</option>
+                        <option value="Harian" <?= old('salary_type') == 'Harian' ? 'selected' : '' ?>>Harian</option>
+                        <option value="Bulanan" <?= old('salary_type') == 'Bulanan' ? 'selected' : '' ?>>Bulanan</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Metode Pembayaran</label>
+                <div class="input-wrapper">
+                    <select name="payment_method" required id="paymentMethodSelect">
+                        <option value="Cash" <?= old('payment_method', 'Cash') == 'Cash' ? 'selected' : '' ?>>Cash (Tunai)</option>
+                        <option value="Transfer" <?= old('payment_method') == 'Transfer' ? 'selected' : '' ?>>Transfer Bank</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="bankFields" style="display: none;">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group">
                         <label class="form-label">Nama Bank</label>
-                        <div class="input-wrapper"><input type="text" name="bank_name" value="<?= old('bank_name') ?>" placeholder="Contoh: BCA"></div>
+                        <div class="input-wrapper"><input type="text" name="bank_name" value="<?= old('bank_name') ?>" placeholder="Contoh: BCA / BRI"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">No Rekening</label>
@@ -245,31 +350,13 @@ function toggleBankFields() {
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="bento-card">
-            <div class="card-header">
-                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph-bold ph-wallet"></i></div>
-                <h3>Payroll, Login & Hak Akses</h3>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Tipe Gaji</label>
-                <div class="input-wrapper">
-                    <select name="salary_type" required>
-                        <option value="Harian" <?= old('salary_type') == 'Harian' ? 'selected' : '' ?>>Harian</option>
-                        <option value="Mingguan" <?= old('salary_type', 'Mingguan') == 'Mingguan' ? 'selected' : '' ?>>Mingguan</option>
-                        <option value="Bulanan" <?= old('salary_type') == 'Bulanan' ? 'selected' : '' ?>>Bulanan</option>
-                    </select>
-                </div>
-            </div>
-
-           <div class="salary-fixed-only">
+            <div class="salary-fixed-only">
                 <div class="form-group">
-                    <label class="form-label" style="color: var(--accent-main);">Gaji Pokok</label>
-                    <div class="input-wrapper" style="border-color: var(--accent-main); box-shadow: 0 0 0 2px var(--accent-light);">
-                        <div class="prefix" style="color: var(--accent-main); background: var(--accent-light);">Rp</div>
-                        <input type="text" name="basic_salary" onkeyup="formatRupiah(this)" autocomplete="off" style="font-size: 14px; font-weight: 900; color: var(--accent-main); font-family: 'Space Mono', monospace;" value="<?= old('basic_salary') ?>">
+                    <label class="form-label" style="color: var(--primary);">Gaji Pokok (Harian / Bulanan)</label>
+                    <div class="input-wrapper" style="border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,.1);">
+                        <div class="prefix" style="color: var(--primary); background: rgba(37,99,235,.1); padding: 12px 14px; font-weight: 900;">Rp</div>
+                        <input type="text" name="basic_salary" onkeyup="formatRupiah(this)" autocomplete="off" style="font-size: 14px; font-weight: 900; color: var(--primary); font-family: 'Space Mono', monospace;" value="<?= old('basic_salary') ?>">
                     </div>
                 </div>
 
@@ -277,14 +364,14 @@ function toggleBankFields() {
                     <div class="form-group">
                         <label class="form-label">Tunjangan Jabatan</label>
                         <div class="input-wrapper">
-                            <div class="prefix">Rp</div>
+                            <div class="prefix" style="padding: 12px; background:var(--bg-base-alt); font-weight: 800;">Rp</div>
                             <input type="text" name="position_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('position_allowance') ?>">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Uang Makan</label>
+                        <label class="form-label">Uang Makan / Hari</label>
                         <div class="input-wrapper">
-                            <div class="prefix">Rp</div>
+                            <div class="prefix" style="padding: 12px; background:var(--bg-base-alt); font-weight: 800;">Rp</div>
                             <input type="text" name="meal_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('meal_allowance') ?>">
                         </div>
                     </div>
@@ -292,16 +379,16 @@ function toggleBankFields() {
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group">
-                        <label class="form-label">Uang Transport</label>
+                        <label class="form-label">Uang Transport / Siklus</label>
                         <div class="input-wrapper">
-                            <div class="prefix">Rp</div>
+                            <div class="prefix" style="padding: 12px; background:var(--bg-base-alt); font-weight: 800;">Rp</div>
                             <input type="text" name="transport_allowance" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('transport_allowance') ?>">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Tarif Lembur</label>
+                        <label class="form-label">Tarif Lembur / Jam</label>
                         <div class="input-wrapper">
-                            <div class="prefix">Rp</div>
+                            <div class="prefix" style="padding: 12px; background:var(--bg-base-alt); font-weight: 800;">Rp</div>
                             <input type="text" name="overtime_rate" onkeyup="formatRupiah(this)" autocomplete="off" style="font-family: 'Space Mono', monospace;" value="<?= old('overtime_rate') ?>">
                         </div>
                     </div>
@@ -312,49 +399,64 @@ function toggleBankFields() {
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div class="form-group">
-                    <label class="form-label">Username Login</label>
+                    <label class="form-label">Username Login Web</label>
                     <div class="input-wrapper"><input type="text" name="username" required value="<?= old('username') ?>"></div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Password Login</label>
+                    <label class="form-label">Password Login Web</label>
                     <div class="input-wrapper"><input type="text" name="password" required value="<?= old('password') ?>"></div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Role Aplikasi</label>
-                <div class="input-wrapper">
-                    <select name="role" required>
-                        <option value="karyawan" <?= old('role', 'karyawan') == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
-                        <option value="admin" <?= old('role') == 'admin' ? 'selected' : '' ?>>Admin</option>
-                    </select>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Role Aplikasi Web</label>
+                    <div class="input-wrapper">
+                        <select name="role" required>
+                            <option value="karyawan" <?= old('role', 'karyawan') == 'karyawan' ? 'selected' : '' ?>>Karyawan</option>
+                            <option value="admin" <?= old('role') == 'admin' ? 'selected' : '' ?>>Admin / HRD</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Privilege Mesin IoT</label>
+                    <div class="input-wrapper">
+                        <select name="machine_privilege">
+                            <option value="0" <?= old('machine_privilege', '0') == '0' ? 'selected' : '' ?>>User Biasa</option>
+                            <option value="14" <?= old('machine_privilege') == '14' ? 'selected' : '' ?>>Admin Mesin</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <hr style="border:0; border-top:1px dashed var(--border-subtle); margin:18px 0;">
 
-            <div class="form-group">
-                <label class="form-label">Privilege Mesin Absensi (IoT)</label>
-                <div class="input-wrapper">
-                    <select name="machine_privilege">
-                        <option value="0" <?= old('machine_privilege', '0') == '0' ? 'selected' : '' ?>>User Biasa</option>
-                        <option value="14" <?= old('machine_privilege') == '14' ? 'selected' : '' ?>>Admin Mesin</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="checkbox-grid">
+            <div class="form-label">Potongan Wajib (Asuransi)</div>
+            <div class="checkbox-grid" style="margin-bottom: 8px;">
                 <label class="checkbox-label">
-                    <input type="checkbox" name="bpjs_kesehatan" value="1" <?= old('bpjs_kesehatan') ? 'checked' : '' ?>>
+                    <input type="hidden" name="bpjs_kesehatan" value="0">
+                    <input type="checkbox" name="bpjs_kesehatan" id="checkBpjsKs" value="1" <?= old('bpjs_kesehatan') ? 'checked' : '' ?> onchange="toggleBpjsKs()">
                     <div class="checkbox-box"><i class="ph-bold ph-heartbeat"></i> BPJS Kesehatan</div>
                 </label>
                 <label class="checkbox-label">
-                    <input type="checkbox" name="bpjs_ketenagakerjaan" value="1" <?= old('bpjs_ketenagakerjaan') ? 'checked' : '' ?>>
+                    <input type="hidden" name="bpjs_ketenagakerjaan" value="0">
+                    <input type="checkbox" name="bpjs_ketenagakerjaan" id="checkBpjsTk" value="1" <?= old('bpjs_ketenagakerjaan') ? 'checked' : '' ?> onchange="toggleBpjsTk()">
                     <div class="checkbox-box"><i class="ph-bold ph-hard-hat"></i> BPJS Ketenagakerjaan</div>
                 </label>
             </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group" id="wrapBpjsKs" style="display: none; margin: 0;">
+                    <label class="form-label">No. BPJS Kesehatan</label>
+                    <div class="input-wrapper"><input type="number" name="bpjs_ks_number" value="<?= old('bpjs_ks_number') ?>" placeholder="Nomor Kartu"></div>
+                </div>
+                <div class="form-group" id="wrapBpjsTk" style="display: none; margin: 0;">
+                    <label class="form-label">No. BPJS Ketenagakerjaan</label>
+                    <div class="input-wrapper"><input type="number" name="bpjs_tk_number" value="<?= old('bpjs_tk_number') ?>" placeholder="Nomor Kartu"></div>
+                </div>
+            </div>
 
-            <button type="submit" class="btn-submit">
+            <button type="submit" class="btn-submit" style="margin-top: 25px;">
                 <i class="ph-bold ph-floppy-disk"></i> Simpan Karyawan
             </button>
         </div>

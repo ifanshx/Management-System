@@ -12,33 +12,39 @@ use CodeIgniter\Router\RouteCollection;
 // ====================================================================
 // 1. RUTE PUBLIK (LANDING PAGE & AUTENTIKASI)
 // ====================================================================
-// Halaman depan / Company Profile
 $routes->get('/', 'LandingController::index');
-
-// Autentikasi Sistem
 $routes->get('/login', 'AuthController::index');
 $routes->post('/login/process', 'AuthController::process');
 $routes->get('/logout', 'AuthController::logout');
 
 // ====================================================================
-// 2. RUTE GLOBAL (AKSES BERSAMA: ADMIN & KARYAWAN)
+// 2. RUTE GLOBAL (AKSES BERSAMA: HARUS LOGIN)
+// Kita buang filter adminAuth/karyawanAuth yang kaku, ganti dengan filter standar (auth)
+// Pastikan Anda punya filter 'auth' yang mengecek apakah user sudah login.
+// Jika belum ada filter 'auth', hapus ['filter' => 'auth'] di bawah ini.
 // ====================================================================
-$routes->get('/profile', 'Profile::index');
-$routes->post('/profile/update_password', 'Profile::update_password');
-
-
-// ====================================================================
-// 3. RUTE MANAJEMEN PUSAT (SUPER ADMIN & HRD)
-// Dilindungi oleh Filter: adminAuth
-// ====================================================================
-$routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
+$routes->group('', static function ($routes) {
     
-    // --- EXECUTIVE DASHBOARD & IDENTITAS ---
+    // --- PORTAL PRIBADI & PENGATURAN AKUN ---
+    $routes->get('/profile', 'Profile::index');
+    $routes->post('/profile/update_password', 'Profile::update_password');
+    $routes->get('/portal', 'Portal::index');
+    $routes->get('/portal/absen/(:segment)', 'Portal::record_attendance/$1');
+    $routes->get('/portal/slip_gaji', 'Portal::slip_gaji');
+    $routes->get('/portal/print_my_slip/(:num)', 'Portal::print_my_slip/$1');
+    
+    $routes->get('/leave', 'Leave::index');
+    $routes->post('/leave/store', 'Leave::store');
+
+// --- EXECUTIVE DASHBOARD & IDENTITAS ---
     $routes->get('/dashboard', 'Dashboard::index');
     $routes->get('/setting/company', 'Setting::company');
     $routes->post('/setting/update_company', 'Setting::update_company');
-    $routes->get('/setting/workshift_create', 'Setting::workshift_create');
-    $routes->post('/setting/workshift_store', 'Setting::workshift_store');
+
+    // --- PENGATURAN SHIFT KERJA ---
+    $routes->get('/setting/workshift_index', 'Setting::workshift_index'); // Menampilkan Form + Tabel
+    $routes->post('/setting/workshift_store', 'Setting::workshift_store'); // Menangani Simpan Baru & Update
+    $routes->get('/setting/workshift_delete/(:num)', 'Setting::workshift_delete/$1'); // Menangani Hapus Data
     
     // --- RUTE PENGATURAN API FINGERSPOT ---
     $routes->get('/device/settings', 'Device::settings');
@@ -79,6 +85,7 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
         $routes->get('delete/(:num)', 'Attendance::delete/$1');
         $routes->get('get_existing_log', 'Attendance::get_existing_log');
         $routes->get('toggle_meal/(:num)', 'Attendance::toggle_meal/$1');
+        $routes->post('toggle_overtime_meal', 'Attendance::toggle_overtime_meal');
         $routes->post('store_quick_kasbon', 'Attendance::store_quick_kasbon');
     });
     
@@ -98,7 +105,7 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/payroll/delete/(:num)', 'Payroll::delete/$1');
     $routes->post('/payroll/push_to_finance', 'Payroll::push_to_finance');
 
-    // ACCOUNTING
+    // --- ACCOUNTING ---
     $routes->get('/accounting', 'Accounting::index');
     $routes->get('/accounting/journal', 'Accounting::journal');
     $routes->post('/accounting/store_journal', 'Accounting::store_journal');
@@ -106,12 +113,33 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/accounting/coa', 'Accounting::coa');
     $routes->post('/accounting/store_account', 'Accounting::store_account');
     $routes->get('/accounting/ledger', 'Accounting::ledger');
-    $routes->get('/accounting/print_report', 'Accounting::print_report');
+    $routes->get('/accounting/print-report', 'Accounting::print_report');
     
-    // FINANCE
+    // --- FINANCE ---
     $routes->get('/finance/cash_index', 'Finance::cash_index');
     $routes->post('/finance/cash-store', 'Finance::cash_store');
     $routes->get('/finance/cash-delete/(:num)', 'Finance::cash_delete/$1');
+    
+    // Pastikan kode ini ada di dalam file app/Config/Routes.php
+$routes->group('companydebt', function ($routes) {
+    $routes->get('/', 'CompanyDebt::index');
+    $routes->post('store', 'CompanyDebt::store');
+    $routes->post('pay/(:num)', 'CompanyDebt::pay/$1');
+    
+    // 2 Baris di bawah ini WAJIB ADA untuk Edit dan Hapus
+    $routes->post('update/(:num)', 'CompanyDebt::update/$1');
+    $routes->get('delete/(:num)', 'CompanyDebt::delete/$1'); 
+});
+    
+    // --- MODUL PENDANAAN & INVESTOR ---
+    $routes->get('/investor', 'Investor::index');
+    $routes->post('/investor/store_investor', 'Investor::store_investor');
+    $routes->post('/investor/store_transaction', 'Investor::store_transaction');
+    $routes->get('/investor/void_transaction/(:num)', 'Investor::void_transaction/$1');
+    
+    // Tambahkan 2 baris wajib ini agar tombol Hapus dan Power berfungsi:
+    $routes->get('/investor/delete_investor/(:num)', 'Investor::delete_investor/$1');
+    $routes->get('/investor/toggle_status/(:num)', 'Investor::toggle_status/$1');
 
     // --- MODUL PENJUALAN KASIR (OFFLINE POS) ---
     $routes->get('/sales/offline', 'OfflineSales::index');
@@ -119,28 +147,83 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/sales/offline_history', 'OfflineSales::history');
     $routes->get('/sales/get_detail/(:any)', 'OfflineSales::get_detail/$1');
 
-    // --- MODUL B2B (WHOLESALE & PIUTANG) ---
-    $routes->get('/wholesale', 'Wholesale::index');
-    $routes->get('/wholesale/surat_jalan/(:num)', 'Wholesale::surat_jalan/$1');
-    $routes->post('/wholesale/store_customer', 'Wholesale::store_customer');
-    $routes->get('/wholesale/delete_customer/(:num)', 'Wholesale::delete_customer/$1');
-    $routes->post('/wholesale/store_so', 'Wholesale::store_so');
-    $routes->post('/wholesale/pay_installment/(:num)', 'Wholesale::pay_installment/$1');
-    $routes->get('/wholesale/ship_preorder/(:num)', 'Wholesale::ship_preorder/$1');
-    $routes->post('/wholesale/return_so/(:num)', 'Wholesale::return_so/$1');
+// ====================================================================
+    // ROUTES: B2B WHOLESALE (GROSIR & PIUTANG)
+    // ====================================================================
+    $routes->group('wholesale', function($routes) {
+        $routes->get('/', 'Wholesale::index');
+        $routes->post('store_so', 'Wholesale::store_so');
+        $routes->get('surat_jalan/(:segment)', 'Wholesale::surat_jalan/$1');
+        $routes->post('pay_installment/(:segment)', 'Wholesale::pay_installment/$1');
+        $routes->post('process_shipment/(:segment)', 'Wholesale::process_shipment/$1');
+        $routes->post('return_so/(:segment)', 'Wholesale::return_so/$1');
+        $routes->get('delete_so/(:segment)', 'Wholesale::delete_so/$1'); 
+        $routes->post('store_customer', 'Wholesale::store_customer');
+        $routes->get('get_customer/(:segment)', 'Wholesale::get_customer/$1'); 
+        $routes->post('update_customer/(:segment)', 'Wholesale::update_customer/$1'); 
+        $routes->get('delete_customer/(:segment)', 'Wholesale::delete_customer/$1'); 
 
+        // --- RUTE KHUSUS FITUR EDIT & TAMBAH ITEM SO ---
+        $routes->get('get_so/(:segment)', 'Wholesale::get_so/$1');
+        $routes->post('add_item_to_so', 'Wholesale::add_item_to_so');
+        $routes->get('delete_item_from_so/(:segment)', 'Wholesale::delete_item_from_so/$1');
+        $routes->post('update_item_qty/(:num)', 'Wholesale::update_item_qty/$1');
+
+        // --- RUTE PENGIRIMAN GABUNGAN ---
+        $routes->get('get_pending_by_customer', 'Wholesale::get_pending_by_customer');
+        $routes->get('get_pending_by_customer/(:segment)', 'Wholesale::get_pending_by_customer/$1');
+        $routes->post('process_shipment_gabungan', 'Wholesale::process_shipment_gabungan');
+        $routes->get('print_sj_gabungan/(:any)', 'Wholesale::print_sj_gabungan/$1');
+    });
+    
     // --- ROUTING MODUL PRODUKSI ---
     $routes->get('production', 'Production::index');
     $routes->get('production/bom_builder', 'Production::bom_builder');
     $routes->post('production/store_bom', 'Production::store_bom');
-    $routes->post('production/create_spk', 'Production::create_spk');
-    $routes->post('production/add_production_log', 'Production::add_production_log');
-    $routes->get('production/print_spk/(:num)', 'Production::print_spk/$1');
     
-    // 👇 TAMBAHKAN BARIS INI UNTUK MEMBUKA GERBANG AJAX TAHAPAN OPERASI 👇
-    $routes->get('production/get_operations/(:num)', 'Production::get_operations/$1');
+    // Fitur Konfirmasi Setoran (Baru)
+    $routes->get('production/confirm_logs', 'Production::confirm_logs');
+    $routes->get('production/approve_log/(:num)', 'Production::approve_log/$1');
+    $routes->get('production/reject_log/(:num)', 'Production::reject_log/$1');
+    
+    // Rute Baru untuk SPK Reguler
+    $routes->post('production/create_spk', 'Production::create_spk');
+    $routes->get('production/get_spk/(:num)', 'Production::get_spk/$1');
+    $routes->post('production/update_spk', 'Production::update_spk');
+    $routes->get('production/delete_spk/(:num)', 'Production::delete_spk/$1');
+    
+    $routes->get('production/duplicate_bom      /(:num)', 'Production::duplicate_bom/$1');
+    $routes->post('production/mass_copy_operations', 'Production::mass_copy_operations');
+    $routes->post('production/mass_copy_bom', 'Production::mass_copy_bom');
+
 
     
+    $routes->post('production/add_production_log', 'Production::add_production_log');
+    $routes->get('production/print_spk/(:num)', 'Production::print_spk/$1');
+    $routes->post('production/check_last_wage', 'Production::check_last_wage');
+    
+    $routes->get('production/mass_update_materials', 'Production::mass_update_materials');
+    $routes->get('production/mass_update_routing', 'Production::mass_update_routing');
+    
+    
+    
+    $routes->get('production/print_rekap_produksi/(:num)', 'Production::print_rekap_produksi/$1');
+    $routes->get('production/print_form_setoran', 'Production::print_form_setoran');
+    
+    $routes->get('production/get_operations/(:num)', 'Production::get_operations/$1');
+
+    $routes->get('production/get_bom/(:num)', 'Production::get_bom/$1');
+    $routes->post('production/update_bom/(:num)', 'Production::update_bom/$1');
+    $routes->get('production/delete_bom/(:num)', 'Production::delete_bom/$1');
+    
+    $routes->get('production/sync_old_po', 'Production::sync_old_po');
+    $routes->get('production/print_spk_batch/(:num)', 'Production::print_spk_batch/$1');
+    
+    $routes->get('production/print_bom/(:segment)', 'Production::print_bom/$1');
+    $routes->get('production/print_bom_batch', 'Production::print_bom_batch');
+    
+    $routes->get('production/print_blank_bom', 'Production::print_blank_bom');
+    $routes->get('production/print_blank_bom_batch', 'Production::print_blank_bom_batch');
 
     // --- MODUL PEMBELIAN BARANG (PROCUREMENT) ---
     $routes->get('/procurement', 'Procurement::index');
@@ -148,13 +231,17 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->post('/procurement/store_supplier', 'Procurement::store_supplier'); 
     $routes->get('/procurement/create_po', 'Procurement::create_po');
     $routes->post('/procurement/store_po', 'Procurement::store_po');
-    $routes->get('/procurement/receive_goods/(:num)', 'Procurement::receive_goods/$1');
+    
+    // Rute untuk Penerimaan dan Void Barang
+    $routes->post('/procurement/receive_goods/(:num)', 'Procurement::receive_goods/$1');
+    $routes->get('/procurement/void_po/(:num)', 'Procurement::void_po/$1'); 
+    $routes->get('/procurement/get_po_items/(:num)', 'Procurement::get_po_items/$1'); 
+    
     $routes->get('/procurement/delete_supplier/(:num)', 'Procurement::delete_supplier/$1');
     $routes->get('/procurement/delete_po/(:num)', 'Procurement::delete_po/$1');
     $routes->get('/procurement/get_supplier/(:num)', 'Procurement::get_supplier/$1');
     $routes->post('/procurement/update_supplier/(:num)', 'Procurement::update_supplier/$1');
     $routes->post('/procurement/pay_po/(:num)', 'Procurement::pay_po/$1');
-
 
     // --- MANAJEMEN ASET PABRIK ---
     $routes->group('asset', function($routes) {
@@ -169,12 +256,10 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->post('/warehouse/store_fg', 'LocalWarehouse::store_fg');
     $routes->post('/warehouse/store_rm', 'LocalWarehouse::store_rm');
     
-    // 👇 TAMBAHKAN 4 BARIS INI BOS 👇
     $routes->get('/warehouse/get_fg/(:num)', 'LocalWarehouse::get_fg/$1');
     $routes->post('/warehouse/update_fg/(:num)', 'LocalWarehouse::update_fg/$1');
     $routes->get('/warehouse/get_rm/(:num)', 'LocalWarehouse::get_rm/$1');
     $routes->post('/warehouse/update_rm/(:num)', 'LocalWarehouse::update_rm/$1');
-    // 👆 SAMPAI SINI 👆
 
     $routes->get('/warehouse/delete_fg/(:num)', 'LocalWarehouse::delete_fg/$1');
     $routes->get('/warehouse/delete_rm/(:num)', 'LocalWarehouse::delete_rm/$1');
@@ -240,37 +325,16 @@ $routes->group('', ['filter' => 'adminAuth'], static function ($routes) {
     $routes->get('/shopee/addon/(:segment)', 'ShopeeAddon::index/$1');
     $routes->post('/shopee/create_addon/(:segment)', 'ShopeeAddon::create_addon/$1');
 
-    // Route Pelindung (Mencegah Akses Tanpa ID Toko)
+    // Route Pelindung
     $routes->get('/shopee/products', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
     $routes->get('/marketing/shopee_discount', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
     $routes->get('/shopee/boost', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
     $routes->get('/shopee/voucher', function() { return redirect()->to('/shopee')->with('error', 'Pilih toko Shopee terlebih dahulu.'); });
-    
-    
 });
-
-// ====================================================================
-// 4. RUTE PORTAL KARYAWAN (EMPLOYEE SELF-SERVICE / ESS)
-// Dilindungi oleh Filter: karyawanAuth
-// ====================================================================
-$routes->group('', ['filter' => 'karyawanAuth'], static function ($routes) {
-    $routes->get('/portal', 'Portal::index');
-    $routes->get('/portal/absen/(:segment)', 'Portal::record_attendance/$1');
-    $routes->get('/portal/slip_gaji', 'Portal::slip_gaji');
-    $routes->get('/portal/print_slip/(:num)', 'Portal::print_my_slip/$1');
-    $routes->get('/leave', 'Leave::index');
-    $routes->post('/leave/store', 'Leave::store');
-}); 
 
 // ====================================================================
 // 5. API WEBHOOKS (LISTENER SISTEM EKSTERNAL)
 // ====================================================================
-// IoT Hardware Integration (Fingerspot / Mesin Absen)
 $routes->post('/api/webhook/fingerspot', 'Api\Webhook::fingerspot');
 $routes->get('/api/webhook/fingerspot', 'Api\Webhook::ping');
-
-// Endpoint Khusus Server Shopee (Real-Time Notification Push)
 $routes->post('/api/webhook/shopee', 'Api\ShopeeWebhook::receive');
-
-
-

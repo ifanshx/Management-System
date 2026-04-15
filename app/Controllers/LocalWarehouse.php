@@ -11,14 +11,12 @@ class LocalWarehouse extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    // --- HELPER: AUTO GENERATE SMART SKU (BERDASARKAN KATEGORI & NAMA) ---
     private function generateSKU($type, $context) 
     {
         if ($type === 'PRD') {
             $table  = 'warehouse_inventory';
             $column = 'sku';
             
-            // Mapping Singkatan Kategori Produk
             $map = [
                 'Full System'           => 'FSY',
                 'Silencer / Slip-on'    => 'SLC',
@@ -32,18 +30,15 @@ class LocalWarehouse extends BaseController
             $table  = 'raw_materials';
             $column = 'sku_material';
             
-            // Ambil 3 huruf alfabet pertama dari Nama Material
             $cleanName = preg_replace('/[^A-Za-z]/', '', $context);
             $midCode = strtoupper(substr($cleanName, 0, 3));
             
-            // Jika kurang dari 3 huruf, tambahkan 'X'
             if (strlen($midCode) < 3) {
                 $midCode = str_pad($midCode, 3, 'X'); 
             }
             $prefix = "MAT-{$midCode}-";
         }
 
-        // Cari nomor urut terakhir berdasarkan prefix spesifik ini
         $lastItem = $this->db->table($table)
                              ->like($column, $prefix, 'after')
                              ->orderBy('id', 'DESC')
@@ -60,15 +55,15 @@ class LocalWarehouse extends BaseController
         return $prefix . $newNumber;
     }
 
-    // --- 1. HALAMAN MASTER DATA GUDANG ---
     public function index()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
 
         $finishedGoods = $this->db->table('warehouse_inventory')->orderBy('id', 'DESC')->get()->getResultArray();
         $rawMaterials = $this->db->table('raw_materials')->orderBy('id', 'DESC')->get()->getResultArray();
-        
         $adjustments = $this->db->table('stock_adjustments')->orderBy('id', 'DESC')->get()->getResultArray();
+        
+        $uomMaster = $this->db->table('uom_master')->where('is_active', 1)->orderBy('uom_name', 'ASC')->get()->getResultArray();
 
         $totalValueFG = 0; foreach($finishedGoods as $f) { $totalValueFG += ($f['physical_stock'] * $f['hpp']); }
         $totalValueRM = 0; foreach($rawMaterials as $r) { $totalValueRM += ($r['physical_stock'] * $r['hpp']); }
@@ -78,6 +73,7 @@ class LocalWarehouse extends BaseController
             'finishedGoods' => $finishedGoods,
             'rawMaterials'  => $rawMaterials,
             'adjustments'   => $adjustments,
+            'uomMaster'     => $uomMaster, 
             'totalValueFG'  => $totalValueFG,
             'totalValueRM'  => $totalValueRM
         ];
@@ -85,17 +81,19 @@ class LocalWarehouse extends BaseController
         return view('warehouse/local_inventory', $data);
     }
 
-    // --- 2. TAMBAH BARANG JADI (PRD) ---
     public function store_fg()
     {
         try {
+            $this->db->transStart(); 
+
             $itemType = $this->request->getPost('item_type');
-            // Generate SKU berdasarkan Kategori (item_type)
+            $itemName = $this->request->getPost('item_name');
+            
             $autoSku = $this->generateSKU('PRD', $itemType);
             
             $data = [
                 'sku'             => $autoSku,
-                'item_name'       => $this->request->getPost('item_name'),
+                'item_name'       => $itemName,
                 'item_type'       => $itemType,
                 'hpp'             => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
                 'retail_price'    => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('retail_price')),
@@ -106,31 +104,72 @@ class LocalWarehouse extends BaseController
 
             $this->db->table('warehouse_inventory')->insert($data);
 
-            if ($this->request->isAJAX()) {
-                return $this->response->setJSON(['status' => 'success', 'message' => "Produk Jadi berhasil disimpan dengan SKU: $autoSku"]);
+            // ========================================================
+            // PERBAIKAN: FORMAT AUTO-DRAFT BOM MENGIKUTI DB BARU
+            // ========================================================
+            $this->db->table('bom_headers')->insert([
+                'fg_sku'      => $autoSku,
+                'recipe_name' => 'Resep Dasar: ' . $itemName
+            ]);
+            $newBomId = $this->db->insertID();
+
+            $this->db->table('bom_operations')->insert([
+                'bom_id'         => $newBomId,
+                'step_order'     => 1,
+                'section_code'   => 'PRK',
+                'operation_name' => '[PERAKITAN] PERAKITAN PACKING',
+                'worker_type'    => 'Tetap',
+                'wage_per_piece' => 0,
+                'is_final_step'  => 1
+            ]);
+            // ========================================================
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Gagal menyimpan Produk dan Draft Resep ke database.");
             }
-            return redirect()->back()->with('success', "Barang Produksi (PRD) berhasil disimpan dengan SKU: <b>{$autoSku}</b>");
+
+            $pesanSukses = "Produk <b>{$autoSku}</b> berhasil didaftarkan! <br><span style='font-size:11px; color:#10b981;'><i class='ph-fill ph-magic-wand'></i> Draft Resep (BoM) telah otomatis dibuat di menu Produksi.</span>";
+
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'success', 'message' => $pesanSukses]);
+            }
+            return redirect()->back()->with('success', $pesanSukses);
+
         } catch (\Exception $e) {
             if ($this->request->isAJAX()) return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    // --- 3. TAMBAH BAHAN BAKU (MAT) ---
     public function store_rm()
     {
         try {
             $materialName = $this->request->getPost('material_name');
-            // Generate SKU berdasarkan Nama Material
             $autoSku = $this->generateSKU('MAT', $materialName);
             
+            $purchaseUom = strtoupper(trim($this->request->getPost('purchase_uom')));
+            $baseUom     = strtoupper(trim($this->request->getPost('base_uom')));
+            $conversion  = (float)$this->request->getPost('conversion_factor');
+
+            if ($conversion <= 0) $conversion = 1;
+            if ($purchaseUom === $baseUom) $conversion = 1;
+
+            if (!$purchaseUom) $purchaseUom = strtoupper(trim($this->request->getPost('unit') ?? 'PCS'));
+            if (!$baseUom) $baseUom = $purchaseUom;
+
             $data = [
-                'sku_material'   => $autoSku,
-                'material_name'  => $materialName,
-                'unit'           => $this->request->getPost('unit'),
-                'hpp'            => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
-                'physical_stock' => (float)$this->request->getPost('initial_stock'),
-                'min_stock'      => (float)$this->request->getPost('min_stock')
+                'sku_material'      => $autoSku,
+                'material_name'     => $materialName,
+                'material_category' => $this->request->getPost('material_category') ?? 'General',
+                'unit'              => $baseUom,
+                'purchase_uom'      => $purchaseUom,
+                'base_uom'          => $baseUom,
+                'conversion_factor' => $conversion,
+                'hpp'               => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
+                'physical_stock'    => (float)$this->request->getPost('initial_stock'),
+                'min_stock'         => (float)$this->request->getPost('min_stock')
             ];
 
             $this->db->table('raw_materials')->insert($data);
@@ -145,7 +184,6 @@ class LocalWarehouse extends BaseController
         }
     }
 
-    // --- FITUR: AMBIL DATA UNTUK FORM EDIT (AJAX) ---
     public function get_fg($id)
     {
         if ($this->request->isAJAX()) {
@@ -162,7 +200,6 @@ class LocalWarehouse extends BaseController
         }
     }
 
-    // --- FITUR: UPDATE PERUBAHAN DATA KE DATABASE ---
     public function update_fg($id)
     {
         try {
@@ -188,11 +225,25 @@ class LocalWarehouse extends BaseController
     public function update_rm($id)
     {
         try {
+            $purchaseUom = strtoupper(trim($this->request->getPost('purchase_uom')));
+            $baseUom     = strtoupper(trim($this->request->getPost('base_uom')));
+            $conversion  = (float)$this->request->getPost('conversion_factor');
+
+            if ($conversion <= 0) $conversion = 1;
+            if ($purchaseUom === $baseUom) $conversion = 1;
+
+            if (!$purchaseUom) $purchaseUom = strtoupper(trim($this->request->getPost('unit') ?? 'PCS'));
+            if (!$baseUom) $baseUom = $purchaseUom;
+
             $data = [
-                'material_name'  => $this->request->getPost('material_name'),
-                'unit'           => $this->request->getPost('unit'),
-                'hpp'            => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
-                'min_stock'      => (float)$this->request->getPost('min_stock')
+                'material_name'     => $this->request->getPost('material_name'),
+                'material_category' => $this->request->getPost('material_category') ?? 'General',
+                'unit'              => $baseUom,
+                'purchase_uom'      => $purchaseUom,
+                'base_uom'          => $baseUom,
+                'conversion_factor' => $conversion,
+                'hpp'               => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
+                'min_stock'         => (float)$this->request->getPost('min_stock')
             ];
 
             $this->db->table('raw_materials')->where('id', $id)->update($data);
@@ -205,7 +256,6 @@ class LocalWarehouse extends BaseController
         }
     }
 
-    // --- 4. EKSEKUSI STOCK OPNAME (PENYESUAIAN STOK) ---
     public function store_adjustment()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
@@ -248,7 +298,6 @@ class LocalWarehouse extends BaseController
             } else {
                 $this->db->query("UPDATE {$tableName} SET physical_stock = physical_stock - ? WHERE {$skuCol} = ?", [$qty, $sku]);
                 
-                // Murni catat Jurnal Saja (View v_account_balances akan otomatis menyesuaikan)
                 $invAccount = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray();
                 $lossAccount = $this->db->table('chart_of_accounts')->where('account_code', '5-9000')->get()->getRowArray(); 
                 
@@ -277,6 +326,30 @@ class LocalWarehouse extends BaseController
                 'financial_value' => $financialValue,
                 'pic_name'        => $picName
             ]);
+            
+            $adjustmentId = $this->db->insertID();
+
+            // Panggil fungsi log mutasi
+            $inventoryService = new \App\Services\InventoryService();
+            // Bypass logging untuk adjustment di controller ini langsung
+            $this->db->table('inventory_movements')->insert([
+                'movement_date'   => date('Y-m-d H:i:s'),
+                'item_type'       => $type === 'PRD' ? 'FG' : 'RAW',
+                'item_sku'        => $sku,
+                'item_name'       => $itemName,
+                'uom'             => $item['unit'] ?? 'PCS',
+                'movement_type'   => $adjType === 'PLUS' ? 'ADJUSTMENT_IN' : 'ADJUSTMENT_OUT',
+                'qty_in'          => $adjType === 'PLUS' ? $qty : 0,
+                'qty_out'         => $adjType === 'MINUS' ? $qty : 0,
+                'balance_after'   => $adjType === 'PLUS' ? ($item['physical_stock'] + $qty) : ($item['physical_stock'] - $qty),
+                'unit_cost'       => $item['hpp'],
+                'total_value'     => $financialValue,
+                'reference_no'    => 'ADJ-' . date('YmdHis'),
+                'reference_table' => 'stock_adjustments',
+                'reference_id'    => $adjustmentId,
+                'notes'           => $reason,
+                'created_by'      => $picName
+            ]);
 
             $this->db->transComplete();
 
@@ -293,18 +366,43 @@ class LocalWarehouse extends BaseController
         }
     }
 
-    // --- 5. HAPUS DATA DENGAN PROTEKSI INTEGRITAS ---
     public function delete_fg($id) {
         $item = $this->db->table('warehouse_inventory')->where('id', $id)->get()->getRowArray();
         if (!$item) return redirect()->back()->with('error', 'Data tidak ditemukan.');
 
-        $cekBom = $this->db->table('bom_headers')->where('fg_sku', $item['sku'])->countAllResults();
-        if ($cekBom > 0) {
-            return redirect()->back()->with('error', "<b>Ditolak!</b> Produk <b>{$item['sku']}</b> sedang digunakan dalam {$cekBom} Resep Produksi (BoM). Hapus resep terkait terlebih dahulu.");
+        $sku = $item['sku'];
+
+        $boms = $this->db->table('bom_headers')->where('fg_sku', $sku)->get()->getResultArray();
+        
+        foreach ($boms as $bom) {
+            $cekSpk = $this->db->table('work_orders')->where('bom_id', $bom['id'])->countAllResults();
+            if ($cekSpk > 0) {
+                return redirect()->back()->with('error', "<b>Ditolak (Data Terkunci)!</b> Produk <b>{$sku}</b> tidak bisa dihapus karena sudah memiliki riwayat Surat Perintah Kerja (SPK) di Pabrik.");
+            }
         }
 
-        $this->db->table('warehouse_inventory')->where('id', $id)->delete();
-        return redirect()->back()->with('success', "Produk Jadi {$item['sku']} berhasil dihapus.");
+        try {
+            $this->db->transStart();
+
+            foreach ($boms as $bom) {
+                $this->db->table('bom_items')->where('bom_id', $bom['id'])->delete();
+                $this->db->table('bom_operations')->where('bom_id', $bom['id'])->delete();
+                $this->db->table('bom_headers')->where('id', $bom['id'])->delete();
+            }
+
+            $this->db->table('warehouse_inventory')->where('id', $id)->delete();
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Gagal menghapus data dari database secara permanen.");
+            }
+
+            return redirect()->back()->with('success', "Produk <b>{$sku}</b> beserta Draft Resep-nya berhasil dihapus bersih dari sistem.");
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     public function delete_rm($id) {
