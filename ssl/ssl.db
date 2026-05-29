@@ -1,0 +1,162 @@
+--- 
+files: 
+  certificate: 
+    _wildcard__noric_management_my_id_85d96_2fc59_1782296285_85dc5cb183051adbdd79a130a006464e: 
+      created: '1774523797'
+      domains: 
+        - "*.noric-management.my.id"
+        - noric-management.my.id
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Cert for “noric-management.my.id” 1774523797.0
+      id: _wildcard__noric_management_my_id_85d96_2fc59_1782296285_85dc5cb183051adbdd79a130a006464e
+      is_self_signed: 0
+      issuer.commonName: R13
+      issuer.organizationName: Let's Encrypt
+      key_algorithm: rsaEncryption
+      modulus: 85d9650bd9c0c223fcff07ca47509ae7c43b1166b00edb398fa5b6481513a7bdba046307a88871da2f19803390174b0fafaba1edbd8d757a2d395ec29184f2753b68df19eb0c03f26d72636d2f052eef825c107119c8fed86b8ed8efce5711165fc791618e6990a11ff3184de2ea2927a8f1edc514f62976863603e23e9da2a98cc7870e38918c0f63fc6bf47aaa1f3f8f5b5beebb1b933cca8d5e4fff3a7e2a068d86ec50f73ca9d31433cf2fde5083124299c71160a82b24c32509d0f2f5b87e53fe9c4d0f6d08d366d13256a843f89c55810fe64488fd6b1551a379384b8a12e7c2b9a19caa289aa6d58c6b385ec6db4d6ffb078ce840fdce20d54dc2fc59
+      modulus_length: 2048
+      not_after: '1782296285'
+      not_before: '1774520286'
+      serial: 068f6858d7b21ced7ae02abd05a2a760a9ee
+      signature_algorithm: sha256WithRSAEncryption
+      subject.commonName: "*.noric-management.my.id"
+      validation_type: dv
+    _wildcard__noric_management_my_id_a60c6_09289_1777026866_620c1cbfd898131ee595960118e5b59e: 
+      created: '1769254380'
+      domains: 
+        - "*.noric-management.my.id"
+        - noric-management.my.id
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Cert for “noric-management.my.id” 1769254380.0
+      id: _wildcard__noric_management_my_id_a60c6_09289_1777026866_620c1cbfd898131ee595960118e5b59e
+      is_self_signed: 0
+      issuer.commonName: R12
+      issuer.organizationName: Let's Encrypt
+      key_algorithm: rsaEncryption
+      modulus: a60c6523ccb0096b2f67ae16f68d6440f80fcbe6eda0aeae6110ee9615ed74c8593c5f59faf9384896eb1e6082f18d612efcb7909c19b396c8cd5c23e9a86feb4141039d7240311bbb2c1c0a91c9d2b50a0f6d7aff0d150f1622469fec6a21a410f3aaa4a73bbca81f48f568f17666bf34fd1794c427451b46baf60fc0c899d9b42617c682186e1b5464991f1b5bee32dd715835900eb1cd293ffe124e34e75d05fa460de256b0ea348e3e5da6bf77b7b568d9cccbd84b2a614708c35969ee0889d1f349dd73dbe0ba2f67525dc5f5c905c1369c1c09c2f9b547c1dabe8deea9bb2749861c8e6a7d597c20acfa1b086231b535d3a3ff0719c4b3cd532c109289
+      modulus_length: 2048
+      not_after: '1777026866'
+      not_before: '1769250867'
+      serial: 066c739e7eb4f5fbc045ea782091b09705fa
+      signature_algorithm: sha256WithRSAEncryption
+      subject.commonName: "*.noric-management.my.id"
+      validation_type: dv
+    noric_management_my_id_982e4_7b3d3_1800786416_a25a5c93af30c884efd56d00a423b5d0: 
+      created: '1769250416'
+      domains: 
+        - noric-management.my.id
+        - www.noric-management.my.id
+        - mail.noric-management.my.id
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Cert for “noric-management.my.id”
+      id: noric_management_my_id_982e4_7b3d3_1800786416_a25a5c93af30c884efd56d00a423b5d0
+      is_self_signed: 1
+      issuer.commonName: noric-management.my.id
+      issuer.organizationName: ~
+      key_algorithm: rsaEncryption
+      modulus: 982e4b95529c6ae75e7d1253e2818793f3c6b259dcd51f218de4f9ffd637df314b63c28a87264c5f13d035ee4c070c37b0e1eb74ada0f2342577a116a53c8fc1b982330ee14b4836722863fea3aab4b5057ebc12751dde09ecd50f2438a7a5da12240204795a7b8df8b8ed037c48e7bf1b5d7b4a1757dc66825961eec096ee80b987e81a469c5cd8acfc889b91d5ab6e7d37366d638f88341633fa9752b9e3e65922710d2d43f4e9d007df14ba7b636ee9e0f4ac322c4808eb9a415b402d48fbff30df2f71c395c7c5db7ac2ec46ad4e079d9f31aa9debe11ffe722bc5780f2900e85bcc8105a96b48a2749898a516070a88d158261e2ab65a2c4da049f7b3d3
+      modulus_length: 2048
+      not_after: '1800786416'
+      not_before: '1769250416'
+      serial: 0141655f89
+      signature_algorithm: sha256WithRSAEncryption
+      subject.commonName: noric-management.my.id
+      validation_type: ~
+    www_test_noric_management_my_id_b07ff_49b53_1782696190_1f4d1fa57d63185eb4cdab99d48e18f6: 
+      created: '1774923702'
+      domains: 
+        - test.noric-management.my.id
+        - www.test.noric-management.my.id
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Cert for “test.noric-management.my.id”
+      id: www_test_noric_management_my_id_b07ff_49b53_1782696190_1f4d1fa57d63185eb4cdab99d48e18f6
+      is_self_signed: 0
+      issuer.commonName: R13
+      issuer.organizationName: Let's Encrypt
+      key_algorithm: rsaEncryption
+      modulus: b07ffb3aaa8bdbfcd97dfcf09dd492a9a39adb3fc957a0662c66cc73cdea1b9614924463392a3de95d755612b3e2273a6ecf807dbd823c7f1797a7bde7ac6e22f420c445cb63f8e50ea00b3fd66ba46131265a95baf8fefc3655fe19535c254e7d57f48da2a870947c26f02e69ebcaebf1b0f346ffc58764369b91b9cc3def7ec18bac3bdae7b6ebc0a21ba883e6017b94bfe79834e58c10030062813e034fd0a39288f3afe083319766bfd7dc7c305aacb4decaabe01f26a1138ed5107aab4d92f1eef58e8675c2bbb5a2375066ef0b836053b6b5fa0e07149bc97b821f26f2fe8691d0f3da4996fbfcba02e7935f6f66407957fa802d5bd37c5a731e049b53
+      modulus_length: 2048
+      not_after: '1782696190'
+      not_before: '1774920191'
+      serial: 05420b601a1fa925af9b672f2cf223171647
+      signature_algorithm: sha256WithRSAEncryption
+      subject.commonName: www.test.noric-management.my.id
+      validation_type: dv
+  key: 
+    85d96_2fc59_cf32151eab5137eedeb305cd3bcf2c84: 
+      created: '1774523797'
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Key for “noric-management.my.id” 1774523797.0
+      id: 85d96_2fc59_cf32151eab5137eedeb305cd3bcf2c84
+      key_algorithm: rsaEncryption
+      modulus: 85d9650bd9c0c223fcff07ca47509ae7c43b1166b00edb398fa5b6481513a7bdba046307a88871da2f19803390174b0fafaba1edbd8d757a2d395ec29184f2753b68df19eb0c03f26d72636d2f052eef825c107119c8fed86b8ed8efce5711165fc791618e6990a11ff3184de2ea2927a8f1edc514f62976863603e23e9da2a98cc7870e38918c0f63fc6bf47aaa1f3f8f5b5beebb1b933cca8d5e4fff3a7e2a068d86ec50f73ca9d31433cf2fde5083124299c71160a82b24c32509d0f2f5b87e53fe9c4d0f6d08d366d13256a843f89c55810fe64488fd6b1551a379384b8a12e7c2b9a19caa289aa6d58c6b385ec6db4d6ffb078ce840fdce20d54dc2fc59
+      modulus_length: 2048
+    982e4_7b3d3_c41aa10505a3b1d3cee2eb28fb0605ce: 
+      created: '1769250416'
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Key for “noric-management.my.id”
+      id: 982e4_7b3d3_c41aa10505a3b1d3cee2eb28fb0605ce
+      key_algorithm: rsaEncryption
+      modulus: 982e4b95529c6ae75e7d1253e2818793f3c6b259dcd51f218de4f9ffd637df314b63c28a87264c5f13d035ee4c070c37b0e1eb74ada0f2342577a116a53c8fc1b982330ee14b4836722863fea3aab4b5057ebc12751dde09ecd50f2438a7a5da12240204795a7b8df8b8ed037c48e7bf1b5d7b4a1757dc66825961eec096ee80b987e81a469c5cd8acfc889b91d5ab6e7d37366d638f88341633fa9752b9e3e65922710d2d43f4e9d007df14ba7b636ee9e0f4ac322c4808eb9a415b402d48fbff30df2f71c395c7c5db7ac2ec46ad4e079d9f31aa9debe11ffe722bc5780f2900e85bcc8105a96b48a2749898a516070a88d158261e2ab65a2c4da049f7b3d3
+      modulus_length: 2048
+    a60c6_09289_f4ffe93af44126653a2fdf441e58d4a9: 
+      created: '1769254380'
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Key for “noric-management.my.id” 1769254380.0
+      id: a60c6_09289_f4ffe93af44126653a2fdf441e58d4a9
+      key_algorithm: rsaEncryption
+      modulus: a60c6523ccb0096b2f67ae16f68d6440f80fcbe6eda0aeae6110ee9615ed74c8593c5f59faf9384896eb1e6082f18d612efcb7909c19b396c8cd5c23e9a86feb4141039d7240311bbb2c1c0a91c9d2b50a0f6d7aff0d150f1622469fec6a21a410f3aaa4a73bbca81f48f568f17666bf34fd1794c427451b46baf60fc0c899d9b42617c682186e1b5464991f1b5bee32dd715835900eb1cd293ffe124e34e75d05fa460de256b0ea348e3e5da6bf77b7b568d9cccbd84b2a614708c35969ee0889d1f349dd73dbe0ba2f67525dc5f5c905c1369c1c09c2f9b547c1dabe8deea9bb2749861c8e6a7d597c20acfa1b086231b535d3a3ff0719c4b3cd532c109289
+      modulus_length: 2048
+    b07ff_49b53_860f3c8945506ae188506463e27f0a3d: 
+      created: '1774923702'
+      ecdsa_curve_name: ~
+      ecdsa_public: ~
+      friendly_name: Key for “test.noric-management.my.id”
+      id: b07ff_49b53_860f3c8945506ae188506463e27f0a3d
+      key_algorithm: rsaEncryption
+      modulus: b07ffb3aaa8bdbfcd97dfcf09dd492a9a39adb3fc957a0662c66cc73cdea1b9614924463392a3de95d755612b3e2273a6ecf807dbd823c7f1797a7bde7ac6e22f420c445cb63f8e50ea00b3fd66ba46131265a95baf8fefc3655fe19535c254e7d57f48da2a870947c26f02e69ebcaebf1b0f346ffc58764369b91b9cc3def7ec18bac3bdae7b6ebc0a21ba883e6017b94bfe79834e58c10030062813e034fd0a39288f3afe083319766bfd7dc7c305aacb4decaabe01f26a1138ed5107aab4d92f1eef58e8675c2bbb5a2375066ef0b836053b6b5fa0e07149bc97b821f26f2fe8691d0f3da4996fbfcba02e7935f6f66407957fa802d5bd37c5a731e049b53
+      modulus_length: 2048
+indexes: 
+  certificate: 
+    modulus: 
+      85d9650bd9c0c223fcff07ca47509ae7c43b1166b00edb398fa5b6481513a7bdba046307a88871da2f19803390174b0fafaba1edbd8d757a2d395ec29184f2753b68df19eb0c03f26d72636d2f052eef825c107119c8fed86b8ed8efce5711165fc791618e6990a11ff3184de2ea2927a8f1edc514f62976863603e23e9da2a98cc7870e38918c0f63fc6bf47aaa1f3f8f5b5beebb1b933cca8d5e4fff3a7e2a068d86ec50f73ca9d31433cf2fde5083124299c71160a82b24c32509d0f2f5b87e53fe9c4d0f6d08d366d13256a843f89c55810fe64488fd6b1551a379384b8a12e7c2b9a19caa289aa6d58c6b385ec6db4d6ffb078ce840fdce20d54dc2fc59: 
+        _wildcard__noric_management_my_id_85d96_2fc59_1782296285_85dc5cb183051adbdd79a130a006464e: ~
+      982e4b95529c6ae75e7d1253e2818793f3c6b259dcd51f218de4f9ffd637df314b63c28a87264c5f13d035ee4c070c37b0e1eb74ada0f2342577a116a53c8fc1b982330ee14b4836722863fea3aab4b5057ebc12751dde09ecd50f2438a7a5da12240204795a7b8df8b8ed037c48e7bf1b5d7b4a1757dc66825961eec096ee80b987e81a469c5cd8acfc889b91d5ab6e7d37366d638f88341633fa9752b9e3e65922710d2d43f4e9d007df14ba7b636ee9e0f4ac322c4808eb9a415b402d48fbff30df2f71c395c7c5db7ac2ec46ad4e079d9f31aa9debe11ffe722bc5780f2900e85bcc8105a96b48a2749898a516070a88d158261e2ab65a2c4da049f7b3d3: 
+        noric_management_my_id_982e4_7b3d3_1800786416_a25a5c93af30c884efd56d00a423b5d0: ~
+      a60c6523ccb0096b2f67ae16f68d6440f80fcbe6eda0aeae6110ee9615ed74c8593c5f59faf9384896eb1e6082f18d612efcb7909c19b396c8cd5c23e9a86feb4141039d7240311bbb2c1c0a91c9d2b50a0f6d7aff0d150f1622469fec6a21a410f3aaa4a73bbca81f48f568f17666bf34fd1794c427451b46baf60fc0c899d9b42617c682186e1b5464991f1b5bee32dd715835900eb1cd293ffe124e34e75d05fa460de256b0ea348e3e5da6bf77b7b568d9cccbd84b2a614708c35969ee0889d1f349dd73dbe0ba2f67525dc5f5c905c1369c1c09c2f9b547c1dabe8deea9bb2749861c8e6a7d597c20acfa1b086231b535d3a3ff0719c4b3cd532c109289: 
+        _wildcard__noric_management_my_id_a60c6_09289_1777026866_620c1cbfd898131ee595960118e5b59e: ~
+      b07ffb3aaa8bdbfcd97dfcf09dd492a9a39adb3fc957a0662c66cc73cdea1b9614924463392a3de95d755612b3e2273a6ecf807dbd823c7f1797a7bde7ac6e22f420c445cb63f8e50ea00b3fd66ba46131265a95baf8fefc3655fe19535c254e7d57f48da2a870947c26f02e69ebcaebf1b0f346ffc58764369b91b9cc3def7ec18bac3bdae7b6ebc0a21ba883e6017b94bfe79834e58c10030062813e034fd0a39288f3afe083319766bfd7dc7c305aacb4decaabe01f26a1138ed5107aab4d92f1eef58e8675c2bbb5a2375066ef0b836053b6b5fa0e07149bc97b821f26f2fe8691d0f3da4996fbfcba02e7935f6f66407957fa802d5bd37c5a731e049b53: 
+        www_test_noric_management_my_id_b07ff_49b53_1782696190_1f4d1fa57d63185eb4cdab99d48e18f6: ~
+    subject.commonName: 
+      "*.noric-management.my.id": 
+        _wildcard__noric_management_my_id_85d96_2fc59_1782296285_85dc5cb183051adbdd79a130a006464e: ~
+        _wildcard__noric_management_my_id_a60c6_09289_1777026866_620c1cbfd898131ee595960118e5b59e: ~
+      noric-management.my.id: 
+        noric_management_my_id_982e4_7b3d3_1800786416_a25a5c93af30c884efd56d00a423b5d0: ~
+      www.test.noric-management.my.id: 
+        www_test_noric_management_my_id_b07ff_49b53_1782696190_1f4d1fa57d63185eb4cdab99d48e18f6: ~
+uniques: 
+  certificate: 
+    friendly_name: 
+      Cert for “noric-management.my.id”: noric_management_my_id_982e4_7b3d3_1800786416_a25a5c93af30c884efd56d00a423b5d0
+      Cert for “noric-management.my.id” 1769254380.0: _wildcard__noric_management_my_id_a60c6_09289_1777026866_620c1cbfd898131ee595960118e5b59e
+      Cert for “noric-management.my.id” 1774523797.0: _wildcard__noric_management_my_id_85d96_2fc59_1782296285_85dc5cb183051adbdd79a130a006464e
+      Cert for “test.noric-management.my.id”: www_test_noric_management_my_id_b07ff_49b53_1782696190_1f4d1fa57d63185eb4cdab99d48e18f6
+  key: 
+    friendly_name: 
+      Key for “noric-management.my.id”: 982e4_7b3d3_c41aa10505a3b1d3cee2eb28fb0605ce
+      Key for “noric-management.my.id” 1769254380.0: a60c6_09289_f4ffe93af44126653a2fdf441e58d4a9
+      Key for “noric-management.my.id” 1774523797.0: 85d96_2fc59_cf32151eab5137eedeb305cd3bcf2c84
+      Key for “test.noric-management.my.id”: b07ff_49b53_860f3c8945506ae188506463e27f0a3d
+    modulus:ecdsa_curve_name:ecdsa_public: 
+      85d9650bd9c0c223fcff07ca47509ae7c43b1166b00edb398fa5b6481513a7bdba046307a88871da2f19803390174b0fafaba1edbd8d757a2d395ec29184f2753b68df19eb0c03f26d72636d2f052eef825c107119c8fed86b8ed8efce5711165fc791618e6990a11ff3184de2ea2927a8f1edc514f62976863603e23e9da2a98cc7870e38918c0f63fc6bf47aaa1f3f8f5b5beebb1b933cca8d5e4fff3a7e2a068d86ec50f73ca9d31433cf2fde5083124299c71160a82b24c32509d0f2f5b87e53fe9c4d0f6d08d366d13256a843f89c55810fe64488fd6b1551a379384b8a12e7c2b9a19caa289aa6d58c6b385ec6db4d6ffb078ce840fdce20d54dc2fc59: 85d96_2fc59_cf32151eab5137eedeb305cd3bcf2c84
+      982e4b95529c6ae75e7d1253e2818793f3c6b259dcd51f218de4f9ffd637df314b63c28a87264c5f13d035ee4c070c37b0e1eb74ada0f2342577a116a53c8fc1b982330ee14b4836722863fea3aab4b5057ebc12751dde09ecd50f2438a7a5da12240204795a7b8df8b8ed037c48e7bf1b5d7b4a1757dc66825961eec096ee80b987e81a469c5cd8acfc889b91d5ab6e7d37366d638f88341633fa9752b9e3e65922710d2d43f4e9d007df14ba7b636ee9e0f4ac322c4808eb9a415b402d48fbff30df2f71c395c7c5db7ac2ec46ad4e079d9f31aa9debe11ffe722bc5780f2900e85bcc8105a96b48a2749898a516070a88d158261e2ab65a2c4da049f7b3d3: 982e4_7b3d3_c41aa10505a3b1d3cee2eb28fb0605ce
+      a60c6523ccb0096b2f67ae16f68d6440f80fcbe6eda0aeae6110ee9615ed74c8593c5f59faf9384896eb1e6082f18d612efcb7909c19b396c8cd5c23e9a86feb4141039d7240311bbb2c1c0a91c9d2b50a0f6d7aff0d150f1622469fec6a21a410f3aaa4a73bbca81f48f568f17666bf34fd1794c427451b46baf60fc0c899d9b42617c682186e1b5464991f1b5bee32dd715835900eb1cd293ffe124e34e75d05fa460de256b0ea348e3e5da6bf77b7b568d9cccbd84b2a614708c35969ee0889d1f349dd73dbe0ba2f67525dc5f5c905c1369c1c09c2f9b547c1dabe8deea9bb2749861c8e6a7d597c20acfa1b086231b535d3a3ff0719c4b3cd532c109289: a60c6_09289_f4ffe93af44126653a2fdf441e58d4a9
+      b07ffb3aaa8bdbfcd97dfcf09dd492a9a39adb3fc957a0662c66cc73cdea1b9614924463392a3de95d755612b3e2273a6ecf807dbd823c7f1797a7bde7ac6e22f420c445cb63f8e50ea00b3fd66ba46131265a95baf8fefc3655fe19535c254e7d57f48da2a870947c26f02e69ebcaebf1b0f346ffc58764369b91b9cc3def7ec18bac3bdae7b6ebc0a21ba883e6017b94bfe79834e58c10030062813e034fd0a39288f3afe083319766bfd7dc7c305aacb4decaabe01f26a1138ed5107aab4d92f1eef58e8675c2bbb5a2375066ef0b836053b6b5fa0e07149bc97b821f26f2fe8691d0f3da4996fbfcba02e7935f6f66407957fa802d5bd37c5a731e049b53: b07ff_49b53_860f3c8945506ae188506463e27f0a3d

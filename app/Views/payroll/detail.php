@@ -5,15 +5,18 @@
 $totalCash = 0;
 $totalTransfer = 0;
 
+// Kalkulasi untuk TAMPILAN VIEW. Semua karyawan (termasuk anak buah) dijumlahkan
+// Karena di Controller mereka juga dijumlahkan agar seimbang.
 foreach($details as $d) {
-    // Hanya hitung yang BUKAN anak buah (yang leader_id nya kosong)
-    // Karena anak buah gajinya sudah di-nol-kan dan ditransfer ke Mandor
-    if (empty($d['leader_id'])) {
-        if ($d['payment_method'] === 'Transfer') {
-            $totalTransfer += $d['net_salary'];
-        } else {
-            $totalCash += $d['net_salary'];
-        }
+    $pm = $d['payment_method'] ?? 'Cash';
+    if (($payroll['employee_status'] ?? '') === 'Borongan') {
+        $pm = 'Transfer';
+    }
+    
+    if ($pm === 'Transfer') {
+        $totalTransfer += (float) ($d['net_salary'] ?? 0);
+    } else {
+        $totalCash += (float) ($d['net_salary'] ?? 0);
     }
 }
 ?>
@@ -64,7 +67,7 @@ foreach($details as $d) {
     .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 15px;}
     @media (max-width: 768px) { .split-grid { grid-template-columns: 1fr; } }
     .split-box { padding: 25px; border-radius: 20px; border: 1px solid var(--border-subtle); background: var(--bg-base); display: flex; align-items: center; gap: 18px; transition: 0.3s;}
-    .split-box:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-color: var(--brand);}
+    .split-box:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-color: #2563eb;}
     .split-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px;}
     .split-title { font-size: 13px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;}
     .split-val { font-size: 28px; font-weight: 900; font-family: 'Space Mono', monospace; color: var(--text-main); letter-spacing: -1px;}
@@ -90,20 +93,20 @@ foreach($details as $d) {
     <div class="summary-grid">
         <div>
             <div class="doc-info-label">Nomor Referensi Dokumen</div>
-            <div class="doc-code"><?= esc($payroll['payroll_code']) ?></div>
+            <div class="doc-code"><?= esc($payroll['payroll_code'] ?? '-') ?></div>
             <div class="doc-meta">
-                <span><i class="ph-bold ph-calendar"></i> <?= date('d M Y', strtotime($payroll['period_start'])) ?> - <?= date('d M Y', strtotime($payroll['period_end'])) ?></span>
-                <span><i class="ph-bold ph-users"></i> <?= $payroll['total_employees'] ?> Karyawan</span>
-                <span><i class="ph-bold ph-briefcase"></i> Tipe: <?= esc($payroll['salary_type']) ?></span>
+                <span><i class="ph-bold ph-calendar"></i> <?= date('d M Y', strtotime($payroll['period_start'] ?? 'now')) ?> - <?= date('d M Y', strtotime($payroll['period_end'] ?? 'now')) ?></span>
+                <span><i class="ph-bold ph-users"></i> <?= esc($payroll['total_employees'] ?? 0) ?> Orang Terproses</span>
+                <span><i class="ph-bold ph-briefcase"></i> Siklus: <?= esc($payroll['employee_status'] ?? '-') ?> (<?= esc($payroll['salary_type'] ?? '-') ?>)</span>
             </div>
         </div>
         
         <div class="total-box">
             <div class="doc-info-label">Total Dana Dibutuhkan</div>
-            <div class="total-amount">Rp <?= number_format($payroll['total_amount'], 0, ',', '.') ?></div>
+            <div class="total-amount">Rp <?= number_format((float)($payroll['total_amount'] ?? 0), 0, ',', '.') ?></div>
             
             <div style="margin-top: 15px;">
-                <?php if($payroll['status'] == 'Draft'): ?>
+                <?php if(($payroll['status'] ?? '') == 'Draft'): ?>
                     <div class="status-banner banner-draft"><i class="ph-bold ph-warning-circle" style="font-size: 18px;"></i> DRAFT (Menunggu Pencairan)</div>
                 <?php else: ?>
                     <div class="status-banner banner-paid"><i class="ph-bold ph-check-circle" style="font-size: 18px;"></i> DANA SUDAH DICAIRKAN</div>
@@ -134,7 +137,7 @@ foreach($details as $d) {
                     <th class="th-green" style="text-align: right;">Upah Pokok/Prod</th>
                     <th class="th-green" style="text-align: right;">Tunjangan (All)</th>
                     <th class="th-green" style="text-align: right;">U. Lembur</th>
-                    <th class="th-red" style="text-align: right;">Kasbon (Team)</th>
+                    <th class="th-red" style="text-align: right;">Kasbon (Diproses)</th>
                     <th class="th-red" style="text-align: right;">Denda Telat</th>
                     <th class="th-red" style="text-align: right;">BPJS</th>
                 </tr>
@@ -142,40 +145,45 @@ foreach($details as $d) {
             <tbody>
                 <?php foreach($details as $row): ?>
                 <?php
-                    // SEMBUNYIKAN ANAK BUAH DARI TABEL! 
-                    // Karena gajinya sudah diakumulasi ke Mandor.
-                    if (!empty($row['leader_id'])) continue;
-
-                    $netMealSaved = (float)$row['meal_allowance'];
-                    $totalTunjanganLengkap = $row['position_allowance'] + $netMealSaved + $row['transport_allowance'];
-                    $totalAllKasbon = $row['cash_advance'];
+                    $netMealSaved = (float)($row['meal_allowance'] ?? 0);
+                    $totalTunjanganLengkap = (float)($row['position_allowance'] ?? 0) + $netMealSaved + (float)($row['transport_allowance'] ?? 0);
+                    $totalAllKasbon = (float)($row['cash_advance'] ?? 0);
                     
-                    // Cek apakah karyawan ini adalah seorang Mandor (punya anak buah)
                     $isMandor = false;
                     foreach($details as $sub) {
-                        if($sub['leader_id'] === $row['employee_id']) {
+                        if(($sub['leader_id'] ?? '') === ($row['employee_id'] ?? '')) {
                             $isMandor = true; break;
                         }
                     }
+
+                    $pm = $row['payment_method'] ?? 'Cash';
+                    if (($payroll['employee_status'] ?? '') === 'Borongan') $pm = 'Transfer';
+                    
+                    $isAnakBuah = !empty($row['leader_id']);
                 ?>
-                <tr>
+                <tr <?= $isAnakBuah ? 'style="background:rgba(0,0,0,0.02); opacity:0.6;" title="Diakumulasi ke Mandor"' : '' ?>>
                     <td style="padding-left:25px;">
                         <div style="font-weight: 900; font-size: 14px; margin-bottom: 4px; color: var(--text-main);">
-                            <?= esc($row['name']) ?>
+                            <?= esc($row['name'] ?? 'Unknown') ?>
                             <?php if($isMandor): ?>
                                 <i class="ph-fill ph-users-three" style="color: #2563eb;" title="Ketua Regu / Mandor"></i>
                             <?php endif; ?>
+                            <?php if($isAnakBuah): ?>
+                                <i class="ph-bold ph-arrow-elbow-down-right" style="color: var(--text-muted);"></i>
+                            <?php endif; ?>
                         </div>
                         <div style="font-size: 11px; color: var(--text-muted); font-family: 'Space Mono', monospace;">
-                            <i class="ph-bold ph-identification-card"></i> <?= esc($row['employee_id']) ?>
+                            <i class="ph-bold ph-identification-card"></i> <?= esc($row['employee_id'] ?? '-') ?>
                         </div>
-                        <?php if($isMandor): ?>
-                            <div class="team-badge">Slip Gaji Kumulatif (Team)</div>
+                        <?php if($isMandor && ($payroll['employee_status'] ?? '') === 'Borongan'): ?>
+                            <div class="team-badge">Slip Gaji Borongan Tim</div>
+                        <?php elseif($isAnakBuah): ?>
+                            <div class="team-badge" style="background:#f1f5f9; color:#64748b; border-color:#cbd5e1;">Anggota Tim</div>
                         <?php endif; ?>
                     </td>
                     
                     <td style="text-align: center;">
-                        <?php if($row['payment_method'] === 'Transfer'): ?>
+                        <?php if($pm === 'Transfer'): ?>
                             <span style="font-size: 10px; font-weight: 900; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.2);"><i class="ph-bold ph-bank"></i> ATM</span>
                         <?php else: ?>
                             <span style="font-size: 10px; font-weight: 900; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2);"><i class="ph-bold ph-money"></i> CASH</span>
@@ -183,39 +191,39 @@ foreach($details as $d) {
                     </td>
 
                     <td style="text-align: center;">
-                        <span style="background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 6px 10px; border-radius: 8px; font-weight: 900; font-size: 12px;"><?= $row['total_present'] ?> HK</span>
+                        <span style="background: var(--bg-base); border: 1px solid var(--border-subtle); padding: 6px 10px; border-radius: 8px; font-weight: 900; font-size: 12px;"><?= esc($row['total_present'] ?? 0) ?> HK</span>
                     </td>
                     
-                    <td class="font-mono text-plus" style="text-align: right;">+<?= number_format($row['basic_salary'] + $row['borongan_pay'], 0, ',', '.') ?></td>
+                    <td class="font-mono text-plus" style="text-align: right;">+<?= number_format((float)($row['basic_salary'] ?? 0) + (float)($row['borongan_pay'] ?? 0), 0, ',', '.') ?></td>
                     
                     <td style="text-align: right;">
                         <span class="font-mono text-plus">+<?= number_format($totalTunjanganLengkap, 0, ',', '.') ?></span>
                         <div class="detail-breakdown">
-                            <?php if($row['position_allowance'] > 0) echo "<div>Jab: ".number_format($row['position_allowance'], 0, ',', '.')."</div>"; ?>
+                            <?php if(($row['position_allowance'] ?? 0) > 0) echo "<div>Jab: ".number_format((float)$row['position_allowance'], 0, ',', '.')."</div>"; ?>
                             <?php if($netMealSaved > 0) echo "<div>Mkn(Sisa Bersih): ".number_format($netMealSaved, 0, ',', '.')."</div>"; ?>
-                            <?php if(isset($row['overtime_meal_allowance']) && $row['overtime_meal_allowance'] > 0) echo "<div style='color:#64748b;'>Mkn Lmbr (Telah Cair): ".number_format($row['overtime_meal_allowance'], 0, ',', '.')."</div>"; ?>
-                            <?php if($row['transport_allowance'] > 0) echo "<div>Trnspt: ".number_format($row['transport_allowance'], 0, ',', '.')."</div>"; ?>
+                            <?php if(isset($row['overtime_meal_allowance']) && $row['overtime_meal_allowance'] > 0) echo "<div style='color:#64748b;'>Mkn Lmbr (Telah Cair): ".number_format((float)$row['overtime_meal_allowance'], 0, ',', '.')."</div>"; ?>
+                            <?php if(($row['transport_allowance'] ?? 0) > 0) echo "<div>Trnspt: ".number_format((float)$row['transport_allowance'], 0, ',', '.')."</div>"; ?>
                         </div>
                     </td>
 
-                    <td class="font-mono text-plus" style="text-align: right;">+<?= number_format($row['overtime_pay'], 0, ',', '.') ?></td>
+                    <td class="font-mono text-plus" style="text-align: right;">+<?= number_format((float)($row['overtime_pay'] ?? 0), 0, ',', '.') ?></td>
                     
                     <td style="text-align: right; <?= $totalAllKasbon > 0 ? 'background: rgba(239, 68, 68, 0.05);' : '' ?>">
                         <span class="font-mono text-min" style="<?= $totalAllKasbon > 0 ? 'font-weight: 900;' : '' ?>">-<?= number_format($totalAllKasbon, 0, ',', '.') ?></span>
                         <div class="detail-breakdown" style="color: #ef4444;">
-                            <?php if($row['cash_advance'] > 0) echo "<div>Kalkulasi Otomatis</div>"; ?>
+                            <?php if(($row['cash_advance'] ?? 0) > 0) echo "<div>Kalkulasi Otomatis</div>"; ?>
                         </div>
                     </td>
 
-                    <td class="font-mono text-min" style="text-align: right;">-<?= number_format($row['late_penalty'], 0, ',', '.') ?></td>
-                    <td class="font-mono text-min" style="text-align: right;">-<?= number_format($row['bpjs_deduction'], 0, ',', '.') ?></td>
+                    <td class="font-mono text-min" style="text-align: right;">-<?= number_format((float)($row['late_penalty'] ?? 0), 0, ',', '.') ?></td>
+                    <td class="font-mono text-min" style="text-align: right;">-<?= number_format((float)($row['bpjs_deduction'] ?? 0), 0, ',', '.') ?></td>
                     
                     <td class="font-mono text-thp" style="text-align: right; background: rgba(0,0,0,0.01);">
-                        Rp <?= number_format($row['net_salary'], 0, ',', '.') ?>
+                        Rp <?= number_format((float)($row['net_salary'] ?? 0), 0, ',', '.') ?>
                     </td>
                     
                     <td style="text-align: center;">
-                        <a href="<?= base_url('/payroll/print_slip/' . $row['id']) ?>" target="_blank" class="btn-print" title="Cetak / Download Slip">
+                        <a href="<?= base_url('/payroll/print_slip/' . ($row['id'] ?? '')) ?>" target="_blank" class="btn-print" title="Cetak / Download Slip">
                             <i class="ph-bold ph-printer" style="font-size: 18px;"></i> Slip
                         </a>
                     </td>
@@ -226,7 +234,7 @@ foreach($details as $d) {
     </div>
 </div>
 
-<?php if($payroll['status'] == 'Draft'): ?>
+<?php if(($payroll['status'] ?? '') == 'Draft'): ?>
     <div class="doc-info-label" style="margin-top: 30px; font-size: 13px;">Otorisasi Pencairan Dana (Otomatis Dipecah & Masuk Buku Besar)</div>
     <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; font-weight: 600;">Sistem akan memotong kas laci/bank dan otomatis memilah beban gaji dengan kasbon secara akurat (Balance).</div>
     
@@ -249,10 +257,9 @@ foreach($details as $d) {
 
     <form method="POST" action="<?= base_url('/payroll/push_to_finance') ?>" id="formDisburse">
         <?= csrf_field() ?>
-        <input type="hidden" name="payroll_id" value="<?= $payroll['id'] ?>">
-        <input type="hidden" name="total_cash" value="<?= $totalCash ?>">
-        <input type="hidden" name="total_transfer" value="<?= $totalTransfer ?>">
-        <input type="hidden" name="payroll_code" value="<?= $payroll['payroll_code'] ?>">
+        <!-- Data murni dikirim sebagai ID. Nominal murni dihitung backend! -->
+        <input type="hidden" name="payroll_id" value="<?= esc($payroll['id'] ?? '') ?>">
+        <input type="hidden" name="payroll_code" value="<?= esc($payroll['payroll_code'] ?? '') ?>">
         
         <button type="button" onclick="confirmSmartDisburse()" class="btn-disburse">
             <i class="ph-bold ph-lock-key" style="font-size: 22px;"></i> Kunci Dokumen & Eksekusi Pembayaran Gaji
@@ -273,10 +280,10 @@ foreach($details as $d) {
 <script>
     <?php if(session()->getFlashdata('success')): ?>
         const isDark = document.documentElement.classList.contains('dark');
-        Swal.fire({ icon: 'success', title: 'Pencairan Sukses!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#38bdf8', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' } });
+        Swal.fire({ icon: 'success', title: 'Pencairan Sukses!', html: <?= json_encode(session()->getFlashdata('success')) ?>, confirmButtonColor: '#38bdf8', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
     <?php if(session()->getFlashdata('error')): ?>
-        Swal.fire({ icon: 'error', title: 'Pencairan Ditolak!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', customClass: { popup: 'swal2-custom-radius' } });
+        Swal.fire({ icon: 'error', title: 'Pencairan Ditolak!', html: <?= json_encode(session()->getFlashdata('error')) ?>, confirmButtonColor: '#ef4444', customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
 
     function confirmSmartDisburse() {

@@ -63,12 +63,18 @@
     .item-row { background: var(--bg-base); border: 1px solid transparent; padding: 16px 20px; border-radius: var(--radius-lg); margin-bottom: 12px; transition: var(--transition-smooth); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); width: 100%;}
     .item-row:hover, .item-row:focus-within { border-color: var(--brand-green); background: var(--bg-surface); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.08); transform: scale(1.01);}
     
-    .item-grid { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1.5fr auto; gap: 15px; align-items: center; width: 100%;}
+    .item-grid { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1.5fr auto; gap: 15px; align-items: flex-start; width: 100%;}
     
     .btn-add-row { width: 100%; background: var(--bg-surface); border: 2px dashed rgba(16, 185, 129, 0.5); color: var(--brand-green); padding: 16px; border-radius: var(--radius-lg); font-weight: 900; font-size: 14px; cursor: pointer; margin-bottom: 25px; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; gap: 8px;}
     .btn-add-row:hover { background: rgba(16, 185, 129, 0.05); border-color: var(--brand-green); transform: translateY(-2px);}
-    .btn-remove-row { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid transparent; width: 46px; height: 46px; border-radius: 12px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);}
+    .btn-remove-row { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid transparent; width: 46px; height: 46px; border-radius: 12px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth); margin-top: 25px;}
     .btn-remove-row:hover { background: #ef4444; color: #fff; transform: scale(1.1) rotate(5deg); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);}
+    
+    .bonus-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;}
+    .bonus-chips span { background: rgba(245, 158, 11, 0.1); color: var(--brand-orange); font-size: 12px; font-weight: 800; padding: 8px 14px; border-radius: 10px; cursor: pointer; transition: 0.2s; border: 1px dashed rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 6px;}
+    .bonus-chips span:hover { background: var(--brand-orange); color: #fff; border-color: var(--brand-orange); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);}
+    .bonus-row { background: rgba(245, 158, 11, 0.02); border: 1px dashed rgba(245, 158, 11, 0.3); padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 8px; display: flex; gap: 15px; align-items: center; transition: 0.2s;}
+    .bonus-row:hover { background: rgba(245, 158, 11, 0.05); border-color: var(--brand-orange); transform: translateX(5px); }
     
     .live-total-box { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid #334155; padding: 24px 30px; border-radius: var(--radius-lg); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 15px 30px -10px rgba(0,0,0,0.3); position: relative; overflow: hidden; width: 100%;}
     .live-total-box::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%); }
@@ -76,6 +82,7 @@
     
     .btn-submit { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; padding: 18px 24px; border-radius: var(--radius-lg); font-size: 16px; font-weight: 900; cursor: pointer; transition: var(--transition-smooth); display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.5); margin-top: 25px;}
     .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.6);}
+    .btn-excel { background: linear-gradient(135deg, #217346, #14532d); box-shadow: 0 8px 25px -5px rgba(33, 115, 70, 0.5); }
     
     .table-responsive { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: separate; border-spacing: 0; white-space: nowrap; min-width: 600px;}
@@ -153,8 +160,9 @@
         .live-total-val { font-size: 28px; align-self: flex-start; }
         .bento-card { padding: 20px; border-radius: 20px;}
         .modal-box { padding: 25px; border-radius: 20px; max-height: 95vh; }
-        .btn-remove-row { width: 100%; } 
+        .btn-remove-row { width: 100%; margin-top: 0; } 
         .page-header { flex-direction: column; align-items: flex-start; }
+        .bonus-row { flex-direction: column; align-items: stretch; }
     }
 </style>
 
@@ -224,59 +232,104 @@
                 <div style="margin: 15px 0; border-top: 2px dashed var(--border-subtle); padding-top: 25px;">
                     <label style="font-size: 12px; font-weight: 900; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                         <div style="background: rgba(16, 185, 129, 0.1); color: var(--brand-green); padding: 6px; border-radius: 8px;"><i class="ph-fill ph-list-numbers" style="font-size: 18px;"></i></div> 
-                        Daftar Barang Pesanan
+                        1. Daftar Barang Pesanan (Utama)
                     </label>
                     
                     <div id="item-container">
                         <div class="item-row">
                             <div class="item-grid">
-                                <select name="fg_sku[]" class="select2-product" required onchange="autoFillPrice(this)">
-                                    <option value="" data-price="0"></option>
-                                    <?php foreach($products as $p): ?>
-                                        <?php $wholesalePrice = !empty($p['wholesale_price']) ? $p['wholesale_price'] : $p['hpp']; ?>
-                                        <option value="<?= $p['sku'] ?>" data-price="<?= $wholesalePrice ?>">
-                                            [Stok: <?= $p['physical_stock'] ?>] <?= esc($p['item_name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">PRODUK PABRIK</label>
+                                    <select name="fg_sku[]" class="select2-product" required onchange="autoFillPrice(this)">
+                                        <option value="" data-price="0"></option>
+                                        <?php foreach($products as $p): ?>
+                                            <?php $wholesalePrice = !empty($p['wholesale_price']) ? $p['wholesale_price'] : $p['hpp']; ?>
+                                            <option value="<?= $p['sku'] ?>" data-price="<?= $wholesalePrice ?>">
+                                                [<?= esc($p['motor_category']) ?> - <?= esc($p['item_type']) ?>] <?= esc($p['item_name']) ?> (Sisa: <?= $p['physical_stock'] ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                                 
-                                <input type="number" name="qty[]" class="form-control so-qty" placeholder="Qty" required min="1" oninput="calcSoTotal()" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 16px;">
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">KUANTITAS</label>
+                                    <input type="number" name="qty[]" class="form-control so-qty" placeholder="Qty" required min="1" oninput="calcSoTotal()" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 16px;">
+                                </div>
                                 
-                                <div class="input-money">
-                                    <span>Rp</span>
-                                    <input type="text" inputmode="numeric" name="unit_price[]" class="so-price" placeholder="Harga" required oninput="formatRupiah(this); calcSoTotal();">
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">HARGA SATUAN</label>
+                                    <div class="input-money">
+                                        <span>Rp</span>
+                                        <input type="text" inputmode="numeric" name="unit_price[]" class="so-price" placeholder="Harga" required oninput="formatRupiah(this); calcSoTotal();">
+                                    </div>
                                 </div>
 
-                                <div class="input-money" style="border-color: rgba(16, 185, 129, 0.4);">
-                                    <span style="color: var(--brand-green);">+ Rp</span>
-                                    <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee" placeholder="Ekstra" value="0" oninput="formatRupiah(this); calcSoTotal();">
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 800; color: var(--brand-green); display: block; margin-bottom: 6px;">BIAYA KUSTOM LAIN</label>
+                                    <div class="input-money" style="border-color: rgba(16, 185, 129, 0.4);">
+                                        <span style="color: var(--brand-green); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">+ Rp</span>
+                                        <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee" placeholder="0" value="0" oninput="formatRupiah(this); calcSoTotal();">
+                                    </div>
                                 </div>
                                 
-                                <input type="text" name="additional_note[]" class="form-control" placeholder="Catatan (Misal Custom Emblem)">
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">CATATAN KHUSUS (PABRIK)</label>
+                                    <input type="text" name="additional_note[]" class="form-control" placeholder="Misal: Custom Laser...">
+                                </div>
                                 
-                                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); calcSoTotal();" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+                                <div style="display: flex; align-items: flex-end; padding-bottom: 4px;">
+                                    <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.parentElement.remove(); calcSoTotal();" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <button type="button" class="btn-add-row" onclick="addSoRow()">
-                        <i class="ph-bold ph-plus-circle" style="font-size: 20px;"></i> Tambah Baris Produk
+                        <i class="ph-bold ph-plus-circle" style="font-size: 20px;"></i> Tambah Produk Utama
                     </button>
                 </div>
 
-                <div class="grid-2" style="margin-top: 30px; align-items: end;">
+                <div style="margin: 15px 0; border-top: 2px dashed var(--border-subtle); padding-top: 25px;">
+                    <label style="font-size: 12px; font-weight: 900; color: var(--brand-orange); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: rgba(245, 158, 11, 0.1); color: var(--brand-orange); padding: 6px; border-radius: 8px;"><i class="ph-fill ph-gift" style="font-size: 18px;"></i></div> 
+                        2. Barang Tambahan / Bonus (Gratis)
+                    </label>
+                    <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 15px;">Pilih bahan baku/material yang akan dikirim sebagai bonus. Stok gudang akan otomatis dipotong, harga dihitung 0 di tagihan pelanggan.</p>
+                    
+                    <div id="bonus-container"></div>
+                    
+                    <button type="button" class="btn-add-item" onclick="addBonusRow()" style="color: var(--brand-orange); background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); padding: 12px 18px; margin-top: 10px;">
+                        <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Tambah Barang Bonus
+                    </button>
+                </div>
+                
+                <div style="margin: 15px 0; border-top: 2px dashed var(--border-subtle); padding-top: 25px;">
+                    <label style="font-size: 12px; font-weight: 900; color: var(--brand-blue); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: rgba(14, 165, 233, 0.1); color: var(--brand-blue); padding: 6px; border-radius: 8px;"><i class="ph-fill ph-factory" style="font-size: 18px;"></i></div> 
+                        3. Titipan Produksi / Buffer Stok (Internal Pabrik)
+                    </label>
+                    <p style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 15px;">Barang yang ditambahkan di sini <b>TIDAK AKAN</b> masuk ke nota/tagihan pelanggan. Sistem hanya akan membuatkan SPK Pabrik otomatis agar barang ini ikut diproduksi sebagai stok jaga-jaga gudang.</p>
+                    
+                    <div id="buffer-container"></div>
+                    
+                    <button type="button" class="btn-add-item" onclick="addBufferRow()" style="color: var(--brand-blue); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); padding: 12px 18px; margin-top: 10px;">
+                        <i class="ph-bold ph-plus-circle" style="font-size: 18px;"></i> Tambah Titipan Produksi
+                    </button>
+                </div>
+
+                <div class="grid-2" style="margin-top: 40px; align-items: end; border-top: 2px dashed var(--border-subtle); padding-top: 25px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>Diskon Transaksi (%)</label>
                             <div class="input-money" style="border-color: rgba(239, 68, 68, 0.4);">
-                                <span style="color: #ef4444;"><i class="ph-bold ph-percent"></i></span>
+                                <span style="color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);"><i class="ph-bold ph-percent"></i></span>
                                 <input type="number" name="discount_percent" class="so-discount" value="0" min="0" max="100" required oninput="calcSoTotal()" style="font-family: 'Space Mono', monospace;">
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>DP Awal (Rp)</label>
                             <div class="input-money" style="border-color: rgba(245, 158, 11, 0.4);">
-                                <span style="color: var(--brand-orange);"><i class="ph-bold ph-wallet"></i></span>
+                                <span style="color: var(--brand-orange); background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2);"><i class="ph-bold ph-wallet"></i></span>
                                 <input type="text" inputmode="numeric" name="dp_amount" value="0" required oninput="formatRupiah(this)">
                             </div>
                         </div>
@@ -373,14 +426,18 @@
                                         
                                         $num = 1;
                                         foreach($so['items'] as $itm) {
-                                            $itmName = $itm['item_name'] ?: $itm['fg_sku'];
-                                            $noteText = !empty($itm['additional_note']) ? " (+{$itm['additional_note']})" : "";
-                                            $itmQty = $itm['qty'];
-                                            $itmPrice = $itm['price'] + $itm['additional_fee'];
-                                            $subTotal = $itmQty * $itmPrice;
-                                            
-                                            $waText .= "{$num}. {$itmName}{$noteText}\n   {$itmQty} Pcs x Rp ".number_format($itmPrice, 0, ',', '.')." = Rp ".number_format($subTotal, 0, ',', '.')."\n";
-                                            $num++;
+                                            if($itm['price'] == 0 && strpos(strtoupper($itm['additional_note']), 'BONUS') !== false) {
+                                                $waText .= "🎁 {$itm['qty']} Pcs {$itm['item_name']} (GRATIS)\n";
+                                            } else {
+                                                $itmName = $itm['item_name'] ?: $itm['fg_sku'];
+                                                $noteText = !empty($itm['additional_note']) ? " ({$itm['additional_note']})" : "";
+                                                $itmQty = $itm['qty'];
+                                                $itmPrice = $itm['price'] + $itm['additional_fee'];
+                                                $subTotal = $itmQty * $itmPrice;
+                                                
+                                                $waText .= "{$num}. {$itmName}{$noteText}\n   {$itmQty} Pcs x Rp ".number_format($itmPrice, 0, ',', '.')." = Rp ".number_format($subTotal, 0, ',', '.')."\n";
+                                                $num++;
+                                            }
                                         }
 
                                         $waText .= "--------------------------------------\n";
@@ -398,13 +455,11 @@
                                             $waText .= "✅ *STATUS:* LUNAS\n\n";
                                         }
                                         
-                                        // Poin Tambahan Teks
                                         $poinEarned = floor($so['total_amount'] / 100000);
                                         if ($poinEarned > 0) {
-                                            $waText .= "🎁 Selamat! Anda mendapatkan tambahan *{$poinEarned} Poin Reward* dari transaksi ini.\n\n";
+                                            $waText .= "Terima kasih atas orderannya! Anda mendapatkan tambahan *{$poinEarned} Poin Reward* dari transaksi ini.\n\n";
                                         }
 
-                                        $waText .= "Terima kasih atas kepercayaannya berbelanja di tempat kami.🙏";
                                         $waLink = "https://wa.me/{$cleanPhone}?text=" . urlencode($waText);
                                     }
                                 }
@@ -499,7 +554,9 @@
                                                 data-discount="<?= $so['discount'] ?? 0 ?>"
                                                 data-discpercent="<?= $so['discount_percent'] ?? 0 ?>"
                                                 data-paid="<?= $so['paid_amount'] ?>"
+                                                data-bonus="<?= esc($so['bonus_notes'] ?? '') ?>"
                                                 data-items="<?= htmlspecialchars(json_encode($so['items'] ?? []), ENT_QUOTES, 'UTF-8') ?>" 
+                                                data-excel="<?= base_url('wholesale/export_excel/'.$so['id']) ?>"
                                                 onclick="openReceiptModal(this)" title="Cetak Struk Transaksi">
                                             <i class="ph-bold ph-receipt"></i> Struk
                                         </button>
@@ -681,6 +738,48 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="modalReturn">
+    <div class="modal-box" style="max-width: 820px; border-top: 8px solid var(--brand-orange);">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin:0; font-size:24px; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:10px;"><i class="ph-bold ph-arrow-u-down-left" style="color: var(--brand-orange);"></i> Retur Penjualan</h3>
+                <p style="margin:6px 0 0; color:var(--text-muted); font-size:13px;">Pilih barang yang diretur dan alasan retur.</p>
+            </div>
+            <button type="button" class="btn-close" onclick="closeModal('modalReturn')">&times;</button>
+        </div>
+
+        <form id="formReturn" method="post">
+            <?= csrf_field() ?>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tanggal Retur</label>
+                    <input type="date" name="return_date" class="form-control" required value="<?= date('Y-m-d') ?>" style="font-family: 'Space Mono', monospace;">
+                </div>
+                <div class="form-group">
+                    <label>Tipe Pengembalian / Solusi</label>
+                    <select name="refund_type" class="form-control" required>
+                        <option value="REDUCE_RECEIVABLE">Potong Piutang (Mengurangi Tagihan Berjalan)</option>
+                        <option value="CASH_REFUND">Refund Uang Kas (Transfer Uang Balik)</option>
+                        <option value="CUSTOMER_CREDIT">Simpan Saldo (Customer Credit / Tabungan)</option>
+                        <option value="REPAIR_REPLACE">Perbaikan / Ganti Barang Baru (RMA)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Alasan Retur</label>
+                <input type="text" name="reason" class="form-control" placeholder="Cth: Barang cacat dari ekspedisi, tidak sesuai pesanan..." required>
+            </div>
+            <div class="form-group">
+                <label>Pilih Barang yang Dikembalikan</label>
+                <div id="returnItemsContainer" style="display:grid; gap:12px; max-height:300px; overflow-y:auto; padding-right:5px;"></div>
+            </div>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, var(--brand-orange), #d97706); box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.5);">
+                <i class="ph-bold ph-arrow-u-down-left"></i> Proses Retur Sekarang
+            </button>
+        </form>
+    </div>
+</div>
+
 <div class="modal-overlay" id="shipModal">
     <div class="modal-box" style="max-width: 820px; border-top: 8px solid #8b5cf6;">
         <div class="modal-header">
@@ -801,9 +900,14 @@
                     <div id="newItemsContainer"></div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                        <button type="button" class="btn-add-item" onclick="addNewRowToModal()">
-                            <i class="ph-bold ph-plus"></i> Baris Baru
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn-add-item" onclick="addNewRowToModal()">
+                                <i class="ph-bold ph-plus"></i> Produk Utama
+                            </button>
+                            <button type="button" class="btn-add-item" style="color:var(--brand-orange); background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3);" onclick="addBonusRowToModal()">
+                                <i class="ph-bold ph-gift"></i> Tambah Bonus
+                            </button>
+                        </div>
                         
                         <div style="text-align: right;">
                             <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Total Penambahan Kotor</div>
@@ -821,8 +925,11 @@
 </div>
 
 <div class="modal-overlay" id="modalReceipt">
-    <div class="modal-box" style="max-width: 420px; padding: 0; background: transparent; box-shadow: none; border: none;">
-        <div class="no-print" style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+    <div class="modal-box" style="max-width: 450px; padding: 0; background: transparent; box-shadow: none; border: none;">
+        <div class="no-print" style="margin-bottom: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+            <a href="#" id="btnExportExcel" class="btn-submit btn-excel" style="margin: 0; width: auto; padding: 10px 18px; text-decoration: none;">
+                <i class="ph-bold ph-file-xls" style="font-size: 20px;"></i> Export Excel
+            </a>
             <button type="button" onclick="closeModal('modalReceipt')" class="btn-close" style="background: var(--bg-surface); width: 44px; height: 44px; font-size: 20px;"><i class="ph-bold ph-x"></i></button>
         </div>
 
@@ -875,6 +982,7 @@
 <script>
     const salesOrdersData = <?= json_encode($salesOrders) ?>;
     const prodData = <?= json_encode($products) ?>;
+    const rawData = <?= json_encode($rawMaterials) ?>;
 
     $(document).ready(function() {
         initSelect2();
@@ -902,6 +1010,69 @@
     function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
     
+    function addBufferRow() {
+        let container = document.getElementById('buffer-container');
+        let options = '<option value="">-- Pilih Produk Yang Akan Diproduksi --</option>';
+        prodData.forEach(p => { 
+            options += `<option value="${p.sku}">[${p.motor_category} - ${p.item_type}] ${p.item_name} (Sisa Stok: ${p.physical_stock})</option>`; 
+        });
+
+        let row = document.createElement('div');
+        row.className = 'bonus-row';
+        row.style.borderColor = 'rgba(14, 165, 233, 0.3)';
+        row.style.backgroundColor = 'rgba(14, 165, 233, 0.02)';
+        
+        row.innerHTML = `
+            <div style="flex: 2;">
+                <label style="font-size: 10px; font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 6px;">PRODUK PABRIK (BUFFER)</label>
+                <select name="buffer_sku[]" class="select2-buffer" required style="width: 100%; border-color: rgba(14,165,233,0.3);">${options}</select>
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 6px;">QTY PRODUKSI</label>
+                <input type="number" name="buffer_qty[]" class="form-control" value="1" required min="1" style="border-color: rgba(14,165,233,0.3); color: var(--brand-blue); font-family: monospace; font-weight: 900; text-align: center; height:46px;">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove();" style="margin-top: 0; background: transparent; color: var(--danger);" title="Hapus"><i class="ph-bold ph-x" style="font-size: 20px; color: #ef4444;"></i></button>
+            </div>
+        `;
+        row.style.opacity = 0; row.style.transform = "translateY(15px)";
+        container.appendChild(row);
+        
+        $(row).find('.select2-buffer').select2({ placeholder: "-- Pilih Produk Katalog --", width: '100%' });
+        
+        setTimeout(() => { row.style.opacity = 1; row.style.transform = "translateY(0)"; }, 10);
+    }
+    // FUNGSI BONUS BARU (TANPA SWEETALERT)
+    function addBonusRow() {
+        let container = document.getElementById('bonus-container');
+        let options = '<option value="">-- Pilih Material/Aksesoris --</option>';
+        rawData.forEach(rm => {
+            options += `<option value="${rm.sku}">[Stok: ${rm.physical_stock}] ${rm.item_name}</option>`;
+        });
+
+        let row = document.createElement('div');
+        row.className = 'bonus-row';
+        row.innerHTML = `
+            <div style="flex: 2;">
+                <label style="font-size: 10px; font-weight: 800; color: var(--brand-orange); display: block; margin-bottom: 6px;">NAMA BARANG GRATIS (Bahan/Aksesoris)</label>
+                <select name="bonus_sku[]" class="select2-bonus" required style="width: 100%; border-color: rgba(245,158,11,0.3);">${options}</select>
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; font-weight: 800; color: var(--brand-orange); display: block; margin-bottom: 6px;">QTY</label>
+                <input type="number" name="bonus_qty[]" class="form-control" value="1" required min="1" style="border-color: rgba(245,158,11,0.3); color: var(--brand-orange); font-family: monospace; font-weight: 900; text-align: center; height:46px;">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove();" style="margin-top: 0; background: transparent; color: var(--danger);" title="Hapus Bonus"><i class="ph-bold ph-x" style="font-size: 20px; color: #ef4444;"></i></button>
+            </div>
+        `;
+        row.style.opacity = 0; row.style.transform = "translateY(15px)";
+        container.appendChild(row);
+        
+        $(row).find('.select2-bonus').select2({ placeholder: "-- Pilih Material/Aksesoris Gudang --", width: '100%' });
+        
+        setTimeout(() => { row.style.opacity = 1; row.style.transform = "translateY(0)"; }, 10);
+    }
+
     function openCreateModalReseller() {
         document.getElementById('formReseller').reset();
         document.getElementById('modalResellerTitle').innerHTML = '<div style="background: rgba(16, 185, 129, 0.1); width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--brand-green);"><i class="ph-fill ph-users-three" style="font-size: 26px;"></i></div> Registrasi Mitra Baru';
@@ -921,6 +1092,48 @@
         
         openModal('modalReseller');
     }
+    
+    function addBonusRowToModal() {
+        let container = document.getElementById('newItemsContainer');
+        let options = '<option value="">-- Pilih Material/Aksesoris --</option>';
+        rawData.forEach(rm => {
+            options += `<option value="${rm.sku}">[Stok: ${rm.physical_stock}] ${rm.item_name}</option>`;
+        });
+
+        let row = document.createElement('div');
+        row.className = 'item-row';
+        row.style.padding = '10px';
+        row.style.border = '1px dashed var(--brand-orange)';
+        row.style.borderRadius = '12px';
+        row.style.marginBottom = '10px';
+        row.style.backgroundColor = 'rgba(245, 158, 11, 0.02)';
+        
+        row.innerHTML = `
+            <div class="item-grid" style="grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1fr auto; gap:10px;">
+                <select name="bonus_sku[]" class="select2-bonus-modal" required>${options}</select>
+                <input type="number" name="bonus_qty[]" class="form-control so-qty-modal" placeholder="Qty" required min="1" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 14px; border-color: var(--brand-orange); color: var(--brand-orange);">
+                <div class="input-money" style="padding:0; height: 100%; opacity: 0.5; pointer-events: none;">
+                    <span style="padding: 0 10px;">Rp</span>
+                    <input type="text" value="0" readonly style="padding: 10px;">
+                </div>
+                <div class="input-money" style="padding:0; height: 100%; opacity: 0.5; pointer-events: none;">
+                    <span style="padding: 0 10px;">+ Rp</span>
+                    <input type="text" value="0" readonly style="padding: 10px;">
+                </div>
+                <input type="text" value="BONUS GRATIS" readonly class="form-control" style="height: 100%; opacity:0.7;">
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove(); calcAddItemsTotal();" style="width: 36px; height: 36px; font-size: 16px; margin:0; background:rgba(239,68,68,0.1); color:#ef4444;" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+            </div>
+        `;
+        
+        container.appendChild(row);
+
+        $(row).find('.select2-bonus-modal').select2({
+            placeholder: "-- Pilih Material (Bonus) --",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#modalEditItems')
+        });
+    }
 
     function openRedeemModal(custId, custName, maxPoints) {
         document.getElementById('formRedeem').reset();
@@ -933,6 +1146,64 @@
         input.value = maxPoints; 
 
         openModal('modalRedeem');
+    }
+
+    // FUNGSI RETUR (BARU DITAMBAHKAN)
+    function openReturnModal(soId) {
+        const form = document.getElementById('formReturn');
+        const container = document.getElementById('returnItemsContainer');
+
+        const so = salesOrdersData.find(x => parseInt(x.id) === parseInt(soId));
+        if (!so) return;
+
+        form.action = "<?= base_url('/wholesale/return_so/') ?>" + soId;
+        container.innerHTML = '';
+
+        let hasReturnable = false;
+
+        (so.items || []).forEach((item) => {
+            const returnableQty = parseInt(item.returnable_qty || 0);
+            if (returnableQty <= 0) return;
+
+            hasReturnable = true;
+
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.style.background = '#f8fafc';
+            row.innerHTML = `
+                <div class="item-grid" style="grid-template-columns: 3fr 1.5fr 1.5fr;">
+                    <div>
+                        <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Identitas Barang</label>
+                        <input type="hidden" name="so_item_id[]" value="${item.id}">
+                        <div style="font-weight:900; font-size:13px; color:var(--text-main); margin-bottom:4px;">${item.item_name || item.fg_sku}</div>
+                        <div style="font-size:11px; color:var(--text-muted); font-family:'Space Mono', monospace;">
+                            Beli: ${item.qty} | Sudah Retur Sebelumnya: <b style="color:var(--brand-orange);">${item.returned_qty || 0}</b>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Maks. Retur</label>
+                        <input type="text" class="form-control" value="${returnableQty} Pcs" readonly style="font-family:'Space Mono', monospace; font-weight:900;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Jml Yg Diretur</label>
+                        <input type="number" name="qty_return[]" class="form-control" style="border-color: var(--brand-orange); color: var(--brand-orange); font-family:'Space Mono', monospace; font-size:16px; font-weight:900; text-align:center;"
+                               min="0" max="${returnableQty}" value="0">
+                    </div>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        if (!hasReturnable) {
+            container.innerHTML = `
+                <div class="empty-state" style="padding:20px 10px;">
+                    <i class="ph-bold ph-check-circle" style="font-size:40px; margin-bottom:10px; color: var(--brand-green);"></i>
+                    <h3 style="font-size:15px;">Semua item pesanan ini sudah diretur secara utuh.</h3>
+                </div>
+            `;
+        }
+
+        openModal('modalReturn');
     }
     
     function openGabunganModal() {
@@ -994,7 +1265,7 @@
                                 <input type="text" class="form-control" value="${unshippedQty} Pcs" readonly style="font-family:'Space Mono', monospace; font-weight:900;">
                             </div>
                             <div>
-                                <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Dikirim</label>
+                                <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Kirim Hari Ini</label>
                                 <input type="number" name="ship_qty[]" class="form-control" style="border-color: #8b5cf6; color: #8b5cf6; font-family:'Space Mono', monospace; font-size:16px; font-weight:900; text-align:center;"
                                        min="0" max="${unshippedQty}" value="${unshippedQty}">
                             </div>
@@ -1105,7 +1376,7 @@
             });
 
             let btn = this.querySelector('button[type="submit"]');
-            if(btn && !btn.classList.contains('pay-btn-small') && !btn.classList.contains('btn-add-item')) {
+            if(btn && !btn.classList.contains('pay-btn-small') && !btn.classList.contains('btn-add-item') && !btn.classList.contains('btn-excel')) {
                 btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin" style="font-size: 20px;"></i> Memproses...';
                 btn.style.opacity = '0.8'; btn.style.pointerEvents = 'none';
             }
@@ -1117,25 +1388,42 @@
         let options = '<option value="" data-price="0"></option>';
         prodData.forEach(p => { 
             let wholesalePrice = parseFloat(p.wholesale_price) || parseFloat(p.hpp) || 0;
-            options += `<option value="${p.sku}" data-price="${wholesalePrice}">[Stok: ${p.physical_stock}] ${p.item_name}</option>`; 
+            options += `<option value="${p.sku}" data-price="${wholesalePrice}">[${p.motor_category} - ${p.item_type}] ${p.item_name} (Sisa: ${p.physical_stock})</option>`; 
         });
 
         let row = document.createElement('div');
         row.className = 'item-row';
         row.innerHTML = `
             <div class="item-grid">
-                <select name="fg_sku[]" class="select2-product" required onchange="autoFillPrice(this)">${options}</select>
-                <input type="number" name="qty[]" class="form-control so-qty" placeholder="Kuantitas" required min="1" oninput="calcSoTotal()" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 16px;">
-                <div class="input-money">
-                    <span>Rp</span>
-                    <input type="text" inputmode="numeric" name="unit_price[]" class="so-price" placeholder="Harga" required oninput="formatRupiah(this); calcSoTotal();">
+                <div>
+                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">PRODUK PABRIK</label>
+                    <select name="fg_sku[]" class="select2-product" required onchange="autoFillPrice(this)">${options}</select>
                 </div>
-                <div class="input-money" style="border-color: rgba(16, 185, 129, 0.4);">
-                    <span style="color: var(--brand-green);">+ Rp</span>
-                    <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee" placeholder="Biaya Ekstra" value="0" oninput="formatRupiah(this); calcSoTotal();">
+                <div>
+                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">KUANTITAS</label>
+                    <input type="number" name="qty[]" class="form-control so-qty" placeholder="Qty" required min="1" oninput="calcSoTotal()" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 16px;">
                 </div>
-                <input type="text" name="additional_note[]" class="form-control" placeholder="Catatan Ekstra (Misal: Custom)">
-                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); calcSoTotal();" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+                <div>
+                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">HARGA SATUAN</label>
+                    <div class="input-money">
+                        <span>Rp</span>
+                        <input type="text" inputmode="numeric" name="unit_price[]" class="so-price" placeholder="Harga" required oninput="formatRupiah(this); calcSoTotal();">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight: 800; color: var(--brand-green); display: block; margin-bottom: 6px;">BIAYA EKSTRA CUSTOM</label>
+                    <div class="input-money" style="border-color: rgba(16, 185, 129, 0.4);">
+                        <span style="color: var(--brand-green); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">+ Rp</span>
+                        <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee" placeholder="0" value="0" oninput="formatRupiah(this); calcSoTotal();">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px;">CATATAN KHUSUS PABRIK</label>
+                    <input type="text" name="additional_note[]" class="form-control" placeholder="Misal: Custom Laser...">
+                </div>
+                <div style="display: flex; align-items: flex-end; padding-bottom: 4px;">
+                    <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.parentElement.remove(); calcSoTotal();" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+                </div>
             </div>
         `;
         row.style.opacity = 0; row.style.transform = "translateY(15px)";
@@ -1155,7 +1443,7 @@
         let options = '<option value="" data-price="0"></option>';
         prodData.forEach(p => { 
             let wholesalePrice = parseFloat(p.wholesale_price) || parseFloat(p.hpp) || 0;
-            options += `<option value="${p.sku}" data-price="${wholesalePrice}">[Stok: ${p.physical_stock}] ${p.item_name}</option>`; 
+            options += `<option value="${p.sku}" data-price="${wholesalePrice}">[${p.motor_category} - ${p.item_type}] ${p.item_name} (Sisa: ${p.physical_stock})</option>`; 
         });
 
         let row = document.createElement('div');
@@ -1166,7 +1454,7 @@
         row.style.marginBottom = '10px';
         
         row.innerHTML = `
-            <div class="item-grid" style="grid-template-columns: 2fr 1fr 1.5fr 1fr auto; gap:10px;">
+            <div class="item-grid" style="grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1fr auto; gap:10px;">
                 <select name="fg_sku[]" class="select2-product-modal" required onchange="autoFillPriceModal(this)">${options}</select>
                 <input type="number" name="qty[]" class="form-control so-qty-modal" placeholder="Qty" required min="1" oninput="calcAddItemsTotal()" style="text-align: center; font-family: 'Space Mono', monospace; font-size: 14px;">
                 <div class="input-money" style="padding:0; height: 100%;">
@@ -1175,9 +1463,10 @@
                 </div>
                 <div class="input-money" style="padding:0; height: 100%; border-color: rgba(16, 185, 129, 0.4);">
                     <span style="padding: 0 10px; color: var(--brand-green);">+ Rp</span>
-                    <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee-modal" placeholder="Ekstra" value="0" oninput="formatRupiah(this); calcAddItemsTotal();" style="padding: 10px;">
+                    <input type="text" inputmode="numeric" name="additional_fee[]" class="so-add-fee-modal" placeholder="0" value="0" oninput="formatRupiah(this); calcAddItemsTotal();" style="padding: 10px;">
                 </div>
-                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); calcAddItemsTotal();" style="width: 36px; height: 36px; font-size: 16px;" title="Hapus"><i class="ph-bold ph-trash"></i></button>
+                <input type="text" name="additional_note[]" class="form-control" placeholder="Aksesoris/Bonus" style="height: 100%;">
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.parentElement.remove(); calcAddItemsTotal();" style="width: 36px; height: 36px; font-size: 16px; margin:0;" title="Hapus"><i class="ph-bold ph-trash"></i></button>
             </div>
         `;
         
@@ -1254,8 +1543,6 @@
         document.getElementById('addItemsGrandTotal').innerText = 'Rp ' + total.toLocaleString('id-ID');
     }
 
-    // FUNGSI AJAX UPDATE QTY
-    
     // FUNGSI AJAX UPDATE QTY (ANTI-CSRF EXPIRED)
     function updateItemQty(itemId, soId) {
         let newQty = document.getElementById('edit_qty_' + itemId).value;
@@ -1263,7 +1550,6 @@
 
         Swal.fire({ title: 'Menyimpan & Menyesuaikan...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
-        // Ambil nama token dan nilainya
         let csrfName = '<?= csrf_token() ?>';
         let csrfHash = $('input[name="<?= csrf_token() ?>"]').first().val();
 
@@ -1280,14 +1566,12 @@
             }
         })
         .then(async res => {
-            // Jika token terlanjur mati dari server
             if (!res.ok && res.status === 403) throw new Error("Token Keamanan Kadaluarsa");
             let data = await res.json();
             if (data.message === 'The action you requested is not allowed.') throw new Error("Token Keamanan Kadaluarsa");
             return data;
         })
         .then(res => {
-            // SANGAT PENTING: Perbarui semua token di halaman agar tidak basi
             if(res.csrf_token) {
                 $('input[name="<?= csrf_token() ?>"]').val(res.csrf_token);
             }
@@ -1301,7 +1585,6 @@
             }
         })
         .catch(err => {
-            // Jika gagal karena Token Basi, reload halaman otomatis dengan mulus
             Swal.fire({
                 icon: 'warning',
                 title: 'Memperbarui Sesi',
@@ -1349,7 +1632,6 @@
                         `;
                     }
 
-                    // INPUT QTY BARU
                     let qtyHtml = '';
                     if (isShipped || isReturned) {
                         qtyHtml = `${item.qty} Pcs`;
@@ -1404,47 +1686,96 @@
         const diskonNom = parseFloat(btn.getAttribute('data-discount')) || 0;
         const diskonPct = parseFloat(btn.getAttribute('data-discpercent')) || 0;
         const paid  = parseFloat(btn.getAttribute('data-paid'));
+        const bonus = btn.getAttribute('data-bonus');
         const sisa  = total - paid;
         const items = JSON.parse(btn.getAttribute('data-items'));
+        const excelUrl = btn.getAttribute('data-excel');
 
         document.getElementById('r_so').innerText = soNum;
         document.getElementById('r_cust').innerText = cust;
         document.getElementById('r_date').innerText = date;
         document.getElementById('r_status').innerText = (stat === 'PAID') ? 'LUNAS' : ((stat === 'PARTIAL') ? 'CICILAN' : ((stat === 'RETURNED') ? 'DIRETUR' : 'BELUM BAYAR'));
+        document.getElementById('btnExportExcel').href = excelUrl;
         
         let tbody = document.getElementById('r_items');
         tbody.innerHTML = '';
+        
+        let shippedHtml = '';
+        let unshippedHtml = '';
+
         items.forEach(it => {
             let name = it.item_name ? it.item_name : it.fg_sku;
-            let qty = it.qty;
+            let qtyTotal = parseInt(it.qty) || 0;
+            let qtyShipped = parseInt(it.shipped_qty) || 0;
+            let qtyUnshipped = qtyTotal - qtyShipped;
+
             let p = parseFloat(it.price) || 0; 
             let af = parseFloat(it.additional_fee) || 0;
-            let an = it.additional_note ? `(+ ${it.additional_note})` : '';
-            let sub = (p + af) * qty;
-            
+            let an = it.additional_note ? `(${it.additional_note})` : '';
             let strikeStyle = (stat === 'RETURNED') ? 'text-decoration: line-through;' : '';
-            let detailText = `${qty} x Rp ${p.toLocaleString('id-ID')}`;
-            if (af > 0) detailText += ` + Kustom: Rp ${af.toLocaleString('id-ID')}`;
+            
+            let isBonus = (p === 0 && (an.toUpperCase().includes('BONUS') || an === ''));
 
-            tbody.innerHTML += `
-                <tr>
-                    <td style="padding: 10px 0; border: none; ${strikeStyle}">
-                        <div style="font-weight: 800; margin-bottom: 6px;">${name} <span style="font-size:11px; font-weight:normal; color:#666;">${an}</span></div>
-                        <div style="color: #555; font-size: 13px;">${detailText}</div>
-                    </td>
-                    <td style="text-align: right; vertical-align: bottom; padding: 10px 0; font-weight: 900; border: none; ${strikeStyle}">
-                        Rp ${sub.toLocaleString('id-ID')}
-                    </td>
-                </tr>
-            `;
+            // Fungsi render baris untuk Struk
+            const renderRow = (qtyRender) => {
+                let sub = (p + af) * qtyRender;
+                if(isBonus) {
+                    return `
+                        <tr style="background: rgba(245, 158, 11, 0.05);">
+                            <td style="padding: 6px 10px; border: none; ${strikeStyle}">
+                                <div style="font-weight: 800; font-size: 12px; color: var(--brand-orange);"><i class="ph-fill ph-gift"></i> ${qtyRender} Pcs ${name}</div>
+                            </td>
+                            <td style="text-align: right; padding: 6px 10px; font-weight: 900; font-size: 12px; border: none; color: var(--brand-orange); ${strikeStyle}">
+                                GRATIS
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    let detailText = `${qtyRender} x Rp ${p.toLocaleString('id-ID')}`;
+                    if (af > 0) detailText += ` + Kustom: Rp ${af.toLocaleString('id-ID')}`;
+                    return `
+                        <tr>
+                            <td style="padding: 10px 0; border: none; ${strikeStyle}">
+                                <div style="font-weight: 800; margin-bottom: 6px;">${name} <span style="font-size:11px; font-weight:normal; color:#666;">${an}</span></div>
+                                <div style="color: #555; font-size: 13px;">${detailText}</div>
+                            </td>
+                            <td style="text-align: right; vertical-align: bottom; padding: 10px 0; font-weight: 900; border: none; ${strikeStyle}">
+                                Rp ${sub.toLocaleString('id-ID')}
+                            </td>
+                        </tr>
+                    `;
+                }
+            };
+
+            // Memasukkan ke grup yang sesuai berdasarkan Qty Terkirim
+            if (qtyShipped > 0) {
+                shippedHtml += renderRow(qtyShipped);
+            }
+            if (qtyUnshipped > 0) {
+                unshippedHtml += renderRow(qtyUnshipped);
+            }
         });
+
+        // Gabungkan HTML dengan Header Pemisah
+        let finalHtml = '';
+        
+        if (shippedHtml !== '') {
+            finalHtml += `<tr><td colspan="2" style="background:#ecfdf5; padding:8px 10px; font-weight:900; font-size:11px; border-radius:6px; color:#059669; border: 1px dashed #a7f3d0;">📦 SUDAH TERKIRIM</td></tr>` + shippedHtml;
+        }
+        
+        if (unshippedHtml !== '') {
+            let spacing = shippedHtml !== '' ? 'margin-top: 15px;' : '';
+            finalHtml += `<tr><td colspan="2" style="background:#fef2f2; padding:8px 10px; font-weight:900; font-size:11px; border-radius:6px; color:#dc2626; border: 1px dashed #fecaca; display:block; width:100%; box-sizing:border-box; ${spacing}">⏳ BELUM TERKIRIM (SISA / BACKORDER)</td></tr>` + unshippedHtml;
+        }
+
+        tbody.innerHTML = finalHtml;
 
         let htmlSubtotal = '';
         if (diskonNom > 0) {
-            htmlSubtotal = `<div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;"><span>Diskon Transaksi (${diskonPct}%)</span><span style="color:#ef4444;">- Rp ${diskonNom.toLocaleString('id-ID')}</span></div>`;
+            htmlSubtotal += `<div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;"><span>Diskon Transaksi (${diskonPct}%)</span><span style="color:#ef4444;">- Rp ${diskonNom.toLocaleString('id-ID')}</span></div>`;
         }
 
-        document.getElementById('r_total_container').innerHTML = htmlSubtotal + `<div style="display: flex; justify-content: space-between; margin-top:5px;"><span>Grand Total</span><span style="font-weight:900;">Rp ${total.toLocaleString('id-ID')}</span></div>`;
+        document.getElementById('r_total_container').innerHTML = htmlSubtotal + `<div style="display: flex; justify-content: space-between; margin-top:5px; padding-top:10px; border-top: 1px dashed #ddd;"><span>Grand Total Tagihan</span><span style="font-weight:900;">Rp ${total.toLocaleString('id-ID')}</span></div>`;
         
         document.getElementById('r_paid').innerText = 'Rp ' + paid.toLocaleString('id-ID');
         document.getElementById('r_sisa').innerText = 'Rp ' + sisa.toLocaleString('id-ID');
@@ -1476,7 +1807,7 @@
             row.innerHTML = `
                 <div class="item-grid" style="grid-template-columns: 3fr 1.5fr 1.5fr;">
                     <div>
-                        <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Produk</label>
+                        <label style="display:block; font-size:10px; font-weight:800; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">Produk / Bonus</label>
                         <input type="hidden" name="so_item_id[]" value="${item.id}">
                         <div style="font-weight:900; font-size:13px; color:var(--text-main); margin-bottom:4px;">${item.item_name || item.fg_sku}</div>
                         <div style="font-size:11px; color:var(--text-muted); font-family:'Space Mono', monospace;">
@@ -1516,10 +1847,10 @@
         const swalText = isDark ? '#f4f4f5' : '#09090b';
 
         <?php if(session()->getFlashdata('success')): ?>
-            Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' } });
+            Swal.fire({ icon: 'success', title: 'Berhasil!', html: <?= json_encode(session()->getFlashdata('success'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>, confirmButtonColor: '#10b981', background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' } });
         <?php endif; ?>
         <?php if(session()->getFlashdata('error')): ?>
-            Swal.fire({ icon: 'error', title: 'Gagal!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' } });
+            Swal.fire({ icon: 'error', title: 'Gagal!', html: <?= json_encode(session()->getFlashdata('error'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>, confirmButtonColor: '#ef4444', background: swalBg, color: swalText, customClass: { popup: 'swal2-custom-radius' } });
         <?php endif; ?>
         
         // AUTO-TRIGGER CETAK SJ GABUNGAN JIKA ADA FLASHDATA

@@ -1,8 +1,6 @@
 <?php
 // =========================================================================
 // KONSOLIDASI MATERIAL (GABUNG QTY BERDASARKAN SKU UNTUK GUDANG)
-// Controller mengirimkan data $materials (dipisah per ukuran potong).
-// Di sini kita gabungkan khusus untuk orang gudang (1 SKU = 1 Baris Total).
 // =========================================================================
 $consolidatedMaterials = [];
 
@@ -204,7 +202,12 @@ if (!empty($materials)) {
                         <tr>
                             <td class="text-center" style="font-weight: 900; font-size:12px; color: var(--muted);"><?= $no++ ?></td>
                             <td><span class="sku-badge"><i class="ph-bold ph-barcode"></i> <?= esc($prod['sku']) ?></span></td>
-                            <td style="font-weight: 800; font-size: 12px; text-transform: uppercase;"><?= esc($prod['name']) ?></td>
+                            <td style="font-weight: 800; font-size: 12px; text-transform: uppercase;">
+                                <?= esc($prod['name']) ?>
+                                <?php if(!empty($prod['notes'])): ?>
+                                    <br><span style="background: #fef2f2; color: #ef4444; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 900; border: 1px dashed #f87171; display: inline-block; margin-top: 5px;"><i class="ph-fill ph-warning-circle"></i> CATATAN SPESIAL: <?= esc($prod['notes']) ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-center" style="font-family: 'Space Mono'; font-size: 15px; font-weight: 900; color: var(--ink);"><?= $prod['qty'] ?> <span style="font-size:10px; font-family:'Inter'; color:var(--muted);">PCS</span></td>
                         </tr>
                         <?php endforeach; ?>
@@ -243,11 +246,11 @@ if (!empty($materials)) {
                                     <span class="sku-badge"><i class="ph-bold ph-barcode"></i> <?= esc($cm['sku']) ?></span>
                                     
                                     <?php if($cm['is_pipa'] && ($cm['raw_uom'] == 'CM' || $cm['raw_uom'] == 'MM')): ?>
-                                        <span style="font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 900; color: #d97706; background: #fffbeb; border: 1px dashed #fcd34d; padding: 4px 10px; border-radius: 6px;">
-                                            Total: <?= $cm['raw_total'] ?> <?= $cm['raw_uom'] ?>
+                                        <span style="font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 900; color: #991b1b; background: #fef2f2; border: 1px dashed #fca5a5; padding: 4px 10px; border-radius: 6px;">
+                                            Total: <?= number_format($cm['qty'], 2, '.', '') ?> BATANG
                                         </span>
                                         <span style="font-size: 10px; font-weight: 800; color: var(--accent); background: rgba(139, 92, 246, 0.1); padding: 4px 10px; border-radius: 6px;">
-                                            (&approx; <?= number_format($cm['qty'], 2, ',', '.') ?> Batang)
+                                            (&approx; <?= number_format($cm['raw_total'], 2, ',', '.') ?> <?= $cm['raw_uom'] ?>)
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -312,9 +315,10 @@ if (!empty($materials)) {
                                         <div style='display: flex; align-items: center; gap: 8px; flex-wrap: wrap;'>
                                             <span style='font-family: "Space Mono", monospace; font-size: 15px; font-weight: 900; color: var(--accent); background: #f1f5f9; padding: 2px 8px; border-radius: 6px; border: 1px solid #cbd5e1;'><?= $totalPcs ?> <?= $qtyUom ?></span>
                                        
-                                        <div style='background: #fffbeb; border: 1px dashed #fcd34d; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 15px; font-weight: 900; margin-top: 6px; display: inline-block;'>
-                                          POTONGAN UKURAN : <?= $size ?> <?= $sizeUom ?>
+                                        <div style='background: #fffbeb; border: 1px dashed #fcd34d; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 15px; font-weight: 900; display: inline-block;'>
+                                          POTONGAN : <?= $size ?> <?= $sizeUom ?>
                                         </div>
+                                    </div>
                                     </div>
                                 <?php else: ?>
                                     <div class="utuh-instruction">

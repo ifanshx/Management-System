@@ -9,22 +9,42 @@ class LocalWarehouse extends BaseController
     public function __construct()
     {
         $this->db = \Config\Database::connect();
+        
+        // AUTO-PATCH SCHEMA: Menambahkan kolom motor_category secara otomatis jika belum ada
+        try {
+            $this->db->query("ALTER TABLE warehouse_inventory ADD COLUMN motor_category VARCHAR(50) DEFAULT 'Universal' AFTER item_type");
+        } catch (\Exception $e) {
+            // Abaikan jika kolom sudah ada
+        }
     }
 
-    private function generateSKU($type, $context) 
+    private function generateSKU($type, $context, $motorCategory = 'Universal') 
     {
         if ($type === 'PRD') {
             $table  = 'warehouse_inventory';
             $column = 'sku';
             
-            $map = [
+            // Pemetaan Tipe Fisik Knalpot
+            $mapType = [
                 'Full System'           => 'FSY',
                 'Silencer / Slip-on'    => 'SLC',
                 'Header / Leheran'      => 'LHR',
                 'Aksesoris / Sparepart' => 'ACC'
             ];
-            $midCode = $map[$context] ?? 'GEN'; 
-            $prefix = "PRD-{$midCode}-";
+            
+            // Pemetaan Kategori Motor
+            $mapMotor = [
+                'Matic'     => 'MTC',
+                'Sport'     => 'SPT',
+                'Bebek'     => 'BBK',
+                'Universal' => 'UNV'
+            ];
+
+            $typeCode  = $mapType[$context] ?? 'GEN'; 
+            $motorCode = $mapMotor[$motorCategory] ?? 'UNV';
+            
+            // Format Standar ERP: PRD-{TIPE}-{MOTOR}-{URUTAN} -> Cth: PRD-LHR-MTC-001
+            $prefix = "PRD-{$typeCode}-{$motorCode}-";
             
         } else {
             $table  = 'raw_materials';
@@ -87,14 +107,16 @@ class LocalWarehouse extends BaseController
             $this->db->transStart(); 
 
             $itemType = $this->request->getPost('item_type');
+            $motorCategory = $this->request->getPost('motor_category') ?? 'Universal';
             $itemName = $this->request->getPost('item_name');
             
-            $autoSku = $this->generateSKU('PRD', $itemType);
+            $autoSku = $this->generateSKU('PRD', $itemType, $motorCategory);
             
             $data = [
                 'sku'             => $autoSku,
                 'item_name'       => $itemName,
                 'item_type'       => $itemType,
+                'motor_category'  => $motorCategory,
                 'hpp'             => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
                 'retail_price'    => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('retail_price')),
                 'wholesale_price' => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('wholesale_price')),
@@ -105,7 +127,7 @@ class LocalWarehouse extends BaseController
             $this->db->table('warehouse_inventory')->insert($data);
 
             // ========================================================
-            // PERBAIKAN: FORMAT AUTO-DRAFT BOM MENGIKUTI DB BARU
+            // AUTO-DRAFT BOM MENGIKUTI DB BARU
             // ========================================================
             $this->db->table('bom_headers')->insert([
                 'fg_sku'      => $autoSku,
@@ -200,22 +222,48 @@ class LocalWarehouse extends BaseController
         }
     }
 
-    public function update_fg($id)
+   public function update_fg($id)
     {
         try {
+            // Mulai transaksi database agar jika salah satu gagal, semuanya dibatalkan
+            $this->db->transStart();
+
+            // 1. Ambil data lama untuk mendapatkan SKU-nya
+            $oldItem = $this->db->table('warehouse_inventory')->where('id', $id)->get()->getRowArray();
+            if (!$oldItem) throw new \Exception("Data produk tidak ditemukan.");
+
+            $itemName = $this->request->getPost('item_name');
+
+            // 2. Siapkan data update untuk gudang
             $data = [
-                'item_name'       => $this->request->getPost('item_name'),
+                'item_name'       => $itemName,
                 'item_type'       => $this->request->getPost('item_type'),
+                'motor_category'  => $this->request->getPost('motor_category') ?? 'Universal',
                 'hpp'             => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('hpp')),
                 'retail_price'    => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('retail_price')),
                 'wholesale_price' => (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('wholesale_price')),
                 'min_stock'       => (int)$this->request->getPost('min_stock')
             ];
 
+            // 3. Eksekusi Update di Master Gudang
             $this->db->table('warehouse_inventory')->where('id', $id)->update($data);
 
-            if ($this->request->isAJAX()) return $this->response->setJSON(['status' => 'success', 'message' => "Data Produk berhasil diperbarui."]);
-            return redirect()->back()->with('success', "Data Produk berhasil diperbarui.");
+            // 4. SINKRONISASI OTOMATIS KE PRODUKSI (BOM HEADERS)
+            // Mengubah nama resep di modul produksi agar sama dengan nama barang terbaru
+            $this->db->table('bom_headers')->where('fg_sku', $oldItem['sku'])->update([
+                'recipe_name' => $itemName
+            ]);
+
+            // Selesaikan transaksi
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Sistem gagal menyinkronkan data Gudang dan Produksi.");
+            }
+
+            if ($this->request->isAJAX()) return $this->response->setJSON(['status' => 'success', 'message' => "Data Produk Gudang & Resep Produksi berhasil disinkronkan!"]);
+            return redirect()->back()->with('success', "Data Produk Gudang & Resep Produksi berhasil disinkronkan!");
+            
         } catch (\Exception $e) {
             if ($this->request->isAJAX()) return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
             return redirect()->back()->with('error', $e->getMessage());
@@ -329,9 +377,7 @@ class LocalWarehouse extends BaseController
             
             $adjustmentId = $this->db->insertID();
 
-            // Panggil fungsi log mutasi
-            $inventoryService = new \App\Services\InventoryService();
-            // Bypass logging untuk adjustment di controller ini langsung
+            // Panggil fungsi log mutasi (Bypass logging untuk adjustment di controller ini langsung)
             $this->db->table('inventory_movements')->insert([
                 'movement_date'   => date('Y-m-d H:i:s'),
                 'item_type'       => $type === 'PRD' ? 'FG' : 'RAW',

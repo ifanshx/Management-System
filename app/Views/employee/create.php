@@ -2,111 +2,41 @@
 <?= $this->section('content') ?>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#18181b' : '#ffffff';
-    const textColor = isDark ? '#f4f4f5' : '#09090b';
-
-    <?php if(session()->getFlashdata('success')): ?>
-        Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
-    <?php endif; ?>
-    <?php if(session()->getFlashdata('error')): ?>
-        Swal.fire({ icon: 'error', title: 'Gagal!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
-    <?php endif; ?>
-
-    togglePayrollFields();
-    toggleBankFields();
-    toggleBpjsKs();
-    toggleBpjsTk();
-    toggleGradeLevel(); 
-
-    document.getElementById('statusSelect').addEventListener('change', togglePayrollFields);
-    document.getElementById('paymentMethodSelect').addEventListener('change', toggleBankFields);
-    document.getElementById('departmentSelect').addEventListener('change', toggleGradeLevel); 
-});
-
-function togglePayrollFields() {
-    const status = document.getElementById('statusSelect').value;
-    const salaryFields = document.querySelectorAll('.salary-fixed-only');
-    salaryFields.forEach(el => {
-        if (status === 'Borongan') {
-            el.style.display = 'none';
-            el.querySelectorAll('input').forEach(inp => inp.value = '0');
-        } else {
-            el.style.display = '';
-        }
-    });
-}
-
-function toggleBankFields() {
-    const payment = document.getElementById('paymentMethodSelect').value;
-    const bankFields = document.getElementById('bankFields');
-    if (payment === 'Transfer') {
-        bankFields.style.display = '';
-    } else {
-        bankFields.style.display = 'none';
-        document.querySelector('input[name="bank_name"]').value = '';
-        document.querySelector('input[name="bank_account"]').value = '';
-    }
-}
-
-function toggleGradeLevel() {
-    const deptSelect = document.getElementById('departmentSelect');
-    const selectedOption = deptSelect.options[deptSelect.selectedIndex];
-    
-    // Ambil nama departemen dari atribut custom
-    const deptName = selectedOption ? selectedOption.getAttribute('data-name') : '';
-    const wrapGrade = document.getElementById('wrapGradeLevel');
-    const wrapSpecialty = document.getElementById('wrapSpecialty');
-    
-    // Jika mengandung kata 'Produksi', tampilkan grade level dan spesialisasi
-    if (deptName && deptName.toLowerCase().includes('produksi')) {
-        wrapGrade.style.display = 'block';
-        wrapSpecialty.style.display = 'block';
-    } else {
-        wrapGrade.style.display = 'none';
-        wrapSpecialty.style.display = 'none';
-        
-        const gradeSelect = document.querySelector('select[name="grade_level"]');
-        if(gradeSelect) gradeSelect.value = ''; 
-        const specSelect = document.querySelector('select[name="specialty"]');
-        if(specSelect) specSelect.value = ''; 
-    }
-}
-
-function toggleBpjsKs() {
-    const check = document.getElementById('checkBpjsKs');
-    const wrap = document.getElementById('wrapBpjsKs');
-    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
-}
-
-function toggleBpjsTk() {
-    const check = document.getElementById('checkBpjsTk');
-    const wrap = document.getElementById('wrapBpjsTk');
-    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
-}
-
-function formatRupiah(angka) {
-    if (!angka) return;
-    let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
-        split   = number_string.split(','),
-        sisa    = split[0].length % 3,
-        rupiah  = split[0].substr(0, sisa),
-        ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
-        
-    if (ribuan) {
-        let separator = sisa ? '.' : '';
-        rupiah += separator + ribuan.join('.');
-    }
-    
-    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-    angka.value = rupiah;
-}
-</script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <style>
-    .swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
+    :root {
+        --bg-base: #f8fafc;
+        --bg-surface: #ffffff;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-subtle: #e2e8f0;
+    }
+    html.dark {
+        --bg-base: #0f172a;
+        --bg-surface: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-subtle: #334155;
+    }
+
+    /* =======================================================
+       PREMIUM SWEETALERT CUSTOMIZATION 
+       ======================================================= */
+    .swal2-container.swal2-backdrop-show { background: rgba(15, 23, 42, 0.75) !important; backdrop-filter: blur(5px) !important; }
+    .swal2-popup.swal2-custom-radius { border-radius: 24px !important; padding: 2.5em 2em 2em 2em !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25) !important; border: 1px solid var(--border-subtle) !important; background: var(--bg-surface) !important; color: var(--text-main) !important; }
+    .swal2-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 900 !important; color: var(--text-main) !important; font-size: 24px !important; margin-bottom: 15px !important; }
+    .swal2-html-container { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 600 !important; color: var(--text-muted) !important; font-size: 15px !important; line-height: 1.6 !important; margin-bottom: 25px !important; }
+    .swal2-actions { gap: 12px !important; margin-top: 15px !important; }
+    .swal2-confirm, .swal2-cancel { border-radius: 12px !important; font-weight: 800 !important; padding: 14px 28px !important; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 15px !important; letter-spacing: 0.5px !important; transition: all 0.3s ease !important; }
+    .swal2-confirm { box-shadow: 0 8px 20px -6px rgba(0,0,0,0.3) !important; }
+    .swal2-confirm:hover { transform: translateY(-2px) !important; box-shadow: 0 12px 25px -6px rgba(0,0,0,0.4) !important; }
+    .swal2-cancel { background: var(--bg-input) !important; color: var(--text-main) !important; border: 1px solid var(--border-subtle) !important; }
+    .swal2-cancel:hover { background: var(--border-subtle) !important; transform: translateY(-2px) !important; }
+
+    /* LAYOUT & FORM STYLES */
     .page-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 18px; margin-bottom: 28px; }
     .page-title-wrap { display: flex; align-items: center; gap: 16px; }
     .page-icon { width: 56px; height: 56px; border-radius: 20px; background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(59,130,246,.05)); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 25px; border: 1px solid rgba(37,99,235,.15); box-shadow: 0 14px 35px -18px rgba(37,99,235,.45); }
@@ -132,7 +62,7 @@ function formatRupiah(angka) {
     .input-wrapper textarea { resize: vertical; min-height: 80px; }
     select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px !important; background-size: 10px; }
 
-    select optgroup { font-weight: 900; color: var(--text-muted); background: var(--bg-base-alt); text-transform: uppercase; font-size: 10px; }
+    select optgroup { font-weight: 900; color: var(--text-muted); background: var(--bg-base); text-transform: uppercase; font-size: 10px; }
     select option { font-weight: 600; color: var(--text-main); background: var(--bg-surface); font-size: 12px; }
 
     .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
@@ -143,6 +73,15 @@ function formatRupiah(angka) {
 
     .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; padding: 13px 20px; border: none; border-radius: 14px; font-weight: 900; font-size: 13px; cursor: pointer; transition: .25s ease; box-shadow: 0 12px 24px -16px rgba(37,99,235,.65); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; }
     .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+    /* Select2 Tweaks */
+    .select2-container--default .select2-selection--single { background-color: var(--bg-base); border: 1px solid var(--border-subtle); height: 42px; border-radius: 14px; display: flex; align-items: center; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--text-main); font-weight: 700; font-size: 12px; padding-left: 14px; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; right: 10px; }
+    .select2-dropdown { background-color: var(--bg-surface); border-color: var(--border-subtle); border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+    .select2-search__field { border-radius: 8px !important; border: 1px solid var(--border-subtle) !important; background: var(--bg-base); color: var(--text-main); font-weight: 600; padding: 8px 12px !important; margin: 8px !important; width: calc(100% - 16px) !important; }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: #2563eb; }
+    .select2-results__option { color: var(--text-main); font-weight: 600; font-size: 12px; padding: 10px 14px; }
 </style>
 
 <div class="page-header">
@@ -156,7 +95,7 @@ function formatRupiah(angka) {
     <a href="<?= base_url('/employee') ?>" class="btn-back">&larr; Kembali</a>
 </div>
 
-<form action="<?= base_url('/employee/store') ?>" method="post">
+<form action="<?= base_url('/employee/store') ?>" method="post" id="formEmployee">
     <?= csrf_field() ?>
     <div class="main-grid">
 
@@ -289,6 +228,25 @@ function formatRupiah(angka) {
             <div class="card-header">
                 <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="ph-bold ph-wallet"></i></div>
                 <h3>Payroll, Login & Hak Akses</h3>
+            </div>
+            
+            <div style="background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.3); padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                <i class="ph-fill ph-users-three" style="color: #f59e0b;"></i>
+                <b>Sistem Mandor/Regu:</b> Jika karyawan ini punya Bos (Mandor), pilih namanya di bawah ini agar gajinya digabung. Kosongkan jika mandiri.
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="color: #f59e0b;">Mandor / Kepala Regu (Opsional)</label>
+                <div class="input-wrapper" style="border-color: rgba(245, 158, 11, 0.3); padding: 0; border: none; background: transparent;">
+                    <select name="leader_id" class="select2-leader">
+                        <option value=""></option>
+                        <?php foreach($leaders as $ld): ?>
+                            <option value="<?= $ld['employee_id'] ?>" <?= old('leader_id') == $ld['employee_id'] ? 'selected' : '' ?>>
+                                <?= esc($ld['name']) ?> (<?= esc($ld['employee_id']) ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -463,4 +421,116 @@ function formatRupiah(angka) {
     </div>
 </form>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const bgColor = isDark ? '#1e293b' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+    <?php if(session()->getFlashdata('success')): ?>
+        Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
+    <?php endif; ?>
+    <?php if(session()->getFlashdata('error')): ?>
+        Swal.fire({ icon: 'error', title: 'Gagal!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
+    <?php endif; ?>
+
+    togglePayrollFields();
+    toggleBankFields();
+    toggleBpjsKs();
+    toggleBpjsTk();
+    toggleGradeLevel(); 
+
+    document.getElementById('statusSelect').addEventListener('change', togglePayrollFields);
+    document.getElementById('paymentMethodSelect').addEventListener('change', toggleBankFields);
+    document.getElementById('departmentSelect').addEventListener('change', toggleGradeLevel); 
+    
+    $('.select2-leader').select2({ width: '100%', placeholder: "-- Pilih Jika Punya Mandor --", allowClear: true });
+
+    document.getElementById('formEmployee').addEventListener('submit', function() {
+        Swal.fire({
+            title: 'Menyimpan Data...',
+            text: 'Mohon tunggu sebentar.',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: bgColor,
+            color: textColor,
+            customClass: { popup: 'swal2-custom-radius' },
+            didOpen: () => { Swal.showLoading(); }
+        });
+    });
+});
+
+function togglePayrollFields() {
+    const status = document.getElementById('statusSelect').value;
+    const salaryFields = document.querySelectorAll('.salary-fixed-only');
+    salaryFields.forEach(el => {
+        if (status === 'Borongan') {
+            el.style.display = 'none';
+            el.querySelectorAll('input').forEach(inp => inp.value = '0');
+        } else {
+            el.style.display = '';
+        }
+    });
+}
+
+function toggleBankFields() {
+    const payment = document.getElementById('paymentMethodSelect').value;
+    const bankFields = document.getElementById('bankFields');
+    if (payment === 'Transfer') {
+        bankFields.style.display = '';
+    } else {
+        bankFields.style.display = 'none';
+        document.querySelector('input[name="bank_name"]').value = '';
+        document.querySelector('input[name="bank_account"]').value = '';
+    }
+}
+
+function toggleGradeLevel() {
+    const deptSelect = document.getElementById('departmentSelect');
+    const selectedOption = deptSelect.options[deptSelect.selectedIndex];
+    const deptName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+    const wrapGrade = document.getElementById('wrapGradeLevel');
+    const wrapSpecialty = document.getElementById('wrapSpecialty');
+    
+    if (deptName && deptName.toLowerCase().includes('produksi')) {
+        wrapGrade.style.display = 'block';
+        wrapSpecialty.style.display = 'block';
+    } else {
+        wrapGrade.style.display = 'none';
+        wrapSpecialty.style.display = 'none';
+        const gradeSelect = document.querySelector('select[name="grade_level"]');
+        if(gradeSelect) gradeSelect.value = ''; 
+        const specSelect = document.querySelector('select[name="specialty"]');
+        if(specSelect) specSelect.value = ''; 
+    }
+}
+
+function toggleBpjsKs() {
+    const check = document.getElementById('checkBpjsKs');
+    const wrap = document.getElementById('wrapBpjsKs');
+    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
+}
+
+function toggleBpjsTk() {
+    const check = document.getElementById('checkBpjsTk');
+    const wrap = document.getElementById('wrapBpjsTk');
+    if(check && wrap) wrap.style.display = check.checked ? 'block' : 'none';
+}
+
+function formatRupiah(angka) {
+    if (!angka) return;
+    let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
+        split   = number_string.split(','),
+        sisa    = split[0].length % 3,
+        rupiah  = split[0].substr(0, sisa),
+        ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
+        
+    if (ribuan) {
+        let separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+    }
+    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+    angka.value = rupiah;
+}
+</script>
 <?= $this->endSection() ?>

@@ -26,3 +26,8 @@ Stack trace:
 [11-Apr-2026 10:40:11 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::sync_old_po() in /home/uwjqdfka/test/app/Controllers/Production.php on line 1246
 [11-Apr-2026 10:40:13 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::sync_old_po() in /home/uwjqdfka/test/app/Controllers/Production.php on line 1246
 [12-Apr-2026 04:02:15 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Production::add_production_log() in /home/uwjqdfka/test/app/Controllers/Production.php on line 936
+[15-Apr-2026 02:18:19 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\LocalWarehouse::index() in /home/uwjqdfka/test/app/Controllers/LocalWarehouse.php on line 65
+[15-Apr-2026 02:18:23 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\LocalWarehouse::index() in /home/uwjqdfka/test/app/Controllers/LocalWarehouse.php on line 65
+[15-Apr-2026 02:20:03 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\LocalWarehouse::index() in /home/uwjqdfka/test/app/Controllers/LocalWarehouse.php on line 65
+[15-Apr-2026 04:22:54 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\LocalWarehouse::index() in /home/uwjqdfka/test/app/Controllers/LocalWarehouse.php on line 65
+[18-Apr-2026 06:38:35 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Wholesale::add_item_to_so() in /home/uwjqdfka/test/app/Controllers/Wholesale.php on line 1363

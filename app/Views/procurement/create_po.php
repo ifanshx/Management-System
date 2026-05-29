@@ -156,7 +156,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const rmData = <?= json_encode($rawMaterials) ?>;
+    const rmData = <?= json_encode($rawMaterials, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
 
     function formatRupiah(angka) {
         let number_string = angka.value.replace(/[^,\d]/g, '').toString(),
@@ -182,7 +182,6 @@
     function materialOptions() {
         let html = `<option value="">-- Pilih Material --</option>`;
         rmData.forEach(item => {
-            // SINKRONISASI: Menggunakan purchase_uom karena kita membeli ke supplier
             let uom = item.purchase_uom || item.unit || 'PCS';
             html += `<option value="${item.sku_material}" data-unit="${uom}">[${item.sku_material}] ${item.material_name}</option>`;
         });

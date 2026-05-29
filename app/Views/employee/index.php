@@ -6,8 +6,8 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#18181b' : '#ffffff';
-    const textColor = isDark ? '#f4f4f5' : '#09090b';
+    const bgColor = isDark ? '#1e293b' : '#ffffff';
+    const textColor = isDark ? '#f8fafc' : '#0f172a';
 
     <?php if(session()->getFlashdata('success')): ?>
         Swal.fire({
@@ -47,6 +47,9 @@ document.addEventListener("DOMContentLoaded", function() {
     <?php endif; ?>
 });
 
+/* =======================================================
+   PREMIUM SWEETALERT CUSTOMIZATION 
+   ======================================================= */
 function confirmDelete(id, name) {
     const isDark = document.documentElement.classList.contains('dark');
     Swal.fire({
@@ -55,11 +58,9 @@ function confirmDelete(id, name) {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1',
+        cancelButtonColor: '#64748b',
         confirmButtonText: 'Ya, Hapus!',
         cancelButtonText: 'Batal',
-        background: isDark ? '#18181b' : '#ffffff',
-        color: isDark ? '#f4f4f5' : '#09090b',
         customClass: { popup: 'swal2-custom-radius' }
     }).then((result) => {
         if (result.isConfirmed) {
@@ -73,26 +74,60 @@ function confirmDeactivate(id, name) {
     Swal.fire({
         title: 'Proses Karyawan Keluar?', 
         html: `Status <b>${name}</b> akan menjadi <b style="color:#f59e0b;">NON-AKTIF</b>. Hak akses portal dicabut.`,
-        icon: 'warning', showCancelButton: true, confirmButtonColor: '#f59e0b', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', confirmButtonText: 'Ya, Resign!', cancelButtonText: 'Batal', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
-    }).then((result) => { if (result.isConfirmed) document.getElementById('deact-form-' + id).submit(); });
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonColor: '#f59e0b', 
+        cancelButtonColor: '#64748b', 
+        confirmButtonText: 'Ya, Resign!', 
+        cancelButtonText: 'Batal', 
+        customClass: { popup: 'swal2-custom-radius' }
+    }).then((result) => { 
+        if (result.isConfirmed) document.getElementById('deact-form-' + id).submit(); 
+    });
 }
 
 function confirmPush(url, name) {
     const isDark = document.documentElement.classList.contains('dark');
     Swal.fire({
-        title: 'Daftarkan ke Mesin?', text: `Sistem akan mengirim identitas ${name} ke mesin pabrik.`,
-        icon: 'info', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', confirmButtonText: 'Ya, Kirim', cancelButtonText: 'Batal', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
-    }).then((result) => { if (result.isConfirmed) window.location.href = url; });
+        title: 'Daftarkan ke Mesin?', 
+        text: `Sistem akan mengirim identitas ${name} ke mesin pabrik.`,
+        icon: 'info', 
+        showCancelButton: true, 
+        confirmButtonColor: '#10b981', 
+        cancelButtonColor: '#64748b', 
+        confirmButtonText: 'Ya, Kirim', 
+        cancelButtonText: 'Batal', 
+        customClass: { popup: 'swal2-custom-radius' }
+    }).then((result) => { 
+        if (result.isConfirmed) window.location.href = url; 
+    });
 }
 
 function confirmPull(url) {
     const isDark = document.documentElement.classList.contains('dark');
     Swal.fire({
-        title: 'Tarik Data dari Mesin?', text: 'Ekstrak daftar karyawan dari mesin fisik ke Web.',
-        icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', confirmButtonText: 'Ya, Tarik', cancelButtonText: 'Batal', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }
+        title: 'Tarik Data dari Mesin?', 
+        text: 'Ekstrak daftar karyawan dari mesin fisik ke Web.',
+        icon: 'question', 
+        showCancelButton: true, 
+        confirmButtonColor: '#10b981', 
+        cancelButtonColor: '#64748b', 
+        confirmButtonText: 'Ya, Tarik', 
+        cancelButtonText: 'Batal', 
+        customClass: { popup: 'swal2-custom-radius' }
     }).then((result) => {
         if (result.isConfirmed) {
-            Swal.fire({ title: 'Sinkronisasi IoT...', html: 'Mengirim perintah ke mesin fisik.', allowOutsideClick: false, showConfirmButton: false, background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }, didOpen: () => { Swal.showLoading(); setTimeout(() => { window.location.href = url; }, 500); } });
+            Swal.fire({ 
+                title: 'Sinkronisasi IoT...', 
+                html: 'Mengirim perintah ke mesin fisik.', 
+                allowOutsideClick: false, 
+                showConfirmButton: false, 
+                customClass: { popup: 'swal2-custom-radius' }, 
+                didOpen: () => { 
+                    Swal.showLoading(); 
+                    setTimeout(() => { window.location.href = url; }, 500); 
+                } 
+            });
         }
     });
 }
@@ -117,12 +152,119 @@ function filterTable() {
 </script>
 
 <style>
-    .swal2-custom-radius { border-radius: 20px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 18px; margin-bottom: 28px; }
+    /* =======================================================================
+       PREMIUM SWEETALERT CUSTOMIZATION 
+       ======================================================================= */
+    .swal2-container.swal2-backdrop-show {
+        background: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(5px) !important;
+    }
+    
+    .swal2-popup.swal2-custom-radius {
+        border-radius: 24px !important;
+        padding: 2.5em 2em 2em 2em !important;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25) !important;
+        border: 1px solid var(--border-subtle) !important;
+        background: var(--bg-surface) !important;
+        color: var(--text-main) !important;
+    }
+
+    .swal2-title { 
+        font-family: 'Plus Jakarta Sans', sans-serif !important; 
+        font-weight: 900 !important; 
+        color: var(--text-main) !important;
+        font-size: 24px !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .swal2-html-container { 
+        font-family: 'Plus Jakarta Sans', sans-serif !important; 
+        font-weight: 600 !important; 
+        color: var(--text-muted) !important; 
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        margin-bottom: 25px !important;
+    }
+    
+    .swal2-actions {
+        gap: 12px !important;
+        margin-top: 15px !important;
+    }
+
+    .swal2-confirm, .swal2-cancel { 
+        border-radius: 12px !important; 
+        font-weight: 800 !important; 
+        padding: 14px 28px !important; 
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-size: 15px !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .swal2-confirm {
+        box-shadow: 0 8px 20px -6px rgba(0,0,0,0.3) !important;
+    }
+    
+    .swal2-confirm:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 25px -6px rgba(0,0,0,0.4) !important;
+    }
+
+    .swal2-cancel {
+        background: var(--bg-input) !important;
+        color: var(--text-main) !important;
+        border: 1px solid var(--border-subtle) !important;
+    }
+    
+    .swal2-cancel:hover {
+        background: var(--border-subtle) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .swal2-icon {
+        border-width: 4px !important;
+        margin-bottom: 25px !important;
+    }
+    
+    /* =======================================================================
+       PAGE STYLES
+       ======================================================================= */
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
     .page-title-wrap { display: flex; align-items: center; gap: 16px; }
-    .page-icon { width: 56px; height: 56px; border-radius: 20px; background: linear-gradient(135deg, rgba(37,99,235,.15), rgba(59,130,246,.05)); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 25px; border: 1px solid rgba(37,99,235,.15); box-shadow: 0 14px 35px -18px rgba(37,99,235,.45); }
-    .page-title h1 { font-size: 28px; font-weight: 900; margin: 0 0 5px 0; color: var(--text-main); letter-spacing: -0.7px; }
-    .page-title p { margin: 0; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .page-icon { width: 50px; height: 50px; border-radius: 16px; background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(59,130,246,.03)); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 1px solid rgba(37,99,235,.12); }
+    .page-title h1 { font-size: 24px; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; letter-spacing: -.6px; }
+    .page-title p { margin: 0; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+    .btn-back { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px 16px; border-radius: 12px; font-weight: 800; text-decoration: none; font-size: 12px; transition: .25s ease; }
+    .btn-back:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .bento-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 22px; padding: 22px; box-shadow: 0 10px 30px -15px rgba(0,0,0,.1); }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px dashed var(--border-subtle); }
+    .icon-wrapper { width: 34px; height: 34px; border-radius: 12px; background: rgba(37,99,235,.08); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .card-header h3 { font-size: 14px; font-weight: 900; color: var(--text-main); margin: 0; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 10px; font-weight: 900; color: var(--text-muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .6px; }
+    .input-wrapper { display: flex; align-items: stretch; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; transition: .25s ease; }
+    .input-wrapper:focus-within { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+    .input-wrapper input, .input-wrapper select, .input-wrapper textarea { flex: 1; background: transparent; border: none; color: var(--text-main); padding: 12px 14px; font-size: 12px; font-weight: 700; outline: none; font-family: inherit; width: 100%; }
+    .input-wrapper textarea { resize: vertical; min-height: 80px; }
+    
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2371717a' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px !important; background-size: 10px; }
+
+    select optgroup { font-weight: 900; color: var(--text-muted); background: var(--bg-base-alt); text-transform: uppercase; font-size: 10px; padding: 5px; }
+    select option { font-weight: 600; color: var(--text-main); background: var(--bg-surface); font-size: 12px; padding: 5px; }
+
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+    .checkbox-label { position: relative; cursor: pointer; display: block; }
+    .checkbox-label input { position: absolute; opacity: 0; }
+    .checkbox-box { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 14px; font-size: 11px; font-weight: 800; color: var(--text-muted); transition: .25s ease; }
+    .checkbox-label input:checked + .checkbox-box { background: rgba(16,185,129,.1); border-color: #10b981; color: #10b981; box-shadow: 0 10px 20px -16px rgba(16,185,129,.5); }
+
+    .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; padding: 13px 20px; border: none; border-radius: 14px; font-weight: 900; font-size: 13px; cursor: pointer; transition: .25s ease; box-shadow: 0 12px 24px -16px rgba(37,99,235,.65); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; }
+    .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
     .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 13px 18px; border-radius: 14px; font-weight: 800; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: .25s ease; box-shadow: 0 12px 25px -14px rgba(37,99,235,.7); }
     .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }

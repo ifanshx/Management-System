@@ -162,6 +162,8 @@ $routes->group('companydebt', function ($routes) {
         $routes->get('get_customer/(:segment)', 'Wholesale::get_customer/$1'); 
         $routes->post('update_customer/(:segment)', 'Wholesale::update_customer/$1'); 
         $routes->get('delete_customer/(:segment)', 'Wholesale::delete_customer/$1'); 
+        $routes->get('export_excel/(:segment)', 'Wholesale::export_excel/$1'); 
+
 
         // --- RUTE KHUSUS FITUR EDIT & TAMBAH ITEM SO ---
         $routes->get('get_so/(:segment)', 'Wholesale::get_so/$1');
@@ -185,6 +187,8 @@ $routes->group('companydebt', function ($routes) {
     $routes->get('production/confirm_logs', 'Production::confirm_logs');
     $routes->get('production/approve_log/(:num)', 'Production::approve_log/$1');
     $routes->get('production/reject_log/(:num)', 'Production::reject_log/$1');
+    $routes->get('production/delete_log/(:num)', 'Production::delete_log/$1');
+
     
     // Rute Baru untuk SPK Reguler
     $routes->post('production/create_spk', 'Production::create_spk');
@@ -224,6 +228,20 @@ $routes->group('companydebt', function ($routes) {
     
     $routes->get('production/print_blank_bom', 'Production::print_blank_bom');
     $routes->get('production/print_blank_bom_batch', 'Production::print_blank_bom_batch');
+    
+    // --- FITUR BARU: Revisi Upah & Mass Inject Harga Tukang ---
+    $routes->post('production/update_log_wage', 'Production::update_log_wage');
+    $routes->post('production/mass_update_custom_wage', 'Production::mass_update_custom_wage');
+    // Fitur Konfirmasi Setoran (Baru)
+    $routes->get('production/confirm_logs', 'Production::confirm_logs');
+    $routes->get('production/approve_log/(:num)', 'Production::approve_log/$1'); // <--- INI UNTUK TERIMA (ACC)
+    $routes->get('production/reject_log/(:num)', 'Production::reject_log/$1');   // <--- INI UNTUK TOLAK (REJECT)
+
+    // --- FITUR BARU: Terbitkan & Cetak SPK Massal (Batch) ---
+    $routes->post('production/batch_create_spk', 'Production::batch_create_spk');
+    $routes->get('production/print_spk_selected_batch', 'Production::print_spk_selected_batch');
+    $routes->post('production/print_spk_selected', 'Production::print_spk_selected');
+    $routes->get('production/print_spk_selected_batch', 'Production::print_spk_selected_batch');
 
     // --- MODUL PEMBELIAN BARANG (PROCUREMENT) ---
     $routes->get('/procurement', 'Procurement::index');

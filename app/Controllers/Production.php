@@ -12,18 +12,25 @@ class Production extends BaseController
     public function __construct()
     {
         $this->db = \Config\Database::connect();
+        
+        // AUTO PATCH: Menambahkan kolom Pengecualian Harga (Memori Cerdas) di Tabel Operasi BOM
+        try {
+            $this->db->query("ALTER TABLE bom_operations ADD COLUMN custom_wages TEXT NULL AFTER wage_per_piece");
+        } catch (\Exception $e) {
+            // Abaikan jika kolom sudah ada
+        }
     }
 
     public function index()
     {
-        // Cek apakah belum login, ATAU (bukan admin DAN bukan orang produksi)
         if (!session()->get('isLoggedIn') || (session()->get('role') !== 'admin' && !str_contains(strtolower(session()->get('department_name') ?? session()->get('department')), 'produksi'))) {
             return redirect()->to('/portal');
         }
 
         $workOrders = $this->db->table('work_orders')
-            ->select('work_orders.*, bom_headers.recipe_name, bom_headers.fg_sku, b2b_sales_orders.so_number, b2b_customers.company_name')
+            ->select('work_orders.*, bom_headers.recipe_name, bom_headers.fg_sku, b2b_sales_orders.so_number, b2b_customers.company_name, warehouse_inventory.item_type')
             ->join('bom_headers', 'bom_headers.id = work_orders.bom_id')
+            ->join('warehouse_inventory', 'warehouse_inventory.sku = bom_headers.fg_sku', 'left')
             ->join('b2b_sales_orders', 'b2b_sales_orders.id = work_orders.so_id', 'left')
             ->join('b2b_customers', 'b2b_customers.id = b2b_sales_orders.customer_id', 'left')
             ->orderBy('work_orders.id', 'DESC')->get()->getResultArray();
@@ -32,19 +39,38 @@ class Production extends BaseController
         $spkPreorder = []; 
         $spkPreorderGrouped = [];
 
-        // FILTER: Jangan tampilkan SPK yang sudah COMPLETED ke tabel antrean
+        $tempGrouped = [];
         foreach ($workOrders as $wo) {
             if (($wo['source'] ?? 'MANUAL') === 'PREORDER') {
-                if ($wo['status'] !== 'COMPLETED') { 
-                    $soId = $wo['so_id'] ?: '0'; 
-                    $groupName = !empty($wo['company_name']) ? "{$wo['company_name']} ({$wo['so_number']})" : "Pre-Order Belum Teridentifikasi";
-                    if(!isset($spkPreorderGrouped[$soId])) $spkPreorderGrouped[$soId] = ['so_id' => $soId, 'group_name' => $groupName, 'spks' => []];
-                    $spkPreorderGrouped[$soId]['spks'][] = $wo;
-                    $spkPreorder[] = $wo;
+                $soId = $wo['so_id'] ?: '0'; 
+                $groupName = !empty($wo['company_name']) ? "{$wo['company_name']} ({$wo['so_number']})" : "Pre-Order Belum Teridentifikasi";
+                
+                if(!isset($tempGrouped[$soId])) {
+                    $tempGrouped[$soId] = [
+                        'so_id' => $soId, 
+                        'group_name' => $groupName, 
+                        'spks' => [],
+                        'all_completed' => true
+                    ];
+                }
+                
+                $tempGrouped[$soId]['spks'][] = $wo;
+                
+                if ($wo['status'] !== 'COMPLETED') {
+                    $tempGrouped[$soId]['all_completed'] = false;
                 }
             } else {
                 if ($wo['status'] !== 'COMPLETED') {
                     $spkManual[] = $wo;
+                }
+            }
+        }
+
+        foreach ($tempGrouped as $soId => $group) {
+            if (!$group['all_completed']) {
+                $spkPreorderGrouped[$soId] = $group;
+                foreach($group['spks'] as $wo) {
+                    $spkPreorder[] = $wo;
                 }
             }
         }
@@ -75,14 +101,31 @@ class Production extends BaseController
             ->orderBy('production_logs.id', 'ASC')
             ->get()->getResultArray();
 
-        // AMBIL RIWAYAT SETORAN PEKERJA YANG SEDANG LOGIN
-        $myLogs = $this->db->table('production_logs')
-            ->select('production_logs.*, warehouse_inventory.item_name')
-            ->join('warehouse_inventory', 'warehouse_inventory.sku = production_logs.sku', 'left')
-            ->where('production_logs.employee_id', session()->get('employee_id'))
-            ->orderBy('production_logs.id', 'DESC')
-            ->limit(50)
-            ->get()->getResultArray();
+        $sessionEmpId = session()->get('employee_id');
+        $teamIds = [$sessionEmpId];
+        
+        if (!empty($sessionEmpId)) {
+            $anakBuahs = $this->db->table('employees')->where('leader_id', $sessionEmpId)->get()->getResultArray();
+            foreach($anakBuahs as $ab) {
+                $teamIds[] = $ab['employee_id'];
+            }
+        }
+
+        // PERBAIKAN: Menambahkan JOIN ke b2b_customers agar Riwayat Setoran memunculkan Nama Pemesan
+        $myLogs = [];
+        if (!empty($teamIds[0])) {
+            $myLogs = $this->db->table('production_logs')
+                ->select('production_logs.*, warehouse_inventory.item_name, employees.name as emp_name, b2b_customers.company_name as buyer_name')
+                ->join('warehouse_inventory', 'warehouse_inventory.sku = production_logs.sku', 'left')
+                ->join('employees', 'employees.employee_id = production_logs.employee_id', 'left')
+                ->join('work_orders', 'work_orders.spk_number = production_logs.spk_number', 'left')
+                ->join('b2b_sales_orders', 'b2b_sales_orders.id = work_orders.so_id', 'left')
+                ->join('b2b_customers', 'b2b_customers.id = b2b_sales_orders.customer_id', 'left')
+                ->whereIn('production_logs.employee_id', $teamIds)
+                ->orderBy('production_logs.id', 'DESC')
+                ->limit(50)
+                ->get()->getResultArray();
+        }
 
         $currentUser = $this->db->table('employees')->where('employee_id', session()->get('employee_id'))->get()->getRowArray();
         $userSpecialty = $currentUser['specialty'] ?? '';
@@ -113,14 +156,15 @@ class Production extends BaseController
         
         if (!$log) return redirect()->back()->with('error', 'Data setoran tidak ditemukan.');
 
-        // PROTEKSI AKUNTANSI: Jika sudah disetujui, dilarang dihapus karena stok sudah terpotong otomatis
         if ($log['status'] === 'Approved') {
             return redirect()->back()->with('error', 'DITOLAK: Setoran sudah diverifikasi (Approved) dan memotong stok bahan baku. Hubungi Admin jika terjadi kesalahan.');
         }
 
-        // PROTEKSI AKSES: Hanya pemilik data (atau Admin) yang boleh menghapus
         if (session()->get('role') !== 'admin' && $log['employee_id'] !== session()->get('employee_id')) {
-            return redirect()->back()->with('error', 'DITOLAK: Anda tidak memiliki akses untuk menghapus data pekerja lain.');
+            $worker = $this->db->table('employees')->where('employee_id', $log['employee_id'])->get()->getRowArray();
+            if (!$worker || $worker['leader_id'] !== session()->get('employee_id')) {
+                return redirect()->back()->with('error', 'DITOLAK: Anda tidak memiliki akses untuk menghapus data pekerja lain.');
+            }
         }
 
         $this->db->table('production_logs')->where('id', $id)->delete();
@@ -153,39 +197,61 @@ class Production extends BaseController
     public function create_spk()
     {
         try {
+            $bomIds = $this->request->getPost('bom_id'); 
+            $qtys = $this->request->getPost('planned_qty'); 
+
+            if (!is_array($bomIds)) $bomIds = [$bomIds];
+            if (!is_array($qtys)) $qtys = [$qtys];
+
+            if (empty($bomIds[0])) throw new \Exception("Pilih minimal 1 resep/SOP.");
+
+            $this->db->transStart();
+            
             $dateStr = date('Ymd');
+            $spkCreated = 0;
+
             $lastSpk = $this->db->table('work_orders')
                 ->like('spk_number', "SPK-$dateStr", 'after')
                 ->orderBy('id', 'DESC')
                 ->get()
                 ->getRowArray();
             
-            if ($lastSpk) {
+            $seq = 0;
+            if ($lastSpk && isset($lastSpk['spk_number'])) {
                 $spkParts = explode('-', $lastSpk['spk_number']);
-                $seq = intval(end($spkParts)) + 1;
-            } else {
-                $seq = 1;
+                $seq = intval(end($spkParts));
             }
-            
-            $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
-            $this->db->table('work_orders')->insert([
-                'spk_number'  => $spkNumber, 
-                'bom_id'      => $this->request->getPost('bom_id'),
-                'planned_qty' => (int)$this->request->getPost('planned_qty'), 
-                'status'      => 'IN_PROGRESS',
-                'start_date'  => date('Y-m-d'), 
-                'source'      => 'MANUAL'
-            ]);
+            for ($i = 0; $i < count($bomIds); $i++) {
+                $bomId = $bomIds[$i];
+                $qty = (int)($qtys[$i] ?? 0);
 
-            if ($this->request->isAJAX()) {
-                return $this->response->setJSON(['status' => 'success', 'message' => "Surat Perintah Kerja $spkNumber berhasil diterbitkan!"]);
+                if (empty($bomId) || $qty <= 0) continue;
+
+                $seq++;
+                $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+                $this->db->table('work_orders')->insert([
+                    'spk_number'  => $spkNumber, 
+                    'bom_id'      => $bomId,
+                    'planned_qty' => $qty, 
+                    'status'      => 'IN_PROGRESS',
+                    'start_date'  => date('Y-m-d'), 
+                    'source'      => 'MANUAL'
+                ]);
+                
+                $spkCreated++;
             }
-            return redirect()->back()->with('success', "Surat Perintah Kerja $spkNumber berhasil diterbitkan!");
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Database error saat menerbitkan SPK Massal.");
+            }
+
+            return redirect()->back()->with('success', "$spkCreated SPK Reguler Gudang berhasil diterbitkan!");
+
         } catch (\Exception $e) {
-            if ($this->request->isAJAX()) {
-                return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
-            }
             return redirect()->back()->with('error', 'Gagal membuat SPK: ' . $e->getMessage());
         }
     }
@@ -251,6 +317,149 @@ class Production extends BaseController
         return redirect()->back()->with('success', "SPK {$spk['spk_number']} berhasil dibatalkan dan dihapus.");
     }
 
+    public function batch_create_spk()
+    {
+        if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') return redirect()->to('/portal');
+
+        $spkIds = $this->request->getPost('spk_ids');
+
+        if (empty($spkIds) || !is_array($spkIds)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada pesanan yang dipilih.']);
+        }
+
+        try {
+            $this->db->transStart();
+            $spkUpdated = 0;
+
+            foreach ($spkIds as $id) {
+                $spkDraft = $this->db->table('work_orders')->where('id', $id)->get()->getRowArray();
+                if ($spkDraft && $spkDraft['status'] !== 'COMPLETED') {
+                    $updateData = ['status' => 'IN_PROGRESS'];
+                    if (empty($spkDraft['start_date'])) {
+                        $updateData['start_date'] = date('Y-m-d');
+                    }
+                    $this->db->table('work_orders')->where('id', $id)->update($updateData);
+                    $spkUpdated++;
+                }
+            }
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception("Gagal memproses penerbitan SPK Massal.");
+            }
+
+            session()->setFlashdata('print_spk_ids', $spkIds);
+
+            return $this->response->setJSON([
+                'status' => 'success', 
+                'message' => "Berhasil memproses $spkUpdated SPK dari antrean pesanan B2B!",
+                'print_url' => base_url('production/print_spk_selected_batch')
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function print_spk_selected_batch()
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+        
+        $spkIds = session()->getFlashdata('print_spk_ids');
+        
+        if (empty($spkIds) || !is_array($spkIds)) {
+            return redirect()->to('/production')->with('error', 'Sesi cetak telah kedaluwarsa atau tidak ada SPK yang dipilih.');
+        }
+
+        $workOrders = $this->db->table('work_orders')
+            ->whereIn('id', $spkIds)
+            ->get()->getResultArray();
+
+        if (empty($workOrders)) {
+            return redirect()->to('/production')->with('error', 'Data SPK tidak ditemukan.');
+        }
+
+        $firstSpk = $workOrders[0];
+        $so = [];
+        if (!empty($firstSpk['so_id'])) {
+            $so = $this->db->table('b2b_sales_orders')
+                ->select('b2b_sales_orders.*, b2b_customers.company_name')
+                ->join('b2b_customers', 'b2b_customers.id = b2b_sales_orders.customer_id', 'left')
+                ->where('b2b_sales_orders.id', $firstSpk['so_id'])->get()->getRowArray();
+        } else {
+            $so = ['so_number' => 'GABUNGAN-PILIHAN', 'company_name' => 'Internal / Multi-Order'];
+        }
+
+        $targetProducts = [];
+        $aggregatedMaterials = [];
+        
+        foreach ($workOrders as $spk) {
+            $plannedQty = (int)$spk['planned_qty'];
+            $bom = $this->db->table('bom_headers')->where('id', $spk['bom_id'])->get()->getRowArray();
+            $fg = $this->db->table('warehouse_inventory')->where('sku', $bom['fg_sku'])->get()->getRowArray();
+            
+            $targetProducts[] = [
+                'sku'        => $fg['sku'] ?? $bom['fg_sku'],
+                'name'       => $fg['item_name'] ?? 'Unknown',
+                'qty'        => $plannedQty,
+                'spk_number' => $spk['spk_number'],
+                'notes'      => $spk['production_notes']
+            ];
+            
+            $items = $this->db->table('bom_items')->where('bom_id', $bom['id'])->get()->getResultArray();
+            foreach ($items as $item) {
+                $rmSku      = $item['rm_sku'];
+                $size       = (float)($item['size_per_item'] ?? 1);
+                $sizeUom    = strtoupper($item['size_uom'] ?? 'PCS');
+                $qtyPerItem = (float)($item['qty_per_item'] ?? 1);
+                $qtyUom     = strtoupper($item['qty_uom'] ?? 'PCS');
+                $unitAkhir  = strtoupper($item['unit'] ?? 'PCS');
+                
+                $groupKey = $rmSku . '_' . $size . '_' . $sizeUom;
+                
+                if (!isset($aggregatedMaterials[$groupKey])) {
+                    $rm = $this->db->table('raw_materials')->where('sku_material', $rmSku)->get()->getRowArray();
+                    if (!$rm) {
+                        $rmFg = $this->db->table('warehouse_inventory')->where('sku', $rmSku)->get()->getRowArray();
+                        $name = $rmFg['item_name'] ?? 'Unknown';
+                    } else {
+                        $name = $rm['material_name'];
+                    }
+                    
+                    $aggregatedMaterials[$groupKey] = [
+                        'sku'                    => $rmSku,
+                        'name'                   => $name,
+                        'size_per_item'          => $size,
+                        'size_uom'               => $sizeUom,
+                        'qty_uom'                => $qtyUom,
+                        'unit_akhir'             => $unitAkhir,
+                        'total_pcs'              => 0,
+                        'total_kebutuhan_gudang' => 0
+                    ];
+                }
+                
+                $aggregatedMaterials[$groupKey]['total_pcs'] += ($qtyPerItem * $plannedQty);
+                $aggregatedMaterials[$groupKey]['total_kebutuhan_gudang'] += ((float)$item['qty_required'] * $plannedQty);
+            }
+        }
+        
+        usort($aggregatedMaterials, function($a, $b) {
+            if ($a['sku'] == $b['sku']) return $b['size_per_item'] <=> $a['size_per_item'];
+            return strcmp($a['sku'], $b['sku']);
+        });
+
+        $company = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
+        
+        return view('production/print_spk_batch', [
+            'title'          => 'Rekap Kebutuhan Terpilih', 
+            'so'             => $so,
+            'targetProducts' => $targetProducts,
+            'materials'      => $aggregatedMaterials,
+            'company'        => $company
+        ]);
+    }
+
     public function bom_builder()
     {
         if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
@@ -276,12 +485,18 @@ class Production extends BaseController
             ->orderBy('bom_headers.id', 'DESC')
             ->get()->getResultArray();
 
+        $workers = $this->db->table('employees')
+            ->where('is_active', 1)
+            ->orderBy('name', 'ASC')
+            ->get()->getResultArray();
+
         return view('production/bom_builder', [
             'title' => 'Master Data BoM & Routing',
             'finishedGoods' => $finishedGoods,
             'rawMaterials' => $rawMaterials,
             'uomMasters' => $uomMasters,
-            'existingBoms' => $existingBoms
+            'existingBoms' => $existingBoms,
+            'workers' => $workers
         ]);
     }
 
@@ -382,6 +597,8 @@ class Production extends BaseController
                     $wage = ($workerType === 'Tetap') ? 0 : (float)str_replace(['Rp', '.', ' '], '', $op['wage'] ?? $op['wage_per_piece'] ?? '0');
                     $isFinal = ($idx === ($totalOps - 1)) ? 1 : 0;
                     $opNameFormatted = (count($sections) > 1) ? "[{$opMap['section_name']}] {$opName}" : $opName;
+                    
+                    $customWagesJson = !empty($op['custom_wages']) ? json_encode($op['custom_wages']) : null;
 
                     $this->db->table('bom_operations')->insert([
                         'bom_id'             => $bomId,
@@ -391,6 +608,7 @@ class Production extends BaseController
                         'worker_type'        => $workerType,
                         'specialty_required' => $op['specialty'] ?? null, 
                         'wage_per_piece'     => $wage,
+                        'custom_wages'       => $customWagesJson,
                         'is_final_step'      => $isFinal
                     ]);
                 }
@@ -505,6 +723,8 @@ class Production extends BaseController
                 $wage = ($workerType === 'Tetap') ? 0 : (float)str_replace(['Rp', '.', ' '], '', $op['wage'] ?? $op['wage_per_piece'] ?? '0');
                 $isFinal = ($idx === ($totalOps - 1)) ? 1 : 0;
                 $opNameFormatted = (count($sections) > 1) ? "[{$opMap['section_name']}] {$opName}" : $opName;
+                
+                $customWagesJson = !empty($op['custom_wages']) ? json_encode($op['custom_wages']) : null;
 
                 $this->db->table('bom_operations')->insert([
                     'bom_id'             => $id,
@@ -514,6 +734,7 @@ class Production extends BaseController
                     'worker_type'        => $workerType,
                     'specialty_required' => $op['specialty'] ?? null, 
                     'wage_per_piece'     => $wage,
+                    'custom_wages'       => $customWagesJson,
                     'is_final_step'      => $isFinal
                 ]);
             }
@@ -575,6 +796,7 @@ class Production extends BaseController
                     'worker_type'        => $op['worker_type'],
                     'specialty_required' => $op['specialty_required'],
                     'wage_per_piece'     => $op['wage_per_piece'],
+                    'custom_wages'       => $op['custom_wages'],
                     'is_final_step'      => $op['is_final_step']
                 ]);
             }
@@ -645,10 +867,13 @@ class Production extends BaseController
                     if (empty($sectionsMap[$secName]['section_code']) && !empty($secCode)) {
                         $sectionsMap[$secName]['section_code'] = $secCode;
                     }
+                    
+                    $customWagesDecoded = json_decode($op['custom_wages'] ?? '[]', true) ?: [];
 
                     $sectionsMap[$secName]['operations'][] = [
                         'name' => $opName, 'operation_name' => $opName, 'worker_type' => $op['worker_type'] ?? 'Borongan',
-                        'specialty_required' => $op['specialty_required'] ?? '', 'wage' => (float)($op['wage_per_piece'] ?? 0), 'wage_per_piece' => (float)($op['wage_per_piece'] ?? 0)
+                        'specialty_required' => $op['specialty_required'] ?? '', 'wage' => (float)($op['wage_per_piece'] ?? 0), 'wage_per_piece' => (float)($op['wage_per_piece'] ?? 0),
+                        'custom_wages' => $customWagesDecoded
                     ];
                 }
 
@@ -709,7 +934,28 @@ class Production extends BaseController
             if ($qtyProduced > $remaining) throw new \Exception("DITOLAK! Kuantitas setoran melebihi sisa target SPK. Sisa target: {$remaining}");
 
             $isTetapOp = (stripos($operation['worker_type'] ?? '', 'Tetap') !== false);
-            $laborRate = $isTetapOp ? 0.00 : (($customWage > 0) ? $customWage : (float)$operation['wage_per_piece']);
+            
+            // PRIORITAS UPAH: Form Input (Nego) -> BOM Exception -> BOM Standard -> 0 (Kalau Karyawan Tetap)
+            $laborRate = 0.00;
+            if (!$isTetapOp) {
+                if ($customWage > 0) {
+                    $laborRate = $customWage;
+                } else {
+                    $bomExceptions = json_decode($operation['custom_wages'] ?? '[]', true) ?: [];
+                    $exceptionFound = false;
+                    foreach ($bomExceptions as $ex) {
+                        if ($ex['employee_id'] === $employeeId) {
+                            $laborRate = (float)$ex['wage'];
+                            $exceptionFound = true;
+                            break;
+                        }
+                    }
+                    if (!$exceptionFound) {
+                        $laborRate = (float)$operation['wage_per_piece'];
+                    }
+                }
+            }
+            
             $totalWage = $qtyProduced * $laborRate;
 
             $extraMaterials = [];
@@ -891,6 +1137,19 @@ class Production extends BaseController
         
         $bom = $this->db->table('bom_headers')->where('id', $spk['bom_id'])->get()->getRowArray();
 
+        // 1. PRIORITAS UTAMA: Cek apakah ada Pengecualian Harga di BOM Builder
+        $bomExceptions = json_decode($op['custom_wages'] ?? '[]', true) ?: [];
+        foreach ($bomExceptions as $ex) {
+            if ($ex['employee_id'] === $employeeId) {
+                return $this->response->setJSON([
+                    'status'      => 'found',
+                    'custom_wage' => (float)$ex['wage'],
+                    'csrf_token'  => csrf_hash() 
+                ]);
+            }
+        }
+
+        // 2. PRIORITAS KEDUA: Cek History "Memori Cerdas" dari log setoran lama
         $lastLog = $this->db->table('production_logs')
             ->where('employee_id', $employeeId)
             ->where('operation_name', $op['operation_name'])
@@ -962,7 +1221,8 @@ class Production extends BaseController
                 'sku'        => $fg['sku'] ?? $bom['fg_sku'],
                 'name'       => $fg['item_name'] ?? 'Unknown',
                 'qty'        => $plannedQty,
-                'spk_number' => $spk['spk_number']
+                'spk_number' => $spk['spk_number'],
+                'notes'      => $spk['production_notes'] // Menambahkan Catatan Kustom (Contoh: DSM)
             ];
             
             $items = $this->db->table('bom_items')->where('bom_id', $bom['id'])->get()->getResultArray();
@@ -1197,12 +1457,13 @@ class Production extends BaseController
                     $newStatus = ($currentCompleted >= $newPlannedQty) ? 'COMPLETED' : 'IN_PROGRESS';
 
                     $this->db->table('work_orders')
-                        ->where('id', $existingSpk['id'])
-                        ->update([
-                            'planned_qty' => $newPlannedQty,
-                            'status'      => $newStatus,
-                            'end_date'    => ($newStatus === 'COMPLETED') ? date('Y-m-d') : null
-                        ]);
+                    ->where('id', $existingSpk['id'])
+                    ->update([
+                        'planned_qty'    => $newPlannedQty,
+                        'status'         => $newStatus,
+                        'completed_date' => ($newStatus === 'COMPLETED') ? date('Y-m-d') : null,
+                        'completed_at'   => ($newStatus === 'COMPLETED') ? date('Y-m-d H:i:s') : null
+                    ]);
 
                     $spkUpdated++;
                 }
@@ -1360,6 +1621,7 @@ class Production extends BaseController
                             'worker_type'        => $op['worker_type'],
                             'specialty_required' => $op['specialty_required'],
                             'wage_per_piece'     => $op['wage_per_piece'],
+                            'custom_wages'       => $op['custom_wages'],
                             'is_final_step'      => $op['is_final_step']
                         ]);
                     }
@@ -1374,6 +1636,127 @@ class Production extends BaseController
 
             $count = count($targetBomIds);
             return redirect()->back()->with('success', "Berhasil menimpa formulasi resep ke <b>{$count} Resep Target</b>.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+    
+    public function update_log_wage()
+    {
+        if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Akses ditolak.']);
+        }
+
+        try {
+            $this->db->transStart(); // Gunakan transaksi agar aman
+
+            $logId = $this->request->getPost('log_id');
+            $newWage = (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('new_wage') ?? '0');
+            $isUpdateMaster = $this->request->getPost('update_master') === 'true'; // Tangkap perintah update master
+
+            $log = $this->db->table('production_logs')->where('id', $logId)->get()->getRowArray();
+            
+            if (!$log || $log['status'] !== 'Pending') {
+                throw new \Exception("Gagal: Data setoran tidak ditemukan atau sudah tidak berstatus Pending.");
+            }
+
+            // 1. Update harga di Log Setoran
+            $newTotalWage = $log['qty_produced'] * $newWage;
+            $this->db->table('production_logs')->where('id', $logId)->update([
+                'wage_per_piece' => $newWage,
+                'total_wage'     => $newTotalWage
+            ]);
+
+            // 2. Jika dicentang, update juga di Master BOM Operations
+            if ($isUpdateMaster) {
+                // Cari SPK untuk mengetahui BOM ID nya
+                $spk = $this->db->table('work_orders')->where('spk_number', $log['spk_number'])->get()->getRowArray();
+                if ($spk) {
+                    $this->db->table('bom_operations')
+                        ->where('bom_id', $spk['bom_id'])
+                        ->where('operation_name', $log['operation_name'])
+                        ->update(['wage_per_piece' => $newWage]);
+                }
+            }
+
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false) throw new \Exception("Database Error.");
+
+            $msg = 'Upah berhasil direvisi untuk setoran ini.';
+            if ($isUpdateMaster) $msg = 'Upah direvisi DAN Master Resep berhasil diperbarui!';
+
+            return $this->response->setJSON([
+                'status'  => 'success', 
+                'message' => $msg
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+    }
+    
+    public function mass_update_custom_wage()
+    {
+        if (!session()->get('isLoggedIn') || session()->get('role') !== 'admin') return redirect()->to('/portal');
+
+        try {
+            $employeeId = $this->request->getPost('employee_id');
+            $keyword    = strtoupper(trim($this->request->getPost('operation_keyword')));
+            $productKw  = strtoupper(trim($this->request->getPost('product_keyword') ?? '')); // Tangkap Filter Produk
+            $newWage    = (float) str_replace(['Rp', '.', ' '], '', $this->request->getPost('custom_wage') ?? '0');
+
+            if (empty($employeeId) || empty($keyword)) {
+                throw new \Exception("Karyawan dan Nama Tahapan wajib diisi.");
+            }
+
+            // Cari tahapan kerja, join dengan tabel master BOM agar bisa filter nama produk
+            $builder = $this->db->table('bom_operations')
+                ->select('bom_operations.*, bom_headers.recipe_name')
+                ->join('bom_headers', 'bom_headers.id = bom_operations.bom_id')
+                ->like('bom_operations.operation_name', $keyword);
+
+            // Jika Admin mengisi filter nama produk (Misal: VIXION)
+            if (!empty($productKw)) {
+                $builder->like('bom_headers.recipe_name', $productKw);
+            }
+
+            $operations = $builder->get()->getResultArray();
+
+            if (empty($operations)) {
+                throw new \Exception("Tidak ditemukan tahapan '{$keyword}' pada produk yang dicari.");
+            }
+
+            $updatedCount = 0;
+            $this->db->transStart();
+
+            foreach ($operations as $op) {
+                $customWages = json_decode($op['custom_wages'] ?? '[]', true) ?: [];
+                $isFound = false;
+
+                foreach ($customWages as &$cw) {
+                    if ($cw['employee_id'] === $employeeId) {
+                        $cw['wage'] = $newWage;
+                        $isFound = true;
+                        break;
+                    }
+                }
+
+                if (!$isFound) {
+                    $customWages[] = ['employee_id' => $employeeId, 'wage' => $newWage];
+                }
+
+                $this->db->table('bom_operations')->where('id', $op['id'])->update([
+                    'custom_wages' => json_encode($customWages)
+                ]);
+                $updatedCount++;
+            }
+
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false) throw new \Exception("Gagal memproses database.");
+
+            $filterMsg = empty($productKw) ? "Semua Produk" : "Produk '{$productKw}'";
+            return redirect()->back()->with('success', "Berhasil! Harga khusus (Rp " . number_format($newWage,0,',','.') . ") untuk tahapan '{$keyword}' diterapkan pada <b>{$updatedCount} Resep</b> ({$filterMsg}).");
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

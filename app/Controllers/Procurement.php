@@ -335,9 +335,6 @@ class Procurement extends BaseController
         }
     }
 
-    // ====================================================================
-    // FUNGSI BARU: AMBIL DATA ITEM PO UNTUK MODAL CHECKLIST
-    // ====================================================================
     public function get_po_items($id)
     {
         if ($this->request->isAJAX()) {
@@ -347,7 +344,6 @@ class Procurement extends BaseController
                 ->where('po_id', $id)
                 ->get()->getResultArray();
             
-            // Hitung sisa yang belum diterima agar UI bisa membatasi Input
             foreach ($items as &$item) {
                 $remBase = (float)$item['qty_base'] - (float)$item['qty_received'];
                 $item['remaining_qty'] = $remBase / (float)$item['conversion_factor'];
@@ -357,9 +353,6 @@ class Procurement extends BaseController
         }
     }
 
-    // ====================================================================
-    // FUNGSI BARU: PENERIMAAN BARANG PARSIAL (DYNAMIC QTY)
-    // ====================================================================
     public function receive_goods($poId)
     {
         if ($redirect = $this->ensureLogin()) return $redirect;
@@ -374,7 +367,6 @@ class Procurement extends BaseController
             $poItems = $this->db->table('purchase_order_items')->where('po_id', $poId)->get()->getResultArray();
             if (empty($poItems)) throw new \Exception("Item PO tidak ditemukan.");
 
-            // Ambil array input jumlah dari User & Catatan Penerimaan
             $inputQtys = $this->request->getPost('qty_received'); 
             $receiveNotes = trim((string)$this->request->getPost('receive_notes'));
 
@@ -397,13 +389,10 @@ class Procurement extends BaseController
                     }
 
                     $hasReceiving = true;
-                    // Konversi input user (purchase uom) ke base uom gudang
                     $receivedBase = $inputQty * (float)$item['conversion_factor'];
-                    // Hitung nilai rupiah barang yang masuk saat ini
                     $receivedValue = $inputQty * (float)$item['unit_price'];
                     $totalReceivedValue += $receivedValue;
 
-                    // 1. UPDATE STOK GUDANG + HPP RATA-RATA
                     $inventoryService->receiveRawMaterial(
                         $item['rm_sku'],
                         $receivedBase,
@@ -413,9 +402,7 @@ class Procurement extends BaseController
                         "Penerimaan PO " . ($receiveNotes ? "($receiveNotes)" : "")
                     );
 
-                    // 2. UPDATE PROGRESS ITEM DI TABEL PO
                     $newQtyReceived = (float)$item['qty_received'] + $receivedBase;
-                    // Beri sedikit toleransi desimal
                     $isFully = ($newQtyReceived >= ((float)$item['qty_base'] - 0.01)) ? 1 : 0;
 
                     $this->db->table('purchase_order_items')->where('id', $itemId)->update([
@@ -427,7 +414,6 @@ class Procurement extends BaseController
                         $allFullyReceived = false;
                     }
                 } else {
-                    // Cek jika item ini sebelumnya belum lunas diterima, maka keseluruhan PO belum lunas diterima.
                     if ($item['is_fully_received'] == 0) {
                         $allFullyReceived = false;
                     }
@@ -438,7 +424,6 @@ class Procurement extends BaseController
                 throw new \Exception("Ditolak! Anda belum mengisi kuantitas penerimaan barang sama sekali.");
             }
 
-            // 3. UPDATE STATUS PO
             $newStatus = $allFullyReceived ? 'RECEIVED' : 'ORDERED';
             $newReceiptStatus = $allFullyReceived ? 'FULLY_RECEIVED' : 'PARTIAL';
 
@@ -449,7 +434,6 @@ class Procurement extends BaseController
                 'received_by'    => session()->get('name') ?? 'SYSTEM'
             ]);
 
-            // 4. JURNAL AKUNTANSI OTOMATIS: PERSEDIAAN VS HUTANG USAHA (Sesuai nilai barang yang datang saja)
             $journalItems = [
                 ['account_id' => $this->getAccountByCode($this->accInventory)['id'], 'debit' => $totalReceivedValue, 'credit' => 0, 'memo' => 'Persediaan Bahan Baku Masuk Gudang'],
                 ['account_id' => $this->getAccountByCode($this->accAP)['id'], 'debit' => 0, 'credit' => $totalReceivedValue, 'memo' => 'Hutang Pembelian Vendor']
@@ -480,9 +464,6 @@ class Procurement extends BaseController
         }
     }
 
-    // ====================================================================
-    // FUNGSI BARU: BATALKAN PENERIMAAN BARANG (VOID PO TERPUSAT)
-    // ====================================================================
     public function void_po($poId)
     {
         if ($redirect = $this->ensureLogin()) return $redirect;
@@ -501,21 +482,18 @@ class Procurement extends BaseController
             foreach ($poItems as $item) {
                 if ((float)$item['qty_received'] > 0) {
                     $hasReceivedItems = true;
-                    // Hitung nilai uang yang harus di-void (HPP)
                     $receivedPurchaseQty = (float)$item['qty_received'] / (float)$item['conversion_factor'];
                     $receivedValue = $receivedPurchaseQty * (float)$item['unit_price'];
 
-                    // 1. Tarik Kembali Stok Gudang & Revert HPP
                     $inventoryService->voidReceipt(
                         $item['rm_sku'],
-                        $item['qty_received'], // base uom
+                        $item['qty_received'], 
                         $receivedValue,
                         $po['po_number'],
                         $poId,
                         'Batal Penerimaan PO (VOID)'
                     );
 
-                    // Reset Qty Received di Item
                     $this->db->table('purchase_order_items')->where('id', $item['id'])->update([
                         'qty_received' => 0,
                         'is_fully_received' => 0
@@ -525,7 +503,6 @@ class Procurement extends BaseController
 
             if (!$hasReceivedItems) throw new \Exception("Sistem Gagal: Belum ada barang yang diterima dari PO ini.");
 
-            // 2. Kembalikan Status PO ke titik awal (ORDERED)
             $this->db->table('purchase_orders')->where('id', $poId)->update([
                 'status'         => 'ORDERED',
                 'receipt_status' => 'PENDING',
@@ -533,7 +510,6 @@ class Procurement extends BaseController
                 'received_by'    => null
             ]);
 
-            // 3. Batalkan SEMUA Jurnal Hutang terkait PO ini
             $accService = new \App\Services\AccountingService();
             $journals = $this->db->table('journals')
                 ->where('source_module', 'PROCUREMENT')

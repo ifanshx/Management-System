@@ -37,10 +37,6 @@ if (!function_exists('format_compact')) {
     .title-text h1 { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; line-height: 1; color: var(--text-main);}
     .title-text p { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted); font-weight: 600; margin: 0;}
     
-    .live-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 900; text-transform: uppercase; border: 1px solid rgba(16, 185, 129, 0.2); letter-spacing: 0.5px;}
-    .live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulseLive 2s infinite;}
-    @keyframes pulseLive { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-
     /* =========================================================
        2. KPI CARDS
        ========================================================= */
@@ -97,9 +93,12 @@ if (!function_exists('format_compact')) {
 <?php 
     $total_paid = 0; $draft_count = 0; $paid_count = 0;
     foreach($payrolls as $p) {
-        if(strpos($p['status'], 'Paid') !== false) {
-            $total_paid += $p['total_amount']; $paid_count++;
-        } else { $draft_count++; }
+        if(strpos($p['status'] ?? '', 'Paid') !== false) {
+            $total_paid += (float) ($p['total_amount'] ?? 0); 
+            $paid_count++;
+        } else { 
+            $draft_count++; 
+        }
     }
 ?>
 
@@ -108,7 +107,7 @@ if (!function_exists('format_compact')) {
         <div class="title-icon"><i class="ph-fill ph-calculator"></i></div>
         <div class="title-text">
             <h1>Mesin Kalkulator Penggajian</h1>
-            <p>Proses kalkulasi otomatis, memisahkan Borongan (Cash) dan Tetap (Transfer).</p>
+            <p>Proses kalkulasi otomatis, menghitung Upah Borongan & Gaji Pokok secara presisi.</p>
         </div>
     </div>
 </div>
@@ -117,7 +116,7 @@ if (!function_exists('format_compact')) {
     <div class="stat-box box-green">
         <div>
             <div class="stat-label">Total Dana Dicairkan (Histori)</div>
-            <div class="stat-val">Rp <?= number_format($total_paid, 0, ',', '.') ?></div>
+            <div class="stat-val">Rp <?= format_compact($total_paid) ?></div>
         </div>
         <div style="font-size: 11px; font-weight: 800; opacity: 0.9; margin-top: 12px; display: flex; align-items: center; gap: 6px;">
             <i class="ph-fill ph-check-circle"></i> Dari <?= $paid_count ?> Dokumen Lunas
@@ -148,8 +147,8 @@ if (!function_exists('format_compact')) {
         <div class="form-group" style="margin: 0;">
             <label>Status Pekerja</label>
             <select name="employee_status" class="form-control" required style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232563eb%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 10px auto;">
-                <option value="Borongan">Borongan (Upah Produksi)</option>
-                <option value="Tetap">Tetap (Gaji Pokok)</option>
+                <option value="Tetap">Tetap (Tarik Semua Jenis Penghasilan)</option>
+                <option value="Borongan">Borongan Murni (Tanpa Gaji Pokok)</option>
             </select>
         </div>
 
@@ -211,28 +210,28 @@ if (!function_exists('format_compact')) {
                     <tr>
                         <td>
                             <div style="font-family: 'Space Mono', monospace; color: #2563eb; font-weight: 900; font-size: 13px; background: rgba(37, 99, 235, 0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 4px;">
-                                <?= esc($pay['payroll_code']) ?>
+                                <?= esc($pay['payroll_code'] ?? '-') ?>
                             </div>
                             <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                <i class="ph-bold ph-clock"></i> <?= date('d M Y, H:i', strtotime($pay['created_at'])) ?>
+                                <i class="ph-bold ph-clock"></i> <?= date('d M Y, H:i', strtotime($pay['created_at'] ?? 'now')) ?>
                             </div>
                         </td>
                         <td style="text-align:center;">
-                            <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;"><?= esc($pay['employee_status']) ?></div>
-                            <span class="status-badge status-info"><?= strtoupper(esc($pay['salary_type'])) ?></span>
+                            <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;"><?= esc($pay['employee_status'] ?? '-') ?></div>
+                            <span class="status-badge status-info"><?= strtoupper(esc($pay['salary_type'] ?? '-')) ?></span>
                         </td>
                         <td style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-align:center;">
-                            <?= date('d M', strtotime($pay['period_start'])) ?> - <?= date('d M Y', strtotime($pay['period_end'])) ?>
+                            <?= date('d M', strtotime($pay['period_start'] ?? 'now')) ?> - <?= date('d M Y', strtotime($pay['period_end'] ?? 'now')) ?>
                         </td>
                         <td style="text-align: center;">
-                            <span style="font-weight: 900; font-size: 14px; font-family: 'Space Mono', monospace;"><?= $pay['total_employees'] ?></span> 
+                            <span style="font-weight: 900; font-size: 14px; font-family: 'Space Mono', monospace;"><?= esc($pay['total_employees'] ?? 0) ?></span> 
                             <span style="font-size: 10px; color: var(--text-muted); font-weight: 700;">Org</span>
                         </td>
                         <td style="text-align: right; color: #10b981; font-weight: 900; font-family: 'Space Mono', monospace; font-size: 15px;">
-                            <?= number_format($pay['total_amount'], 0, ',', '.') ?>
+                            <?= number_format((float)($pay['total_amount'] ?? 0), 0, ',', '.') ?>
                         </td>
                         <td style="text-align: center;">
-                            <?php if($pay['status'] == 'Draft'): ?>
+                            <?php if(($pay['status'] ?? '') == 'Draft'): ?>
                                 <span class="status-badge status-draft"><i class="ph-bold ph-warning-circle"></i> DRAFT</span>
                             <?php else: ?>
                                 <span class="status-badge status-paid"><i class="ph-bold ph-check-circle"></i> PAID</span>
@@ -240,11 +239,11 @@ if (!function_exists('format_compact')) {
                         </td>
                         <td style="text-align: center;">
                             <div class="action-btns">
-                                <a href="<?= base_url('/payroll/detail/' . $pay['id']) ?>" class="btn-icon btn-detail" title="Rincian Slip Gaji">
+                                <a href="<?= base_url('/payroll/detail/' . ($pay['id'] ?? '')) ?>" class="btn-icon btn-detail" title="Rincian Slip Gaji">
                                     <i class="ph-bold ph-eye"></i>
                                 </a>
-                                <?php if($pay['status'] == 'Draft'): ?>
-                                    <a href="#" onclick="confirmDeleteDoc(event, '<?= base_url('/payroll/delete/' . $pay['id']) ?>')" class="btn-icon btn-delete" title="Hapus Dokumen">
+                                <?php if(($pay['status'] ?? '') == 'Draft'): ?>
+                                    <a href="#" onclick="confirmDeleteDoc(event, '<?= base_url('/payroll/delete/' . ($pay['id'] ?? '')) ?>')" class="btn-icon btn-delete" title="Hapus Dokumen">
                                         <i class="ph-bold ph-trash"></i>
                                     </a>
                                 <?php else: ?>
@@ -265,10 +264,10 @@ if (!function_exists('format_compact')) {
 <script>
     <?php if(session()->getFlashdata('success')): ?>
         const isDark = document.documentElement.classList.contains('dark');
-        Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#38bdf8', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' } });
+        Swal.fire({ icon: 'success', title: 'Berhasil!', html: <?= json_encode(session()->getFlashdata('success')) ?>, confirmButtonColor: '#38bdf8', background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
     <?php if(session()->getFlashdata('error')): ?>
-        Swal.fire({ icon: 'error', title: 'Perhatian Sistem', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', customClass: { popup: 'swal2-custom-radius' } });
+        Swal.fire({ icon: 'error', title: 'Perhatian Sistem', html: <?= json_encode(session()->getFlashdata('error')) ?>, confirmButtonColor: '#ef4444', customClass: { popup: 'swal2-custom-radius' } });
     <?php endif; ?>
 
     function confirmCustom(e, btn) {
@@ -277,7 +276,7 @@ if (!function_exists('format_compact')) {
         const isDark = document.documentElement.classList.contains('dark');
         Swal.fire({
             title: 'Kalkulasi Gaji?',
-            html: '<span style="font-size:14px;">Sistem akan menarik data absensi/produksi, memotong kasbon, dan membuat draf slip gaji.</span>',
+            html: '<span style="font-size:14px;">Sistem akan menarik data absensi, produksi borongan, kasbon, dan uang makan secara otomatis.</span>',
             icon: 'info', showCancelButton: true, confirmButtonColor: '#2563eb',
             cancelButtonColor: isDark ? '#3f3f46' : '#cbd5e1', confirmButtonText: 'Ya, Mulai', cancelButtonText: 'Batal',
             background: isDark ? '#18181b' : '#ffffff', color: isDark ? '#f4f4f5' : '#09090b', customClass: { popup: 'swal2-custom-radius' }

@@ -144,8 +144,102 @@
         .dropdown-divider { height: 1px; background: var(--border-subtle); margin: 8px 0; }
 
         /* =========================================================
-           RESPONSIVE (MOBILE & TABLET FIX)
+           GLOBAL SWEETALERT PREMIUM UI (FIXED TOAST BUG)
            ========================================================= */
+        .swal2-container.swal2-backdrop-show { 
+            background: rgba(15, 23, 42, 0.75) !important; 
+            backdrop-filter: blur(5px) !important; 
+        }
+        
+        /* Modal Tengah (Popup Besar) */
+        .swal2-popup.swal2-modal { 
+            border-radius: 24px !important; 
+            padding: 2.5em 2em 2em 2em !important; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25) !important; 
+            border: 1px solid var(--border-subtle) !important; 
+            background: var(--bg-surface) !important; 
+            color: var(--text-main) !important; 
+        }
+
+        .swal2-popup.swal2-modal .swal2-title { 
+            font-family: 'Plus Jakarta Sans', sans-serif !important; 
+            font-weight: 900 !important; 
+            color: var(--text-main) !important;
+            font-size: 24px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .swal2-popup.swal2-modal .swal2-html-container { 
+            font-family: 'Plus Jakarta Sans', sans-serif !important; 
+            font-weight: 600 !important; 
+            color: var(--text-muted) !important; 
+            font-size: 15px !important;
+            line-height: 1.6 !important;
+            margin-bottom: 25px !important;
+        }
+        
+        .swal2-actions {
+            gap: 12px !important;
+            margin-top: 15px !important;
+        }
+
+        .swal2-confirm, .swal2-cancel { 
+            border-radius: 12px !important; 
+            font-weight: 800 !important; 
+            padding: 14px 28px !important; 
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 15px !important;
+            letter-spacing: 0.5px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .swal2-confirm {
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.3) !important;
+        }
+        
+        .swal2-confirm:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 25px -6px rgba(0,0,0,0.4) !important;
+        }
+
+        .swal2-cancel {
+            background: var(--bg-input) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border-subtle) !important;
+        }
+        
+        .swal2-cancel:hover {
+            background: var(--border-subtle) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        /* Notifikasi Pojok Kanan (Toast) */
+        .swal2-popup.swal2-toast {
+            background: var(--bg-surface) !important;
+            border: 1px solid var(--border-subtle) !important;
+            box-shadow: var(--shadow-lg) !important;
+            border-radius: 14px !important;
+            padding: 12px 20px !important;
+            color: var(--text-main) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        
+        .swal2-popup.swal2-toast .swal2-title {
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            margin: 0 !important;
+            color: var(--text-main) !important;
+        }
+        
+        html.dark .swal2-popup.swal2-modal,
+        html.dark .swal2-popup.swal2-toast {
+            background: var(--bg-surface) !important;
+            border-color: rgba(255,255,255,0.1) !important;
+        }
+
+        /* =========================================================
+            RESPONSIVE (MOBILE & TABLET FIX)
+            ========================================================= */
         @media (max-width: 1200px) { 
             .header-search input { width: 240px; } 
             .header-search input:focus { width: 290px; } 
@@ -473,28 +567,6 @@
                 profileMenu.classList.remove('show');
                 profileBtn.classList.remove('active');
             }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            <?php if (session()->getFlashdata('success')): ?>
-                Swal.fire({
-                    icon: 'success', title: 'Berhasil!',
-                    html: <?= json_encode(session()->getFlashdata('success')) ?>,
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 4500, timerProgressBar: true,
-                    background: document.documentElement.classList.contains('dark') ? '#18181b' : '#ffffff',
-                    color: document.documentElement.classList.contains('dark') ? '#f4f4f5' : '#09090b', iconColor: '#10b981'
-                });
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('error')): ?>
-                Swal.fire({
-                    icon: 'error', title: 'Peringatan Sistem',
-                    html: <?= json_encode(session()->getFlashdata('error')) ?>,
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 5500, timerProgressBar: true,
-                    background: document.documentElement.classList.contains('dark') ? '#18181b' : '#ffffff',
-                    color: document.documentElement.classList.contains('dark') ? '#f4f4f5' : '#09090b', iconColor: '#ef4444'
-                });
-            <?php endif; ?>
         });
 
         window.formatRupiah = function(angka) {

@@ -137,34 +137,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                   <?php foreach($purchaseOrders as $po): 
-    $paidAmt = (float)($po['paid_amount'] ?? 0);
-    $totalAmt = (float)($po['total_amount'] ?? 0);
-    $remAmt = max(0, $totalAmt - $paidAmt);
+                    <?php foreach($purchaseOrders as $po): 
+                        $paidAmt = (float)($po['paid_amount'] ?? 0);
+                        $totalAmt = (float)($po['total_amount'] ?? 0);
+                        $remAmt = max(0, $totalAmt - $paidAmt);
 
-    $rawPhone = $po['supplier_phone'] ?? '';
-    $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
-    if (!empty($cleanPhone)) {
-        if (substr($cleanPhone, 0, 1) === '0') $cleanPhone = '62' . substr($cleanPhone, 1);
-    }
-    $isPhoneValid = (strlen($cleanPhone) >= 10);
-    
-    $compName = esc($company['company_name'] ?? 'Perusahaan Kami');
-    $waText = "Halo *" . esc($po['supplier_name']) . "*,\n\nKami dari *" . $compName . "* memesan barang:\n\n📄 *[ No. PO: " . esc($po['po_number']) . " ]*\n------------------\n";
-    if (isset($groupedItems[$po['id']])) {
-        $num = 1;
-        foreach ($groupedItems[$po['id']] as $itm) {
-            // PERBAIKAN: Gunakan purchase_uom untuk WA ke Supplier
-            $uomBeli = esc($itm['purchase_uom'] ?? $itm['unit']); 
-            $waText .= "{$num}. {$itm['material_name']} ({$itm['qty']} {$uomBeli})\n";
-            $num++;
-        }
-    }
-    $waText .= "------------------\n💰 *Total:* Rp " . number_format($totalAmt, 0, ',', '.') . "\n💳 *Termin:* " . esc($po['payment_term'] ?? 'Cash') . "\n\nTerima kasih 🙏";
-    $waLink = $isPhoneValid ? "https://wa.me/{$cleanPhone}?text=" . urlencode($waText) : "#";
-    
-    $isPartialReceived = ($po['status'] === 'ORDERED' && ($po['receipt_status'] ?? 'PENDING') === 'PARTIAL');
-?>
+                        $rawPhone = $po['supplier_phone'] ?? '';
+                        $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+                        if (!empty($cleanPhone)) {
+                            if (substr($cleanPhone, 0, 1) === '0') $cleanPhone = '62' . substr($cleanPhone, 1);
+                        }
+                        $isPhoneValid = (strlen($cleanPhone) >= 10);
+                        
+                        $compName = esc($company['company_name'] ?? 'Perusahaan Kami');
+                        $waText = "Halo *" . esc($po['supplier_name']) . "*,\n\nKami dari *" . $compName . "* memesan barang:\n\n📄 *[ No. PO: " . esc($po['po_number']) . " ]*\n------------------\n";
+                        if (isset($groupedItems[$po['id']])) {
+                            $num = 1;
+                            foreach ($groupedItems[$po['id']] as $itm) {
+                                $uomBeli = esc($itm['purchase_uom'] ?? $itm['unit']); 
+                                $waText .= "{$num}. {$itm['material_name']} ({$itm['qty']} {$uomBeli})\n";
+                                $num++;
+                            }
+                        }
+                        $waText .= "------------------\n💰 *Total:* Rp " . number_format($totalAmt, 0, ',', '.') . "\n💳 *Termin:* " . esc($po['payment_term'] ?? 'Cash') . "\n\nTerima kasih 🙏";
+                        $waLink = $isPhoneValid ? "https://wa.me/{$cleanPhone}?text=" . urlencode($waText) : "#";
+                        
+                        $isPartialReceived = ($po['status'] === 'ORDERED' && ($po['receipt_status'] ?? 'PENDING') === 'PARTIAL');
+                    ?>
                     <tr>
                         <td>
                             <span style="font-family:'Space Mono'; font-weight:900; color:var(--brand);"><?= esc($po['po_number']) ?></span>
@@ -245,7 +244,8 @@
                         <td><span style="background:var(--brand-soft); color:var(--brand); padding:4px 8px; border-radius:6px; font-family:'Space Mono'; font-weight:800;"><?= esc($s['phone'] ?: 'BELUM DIISI') ?></span></td>
                         <td><?= esc($s['address']) ?></td>
                         <td style="text-align:center;">
-                            <button class="btn-action" style="background:var(--warning-soft); color:var(--warning);" onclick='openSupplierModal(<?= json_encode($s) ?>)'><i class="ph-bold ph-pencil"></i></button>
+                            <button class="btn-action" style="background:var(--warning-soft); color:var(--warning);" onclick='openSupplierModal(<?= json_encode($s, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>)'><i class="ph-bold ph-pencil"></i></button>
+                            
                             <button class="btn-action" style="background:var(--danger-soft); color:var(--danger);" onclick="openConfirm('<?= base_url('/procurement/delete_supplier/'.$s['id']) ?>', 'Hapus Vendor')"><i class="ph-bold ph-trash"></i></button>
                         </td>
                     </tr>
@@ -386,10 +386,10 @@
         const textColor = isDark ? '#f4f4f5' : '#09090b';
 
         <?php if(session()->getFlashdata('success')): ?>
-            Swal.fire({ icon: 'success', title: 'Berhasil!', html: '<?= session()->getFlashdata('success') ?>', confirmButtonColor: '#10b981', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
+            Swal.fire({ icon: 'success', title: 'Berhasil!', html: <?= json_encode(session()->getFlashdata('success')) ?>, confirmButtonColor: '#10b981', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
         <?php endif; ?>
         <?php if(session()->getFlashdata('error')): ?>
-            Swal.fire({ icon: 'error', title: 'Gagal!', html: '<?= session()->getFlashdata('error') ?>', confirmButtonColor: '#ef4444', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
+            Swal.fire({ icon: 'error', title: 'Gagal!', html: <?= json_encode(session()->getFlashdata('error')) ?>, confirmButtonColor: '#ef4444', background: bgColor, color: textColor, customClass: { popup: 'swal2-custom-radius' } });
         <?php endif; ?>
     });
 
@@ -456,16 +456,13 @@
         openModal('paymentModal');
     }
 
-    // =========================================================================
-    // FUNGSI MEMUAT UI CHECKLIST PENERIMAAN BARANG PARSIAL
-    // =========================================================================
     function openReceiveModal(id, no) {
         document.getElementById('receiveForm').action = "<?= base_url('/procurement/receive_goods/') ?>" + id;
         document.getElementById('receiveTitlePo').innerText = no;
         
         let tbody = document.getElementById('chkBody');
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;"><i class="ph-bold ph-spinner-gap ph-spin" style="font-size:30px; color:var(--brand);"></i><br><br>Memuat data pesanan...</td></tr>';
-        document.getElementById('btnSubmitReceive').style.display = 'none'; // Sembunyikan tombol saat loading
+        document.getElementById('btnSubmitReceive').style.display = 'none'; 
 
         openModal('receiveModal');
         
@@ -480,7 +477,6 @@
                 data.forEach(item => {
                     let remQty = parseFloat(item.remaining_qty);
                     
-                    // Hanya tampilkan item yang masih punya sisa pesanan (belum komplit)
                     if (remQty > 0) {
                         validItems++;
                         tbody.innerHTML += `
@@ -553,7 +549,6 @@
 
     handleAjaxForm('supplierForm', 'supplierModal');
     
-    // Khusus form Payment tidak pakai AJAX murni untuk redirect refresh yg bersih 
     document.getElementById('paymentForm').addEventListener('submit', function(e) {
         let amountInput = this.querySelector('input[name="pay_amount"]');
         if (amountInput) { amountInput.value = amountInput.value.replace(/\./g, ''); }
@@ -561,7 +556,6 @@
         btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin"></i> Membayar...';
     });
 
-    // Khusus form Terima Barang
     document.getElementById('receiveForm').addEventListener('submit', function(e) {
         let btn = document.getElementById('btnSubmitReceive');
         btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner-gap ph-spin" style="font-size:20px;"></i> Menyimpan ke Gudang...';

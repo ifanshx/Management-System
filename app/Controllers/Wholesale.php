@@ -10,14 +10,18 @@ class Wholesale extends BaseController
     {
         $this->db = \Config\Database::connect();
         
-        // AUTO-PATCH SCHEMA
+        // AUTO-PATCH SCHEMA DATABASE
         try { $this->db->query("ALTER TABLE b2b_sales_orders MODIFY COLUMN status ENUM('PENDING','PARTIAL','PAID','RETURNED') DEFAULT 'PENDING'"); } catch (\Exception $e) {}
         try { $this->db->query("ALTER TABLE b2b_sales_orders ADD COLUMN discount DECIMAL(15,2) DEFAULT 0 AFTER total_amount"); } catch (\Exception $e) {}
         try { $this->db->query("ALTER TABLE b2b_sales_orders ADD COLUMN discount_percent INT DEFAULT 0 AFTER discount"); } catch (\Exception $e) {}
+        try { $this->db->query("ALTER TABLE b2b_sales_orders ADD COLUMN bonus_notes TEXT NULL AFTER discount_percent"); } catch (\Exception $e) {} // KOLOM BONUS BARU
         try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN additional_fee DECIMAL(15,2) DEFAULT 0 AFTER price"); } catch (\Exception $e) {}
         try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN additional_note VARCHAR(255) NULL AFTER additional_fee"); } catch (\Exception $e) {}
         try { $this->db->query("ALTER TABLE b2b_sales_order_items ADD COLUMN shipped_qty INT DEFAULT 0 AFTER qty"); } catch (\Exception $e) {}
         try { $this->db->query("ALTER TABLE b2b_sales_returns MODIFY COLUMN refund_type ENUM('REDUCE_RECEIVABLE','CASH_REFUND','CUSTOMER_CREDIT','REPAIR_REPLACE') DEFAULT 'REDUCE_RECEIVABLE'"); } catch (\Exception $e) {}
+        
+        // Auto Patch Master Data jika modul Warehouse belum sempat diakses
+        try { $this->db->query("ALTER TABLE warehouse_inventory ADD COLUMN motor_category VARCHAR(50) DEFAULT 'Universal' AFTER item_type"); } catch (\Exception $e) {}
         
         // Fix null values
         try { $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = 0 WHERE shipped_qty IS NULL"); } catch (\Exception $e) {}
@@ -44,18 +48,33 @@ class Wholesale extends BaseController
             }
         }
 
-        if (!preg_match('/^62[0-9]{8,15}$/', $phone)) {
-            return '';
-        }
+        if (!preg_match('/^62[0-9]{8,15}$/', $phone)) return '';
         return $phone;
+    }
+
+    // Fungsi Helper Dinamis untuk melengkapi data produk PRD (Barang Jadi) maupun MAT (Bahan Baku/Bonus)
+    private function enrichItemsWithNames(array &$items) {
+        foreach ($items as &$itm) {
+            $sku = $itm['fg_sku'];
+            if (strpos($sku, 'MAT-') === 0) {
+                $inv = $this->db->table('raw_materials')->where('sku_material', $sku)->get()->getRowArray();
+                $itm['item_name'] = $inv['material_name'] ?? $sku;
+                $itm['motor_category'] = $inv['material_category'] ?? 'Material/Sparepart';
+                $itm['item_type'] = $inv['unit'] ?? 'PCS';
+                $itm['hpp'] = $inv['hpp'] ?? 0;
+            } else {
+                $inv = $this->db->table('warehouse_inventory')->where('sku', $sku)->get()->getRowArray();
+                $itm['item_name'] = $inv['item_name'] ?? $sku;
+                $itm['motor_category'] = $inv['motor_category'] ?? 'Universal';
+                $itm['item_type'] = $inv['item_type'] ?? 'Produk';
+                $itm['hpp'] = $inv['hpp'] ?? 0;
+            }
+        }
     }
 
     public function index(): string
     {
-        if (!session()->get('isLoggedIn')) {
-            header("Location: " . base_url('/portal'));
-            exit;
-        }
+        if (!session()->get('isLoggedIn')) { header("Location: " . base_url('/portal')); exit; }
 
         $salesOrders = $this->db->table('b2b_sales_orders')
             ->select('b2b_sales_orders.*, b2b_customers.company_name')
@@ -64,35 +83,35 @@ class Wholesale extends BaseController
             ->get()->getResultArray();
 
         foreach ($salesOrders as &$so) {
-            $items = $this->db->table('b2b_sales_order_items')
-                ->select('b2b_sales_order_items.*, warehouse_inventory.item_name, warehouse_inventory.hpp')
-                ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
-                ->where('so_id', $so['id'])
-                ->get()->getResultArray();
+            $items = $this->db->table('b2b_sales_order_items')->where('so_id', $so['id'])->get()->getResultArray();
+            $this->enrichItemsWithNames($items);
 
             foreach ($items as &$item) {
-                $returned = $this->db->table('b2b_sales_return_items')
-                    ->selectSum('qty_return')
-                    ->where('so_item_id', $item['id'])
-                    ->get()->getRowArray();
-
+                $returned = $this->db->table('b2b_sales_return_items')->selectSum('qty_return')->where('so_item_id', $item['id'])->get()->getRowArray();
                 $item['shipped_qty']    = (int)($item['shipped_qty'] ?? 0);
                 $item['unshipped_qty']  = max(0, (int)$item['qty'] - $item['shipped_qty']);
                 $item['returned_qty']   = (int)($returned['qty_return'] ?? 0);
                 $item['returnable_qty'] = max(0, (int)$item['qty'] - $item['returned_qty']);
             }
-
-            $returns = $this->db->table('b2b_sales_returns')->where('so_id', $so['id'])->orderBy('id', 'DESC')->get()->getResultArray();
             $so['items']   = $items;
-            $so['returns'] = $returns; 
+            $so['returns'] = $this->db->table('b2b_sales_returns')->where('so_id', $so['id'])->orderBy('id', 'DESC')->get()->getResultArray();
         }
 
         $customers = $this->db->table('b2b_customers')->orderBy('company_name', 'ASC')->get()->getResultArray();
-        $products  = $this->db->table('warehouse_inventory')->select('sku, item_name, physical_stock, hpp, wholesale_price')->like('sku', 'PRD-', 'after')->get()->getResultArray();
-        $company   = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
+        $products  = $this->db->table('warehouse_inventory')
+                            ->select('sku, item_name, physical_stock, hpp, wholesale_price, item_type, motor_category')
+                            ->like('sku', 'PRD-', 'after')->orderBy('motor_category', 'ASC')->orderBy('item_name', 'ASC')->get()->getResultArray();
+        
+        $rawMaterials = $this->db->table('raw_materials')
+                            ->select('sku_material as sku, material_name as item_name, physical_stock, hpp, material_category as motor_category, unit as item_type')
+                            ->orderBy('material_name', 'ASC')->get()->getResultArray();
 
-        $data = ['title' => 'B2B Wholesale & Piutang', 'salesOrders' => $salesOrders, 'customers' => $customers, 'products' => $products, 'company' => $company];
-        return view('wholesale/index', $data);
+        $company = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
+
+        return view('wholesale/index', [
+            'title' => 'B2B Wholesale & Piutang', 'salesOrders' => $salesOrders, 
+            'customers' => $customers, 'products' => $products, 'rawMaterials' => $rawMaterials, 'company' => $company
+        ]);
     }
 
     private function cleanRupiah(?string $string): float
@@ -109,39 +128,66 @@ class Wholesale extends BaseController
         return (int)($row['qty_return'] ?? 0);
     }
 
-    public function store_so()
+   public function store_so()
     {
         try {
             $this->db->transStart();
 
             $customerId = $this->request->getPost('customer_id');
             $orderType  = $this->request->getPost('order_type') ?? 'READY'; 
-            $fgSkus     = $this->request->getPost('fg_sku'); 
-            $qtys       = $this->request->getPost('qty');     
-            $prices     = $this->request->getPost('unit_price'); 
-            $addFees    = $this->request->getPost('additional_fee');
-            $addNotes   = $this->request->getPost('additional_note');
+            
+            // Produk Utama
+            $fgSkus     = $this->request->getPost('fg_sku') ?? []; 
+            $qtys       = $this->request->getPost('qty') ?? [];     
+            $prices     = $this->request->getPost('unit_price') ?? []; 
+            $addFees    = $this->request->getPost('additional_fee') ?? [];
+            $addNotes   = $this->request->getPost('additional_note') ?? [];
+            
+            // Produk Bonus (Gratis)
+            $bonusSkus  = $this->request->getPost('bonus_sku') ?? [];
+            $bonusQtys  = $this->request->getPost('bonus_qty') ?? [];
+
+            // Titipan Produksi / Buffer Stok (TIDAK MASUK INVOICE, LANGSUNG KE SPK)
+            $bufferSkus = $this->request->getPost('buffer_sku') ?? [];
+            $bufferQtys = $this->request->getPost('buffer_qty') ?? [];
+            
+            // Menggabungkan Bonus ke dalam pesanan sebagai item dengan harga 0
+            for ($i = 0; $i < count($bonusSkus); $i++) {
+                if (!empty($bonusSkus[$i]) && (int)$bonusQtys[$i] > 0) {
+                    $fgSkus[]   = $bonusSkus[$i];
+                    $qtys[]     = $bonusQtys[$i];
+                    $prices[]   = 0;
+                    $addFees[]  = 0;
+                    $addNotes[] = 'BONUS GRATIS';
+                }
+            }
+
             $dpAmount    = $this->cleanRupiah($this->request->getPost('dp_amount'));
             $discPercent = (int)$this->request->getPost('discount_percent');
             $dueDate     = $this->request->getPost('due_date');
 
             if ($discPercent < 0) $discPercent = 0; if ($discPercent > 100) $discPercent = 100;
-            if (empty($fgSkus) || count($fgSkus) === 0) throw new \Exception("Anda harus memilih minimal 1 produk.");
+            if (empty($fgSkus) || count($fgSkus) === 0) throw new \Exception("Anda harus memilih minimal 1 produk utama.");
 
             $totalAmount  = 0; $totalHppCost = 0; $validItems   = [];
 
             for ($i = 0; $i < count($fgSkus); $i++) {
                 if (!empty($fgSkus[$i])) {
-                    $sku     = $fgSkus[$i]; $qty = (int)$qtys[$i]; $price = $this->cleanRupiah($prices[$i]);
-                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah($addFees[$i]) : 0;
+                    $sku     = $fgSkus[$i]; $qty = (int)$qtys[$i]; 
+                    $price   = isset($prices[$i]) ? $this->cleanRupiah((string)$prices[$i]) : 0;
+                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah((string)$addFees[$i]) : 0;
                     $addNote = $addNotes[$i] ?? '';
 
-                    if ($qty <= 0 || ($price + $addFee) <= 0) continue;
+                    if ($qty <= 0) continue;
 
-                    $stock = $this->db->table('warehouse_inventory')->where('sku', $sku)->get()->getRowArray();
+                    $isMat = (strpos($sku, 'MAT-') === 0);
+                    $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                    $skuCol = $isMat ? 'sku_material' : 'sku';
+
+                    $stock = $this->db->table($table)->where($skuCol, $sku)->get()->getRowArray();
                     
                     if ($orderType === 'READY') {
-                        if (!$stock || $stock['physical_stock'] < $qty) throw new \Exception("GAGAL! Pesanan bersifat Ready Stock, sisa {$sku} di gudang tidak mencukupi.");
+                        if (!$stock || $stock['physical_stock'] < $qty) throw new \Exception("GAGAL! Pesanan Ready Stock, sisa {$sku} di gudang tidak mencukupi.");
                         $totalHppCost += ($qty * ($stock['hpp'] ?? 0));
                     }
 
@@ -149,7 +195,7 @@ class Wholesale extends BaseController
                     $totalAmount += $subtotal;
                     
                     $validItems[] = [
-                        'sku' => $sku, 'qty' => $qty, 'price' => $price,
+                        'sku' => $sku, 'qty' => $qty, 'price' => $price, 'is_mat' => $isMat, 'table' => $table, 'sku_col' => $skuCol,
                         'additional_fee' => $addFee, 'additional_note' => $addNote, 'subtotal' => $subtotal
                     ];
                 }
@@ -164,7 +210,6 @@ class Wholesale extends BaseController
 
             $status      = ($dpAmount >= $grandTotal) ? 'PAID' : ($dpAmount > 0 ? 'PARTIAL' : 'PENDING');
             $soNumber    = "SO-" . date('Ymd') . "-" . rand(1000, 9999);
-            
             $orderStatus = ($orderType === 'READY') ? 'SHIPPED' : 'PENDING'; 
 
             $this->db->table('b2b_sales_orders')->insert([
@@ -175,7 +220,6 @@ class Wholesale extends BaseController
             ]);
             $soId = $this->db->insertID();
 
-            // LOGIKA TAMBAH POIN: 1 Poin per Rp 100.000 transaksi
             $pointsEarned = floor($grandTotal / 100000);
             if ($pointsEarned > 0) {
                 $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsEarned, $customerId]);
@@ -193,19 +237,21 @@ class Wholesale extends BaseController
                 ]);
                 
                 if ($orderType === 'READY') {
-                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$item['qty'], $item['sku']]);
+                    $this->db->query("UPDATE {$item['table']} SET physical_stock = physical_stock - ? WHERE {$item['sku_col']} = ?", [$item['qty'], $item['sku']]);
                 } 
-                else if ($orderType === 'PREORDER') {
+                else if ($orderType === 'PREORDER' && !$item['is_mat']) {
+                    // SPK hanya dicetak untuk Produk PRD, bukan Material Bonus
                     $bom = $this->db->table('bom_headers')->where('fg_sku', $item['sku'])->orderBy('id', 'DESC')->get()->getRowArray();
                     if ($bom) {
                         $dateStr = date('Ymd');
                         $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                        
+                        $seq = 1;
                         if ($lastSpk) {
-                            $parts = explode('-', $lastSpk['spk_number']);
-                            $seq = intval(end($parts)) + 1;
-                        } else {
-                            $seq = 1;
+                            $spkParts = explode('-', $lastSpk['spk_number']);
+                            $seq = intval(end($spkParts)) + 1;
                         }
+                        
                         $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
                         $this->db->table('work_orders')->insert([
@@ -225,6 +271,39 @@ class Wholesale extends BaseController
                 }
             }
 
+            // PROSES TITIPAN PRODUKSI / BUFFER STOK
+            $bufferSpkCreated = 0;
+            for ($i = 0; $i < count($bufferSkus); $i++) {
+                if (!empty($bufferSkus[$i]) && (int)$bufferQtys[$i] > 0) {
+                    $sku = $bufferSkus[$i];
+                    $qty = (int)$bufferQtys[$i];
+                    
+                    $bom = $this->db->table('bom_headers')->where('fg_sku', $sku)->orderBy('id', 'DESC')->get()->getRowArray();
+                    if ($bom) {
+                        $dateStr = date('Ymd');
+                        $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                        $seq = 1;
+                        if ($lastSpk) {
+                            $spkParts = explode('-', $lastSpk['spk_number']);
+                            $seq = intval(end($spkParts)) + 1;
+                        }
+                        $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+                        $this->db->table('work_orders')->insert([
+                            'so_id'            => null, // Null agar tidak nyangkut di riwayat SO
+                            'spk_number'       => $spkNumber,
+                            'bom_id'           => $bom['id'],
+                            'planned_qty'      => $qty, 
+                            'production_notes' => "BUFFER STOK (Dititipkan via $soNumber)",
+                            'status'           => 'IN_PROGRESS',
+                            'start_date'       => date('Y-m-d'),
+                            'source'           => 'MANUAL' // Treat as manual SPK (Reguler)
+                        ]);
+                        $bufferSpkCreated++;
+                    }
+                }
+            }
+
             // Jurnal B2B
             $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
             if (!$piutangAcc) {
@@ -238,14 +317,14 @@ class Wholesale extends BaseController
 
             $this->db->table('journals')->insert([
                 'journal_number'   => 'JRN-B2B-'.time(), 'transaction_date' => date('Y-m-d'),
-                'description'      => "Penjualan Grosir B2B: $soNumber" . ($orderType === 'PREORDER' ? " [Pre-Order]" : " [Ready Stock]"),
-                'total_amount'     => $grandTotal, 'created_by'        => session()->get('name') ?? 'System'
+                'description'      => "Penjualan Grosir B2B: $soNumber",
+                'total_amount'     => $grandTotal, 'created_by' => session()->get('name') ?? 'System'
             ]);
             $journalId = $this->db->insertID();
 
             if ($rev && $kas && $piutangAcc) {
                 $sisaPiutang = $grandTotal - $dpAmount;
-                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $rev['id'], 'debit' => 0, 'credit' => $grandTotal, 'line_description' => 'Pendapatan B2B Bersih']);
+                $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $rev['id'], 'debit' => 0, 'credit' => $grandTotal, 'line_description' => 'Pendapatan B2B']);
                 if ($dpAmount > 0) {
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $kas['id'], 'debit' => $dpAmount, 'credit' => 0, 'line_description' => 'DP Kas B2B']);
                     $dateCode  = date('Ymd');
@@ -271,6 +350,7 @@ class Wholesale extends BaseController
             $pesan = "Pesanan Grosir berhasil diterbitkan. <br>🎁 <b>Dapat $pointsEarned Poin Hadiah/THR.</b>";
             if ($orderType === 'PREORDER') {
                 if ($autoSpkCreated > 0) $pesan .= "<br><br><span style='color:#10b981;'><i class='ph-fill ph-check-circle'></i> <b>Berhasil membuat $autoSpkCreated SPK Pabrik otomatis.</b></span>";
+                if ($bufferSpkCreated > 0) $pesan .= "<br><span style='color:#3b82f6;'><i class='ph-fill ph-factory'></i> <b>Ditambah $bufferSpkCreated SPK Titipan (Stok Gudang).</b></span>";
                 if (count($missingBomSkus) > 0) {
                     $skus = implode(', ', $missingBomSkus);
                     $pesan .= "<br><br><span style='color:#ef4444;'><i class='ph-fill ph-warning-circle'></i> <b>Peringatan:</b> Produk [$skus] belum memiliki Resep BOM. Harap buat SPK manual.</span>";
@@ -280,6 +360,112 @@ class Wholesale extends BaseController
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+public function export_excel(string $id)
+    {
+        if (!session()->get('isLoggedIn')) return redirect()->to('/portal');
+        
+        $so = $this->db->table('b2b_sales_orders')
+            ->select('b2b_sales_orders.*, b2b_customers.company_name, b2b_customers.address, b2b_customers.phone')
+            ->join('b2b_customers', 'b2b_customers.id = b2b_sales_orders.customer_id')
+            ->where('b2b_sales_orders.id', $id)
+            ->get()->getRowArray();
+
+        if (!$so) return redirect()->back()->with('error', 'SO tidak ditemukan.');
+
+        $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+        $this->enrichItemsWithNames($items);
+
+        $fileName = "Invoice_Noric_B2B_" . $so['so_number'] . ".xls";
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$fileName\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        echo "<table border='1' style='font-family: sans-serif; border-collapse: collapse;'>";
+        echo "<tr><th colspan='9' style='background-color:#10b981; color:#ffffff; font-size:16px; padding:10px;'>INVOICE GROSIR B2B - {$so['so_number']}</th></tr>";
+        echo "<tr><td colspan='9'><strong>Toko/Mitra:</strong> {$so['company_name']}</td></tr>";
+        echo "<tr><td colspan='9'><strong>Telepon:</strong> {$so['phone']}</td></tr>";
+        echo "<tr><td colspan='9'><strong>Tanggal Transaksi:</strong> " . date('d F Y', strtotime($so['order_date'])) . "</td></tr>";
+        
+        echo "<tr style='background-color:#e2e8f0;'>
+                <th>No</th>
+                <th>Kode SKU</th>
+                <th>Kategori/Sifat</th>
+                <th>Tipe Fisik</th>
+                <th>Nama Produk / Barang</th>
+                <th>Catatan Kustom</th>
+                <th>Qty</th>
+                <th>Harga Satuan (Rp)</th>
+                <th>Subtotal (Rp)</th>
+              </tr>";
+        
+       // PENGELOMPOKAN BARANG UNTUK EXCEL BERDASARKAN DATABASE (item_type)
+        $catSilencer = [];
+        $catLeheran  = [];
+        $catFullsystem = [];
+        $catBonus    = [];
+        $catLainnya  = [];
+
+        foreach ($items as $itm) {
+            $p = $itm['price'] + $itm['additional_fee'];
+            $note = strtoupper($itm['additional_note'] ?? '');
+            $itemType = strtoupper($itm['item_type'] ?? '');
+            $name = strtoupper($itm['item_name']);
+            $sku = strtoupper($itm['fg_sku']);
+
+            if ($p == 0 && strpos($note, 'BONUS') !== false) {
+                $catBonus[] = $itm;
+            // LOGIKA BARU: Pastikan nama SLINCER/LEHER ditarik duluan agar tidak nyangkut di -FSY-
+            } elseif (strpos($itemType, 'SILENCER') !== false || strpos($itemType, 'SLIP-ON') !== false || strpos($name, 'SLINCER') !== false || strpos($sku, '-SLC-') !== false) {
+                $catSilencer[] = $itm;
+            } elseif (strpos($itemType, 'LEHERAN') !== false || strpos($itemType, 'HEADER') !== false || strpos($name, 'LEHER') !== false || strpos($sku, '-LHR-') !== false) {
+                $catLeheran[] = $itm;
+            } elseif (strpos($itemType, 'FULLSYSTEM') !== false || strpos($sku, '-FSY-') !== false) {
+                $catFullsystem[] = $itm;
+            } else {
+                $catLainnya[] = $itm;
+            }
+        }
+        
+        $no = 1;
+
+        // Fungsi Bantuan Render Baris Excel
+        $renderRows = function($title, $arrayItems, $bgColor, &$no) {
+            if (empty($arrayItems)) return;
+            echo "<tr><td colspan='9' style='background-color:{$bgColor}; font-weight:900; font-size:13px; text-align:center;'>--- {$title} ---</td></tr>";
+            foreach ($arrayItems as $itm) {
+                $p = $itm['price'] + $itm['additional_fee'];
+                echo "<tr>";
+                echo "<td align='center'>".$no++."</td>";
+                echo "<td>{$itm['fg_sku']}</td>";
+                echo "<td align='center'>{$itm['motor_category']}</td>";
+                echo "<td align='center'>{$itm['item_type']}</td>";
+                echo "<td>{$itm['item_name']}</td>";
+                echo "<td>{$itm['additional_note']}</td>";
+                echo "<td align='center'>{$itm['qty']}</td>";
+                echo "<td align='right'>".number_format($p, 0, ',', '.')."</td>";
+                echo "<td align='right'>".number_format($itm['subtotal'], 0, ',', '.')."</td>";
+                echo "</tr>";
+            }
+        };
+
+        // Cetak Grup secara Berurutan
+        $renderRows("KATEGORI: FULLSYSTEM / PAKET LENGKAP", $catFullsystem, '#fef08a', $no);
+        $renderRows("KATEGORI: SILENCER", $catSilencer, '#dbeafe', $no);
+        $renderRows("KATEGORI: LEHERAN", $catLeheran, '#fce7f3', $no);
+        $renderRows("KATEGORI: LAIN-LAIN / SPAREPART", $catLainnya, '#f3f4f6', $no);
+        $renderRows("BARANG BONUS / GRATIS", $catBonus, '#fef3c7', $no);
+        
+        // FOOTER TOTALAN
+        echo "<tr><td colspan='8' align='right'><strong>Total Kotor</strong></td><td align='right'><strong>".number_format($so['total_amount'] + $so['discount'], 0, ',', '.')."</strong></td></tr>";
+        echo "<tr><td colspan='8' align='right'><strong>Diskon Transaksi ({$so['discount_percent']}%)</strong></td><td align='right'><strong>-".number_format($so['discount'], 0, ',', '.')."</strong></td></tr>";
+        echo "<tr><td colspan='8' align='right'><strong>GRAND TOTAL TAGIHAN</strong></td><td align='right' style='background-color:#fef08a;'><strong>".number_format($so['total_amount'], 0, ',', '.')."</strong></td></tr>";
+        echo "<tr><td colspan='8' align='right'><strong>Telah Dibayar (Deposit)</strong></td><td align='right' style='background-color:#bbf7d0;'><strong>".number_format($so['paid_amount'], 0, ',', '.')."</strong></td></tr>";
+        echo "<tr><td colspan='8' align='right'><strong>Sisa Piutang Berjalan</strong></td><td align='right' style='background-color:#fecaca; color:#ef4444;'><strong>".number_format($so['total_amount'] - $so['paid_amount'], 0, ',', '.')."</strong></td></tr>";
+        echo "</table>";
+        exit;
     }
 
     public function pay_installment(string $id)
@@ -367,12 +553,16 @@ class Wholesale extends BaseController
                 $unshipped = (int)$item['qty'] - (int)$item['shipped_qty'];
                 if ($shipQty > $unshipped) throw new \Exception("Kuantitas kirim melebihi batas sisa barang yang belum dikirim.");
 
-                $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
+                $isMat = (strpos($item['fg_sku'], 'MAT-') === 0);
+                $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                $skuCol = $isMat ? 'sku_material' : 'sku';
+
+                $stock = $this->db->table($table)->where($skuCol, $item['fg_sku'])->get()->getRowArray();
                 if (!$stock || $stock['physical_stock'] < $shipQty) {
-                    throw new \Exception("Stok Gudang fisik untuk knalpot {$item['fg_sku']} kurang (Tersedia: " . ($stock['physical_stock'] ?? 0) . "). Tidak bisa mengirim!");
+                    throw new \Exception("Stok Gudang fisik untuk barang {$item['fg_sku']} kurang (Tersedia: " . ($stock['physical_stock'] ?? 0) . "). Tidak bisa mengirim!");
                 }
 
-                $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$shipQty, $item['fg_sku']]);
+                $this->db->query("UPDATE {$table} SET physical_stock = physical_stock - ? WHERE {$skuCol} = ?", [$shipQty, $item['fg_sku']]);
                 $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$shipQty, $itemId]);
 
                 $totalHppCost += ($shipQty * ($stock['hpp'] ?? 0));
@@ -463,7 +653,11 @@ class Wholesale extends BaseController
 
                 $totalReturn += $subtotal;
 
-                $stock = $this->db->table('warehouse_inventory')->where('sku', $soItem['fg_sku'])->get()->getRowArray();
+                $isMat = (strpos($soItem['fg_sku'], 'MAT-') === 0);
+                $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                $skuCol = $isMat ? 'sku_material' : 'sku';
+
+                $stock = $this->db->table($table)->where($skuCol, $soItem['fg_sku'])->get()->getRowArray();
                 $hpp   = (float)($stock['hpp'] ?? 0);
                 
                 $shippedQty = (int)$soItem['shipped_qty'];
@@ -471,7 +665,7 @@ class Wholesale extends BaseController
                 
                 if ($hppToReverse > 0) {
                     $totalHppReturn += ($hppToReverse * $hpp);
-                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$hppToReverse, $soItem['fg_sku']]);
+                    $this->db->query("UPDATE {$table} SET physical_stock = physical_stock + ? WHERE {$skuCol} = ?", [$hppToReverse, $soItem['fg_sku']]);
                     
                     if ($refundType === 'REPAIR_REPLACE') {
                         $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty - ? WHERE id = ?", [$hppToReverse, $soItemId]);
@@ -687,11 +881,8 @@ class Wholesale extends BaseController
 
         if (!$so) return redirect()->back()->with('error', 'Dokumen Sales Order tidak ditemukan.');
 
-        $items = $this->db->table('b2b_sales_order_items')
-            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name')
-            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
-            ->where('so_id', $id)
-            ->get()->getResultArray();
+        $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+        $this->enrichItemsWithNames($items);
 
         $company = [];
         if($this->db->tableExists('company_settings')) {
@@ -723,10 +914,10 @@ class Wholesale extends BaseController
             $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
             foreach ($items as $item) {
                 if ((int)$item['shipped_qty'] > 0) {
-                    $this->db->query(
-                        "UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", 
-                        [$item['shipped_qty'], $item['fg_sku']]
-                    );
+                    $isMat = (strpos($item['fg_sku'], 'MAT-') === 0);
+                    $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                    $skuCol = $isMat ? 'sku_material' : 'sku';
+                    $this->db->query("UPDATE {$table} SET physical_stock = physical_stock + ? WHERE {$skuCol} = ?", [$item['shipped_qty'], $item['fg_sku']]);
                 }
             }
 
@@ -770,50 +961,26 @@ class Wholesale extends BaseController
     
     public function get_pending_by_customer($customerId = null)
     {
-        if (empty($customerId)) {
-            $customerId = $this->request->getUri()->getSegment(3);
-        }
+        if (empty($customerId)) $customerId = $this->request->getUri()->getSegment(3);
+        if (empty($customerId)) return $this->response->setJSON(['status' => 'error', 'message' => 'Parameter Toko tidak valid.']);
 
-        if (empty($customerId)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Parameter Toko tidak valid.']);
-        }
-
-        $sql = "
-            SELECT 
-                i.id, 
-                i.so_id, 
-                i.fg_sku, 
-                i.qty, 
-                i.shipped_qty, 
-                o.so_number, 
-                o.order_date, 
-                o.shipping_status,
-                w.item_name 
+        $items = $this->db->query("
+            SELECT i.id, i.so_id, i.fg_sku, i.qty, i.shipped_qty, o.so_number, o.order_date, o.shipping_status
             FROM b2b_sales_order_items i
             JOIN b2b_sales_orders o ON o.id = i.so_id
-            LEFT JOIN warehouse_inventory w ON w.sku = i.fg_sku
-            WHERE o.customer_id = ?
-            ORDER BY o.order_date ASC
-        ";
+            WHERE o.customer_id = ? ORDER BY o.order_date ASC
+        ", [$customerId])->getResultArray();
         
-        $items = $this->db->query($sql, [$customerId])->getResultArray();
+        $this->enrichItemsWithNames($items);
         
         $pendingItems = [];
         foreach ($items as $itm) {
             if ($itm['shipping_status'] === 'SHIPPED') continue;
-
-            $qtyOrder = (int)($itm['qty'] ?? 0);
-            $qtyShipped = (int)($itm['shipped_qty'] ?? 0);
-            
-            if ($qtyOrder > $qtyShipped) {
+            if ((int)$itm['qty'] > (int)$itm['shipped_qty']) {
                 $pendingItems[] = $itm;
             }
         }
-
-        return $this->response->setJSON([
-            'status' => 'success', 
-            'data' => $pendingItems
-        ]);
+        return $this->response->setJSON(['status' => 'success', 'data' => $pendingItems]);
     }
 
     public function process_shipment_gabungan()
@@ -836,13 +1003,17 @@ class Wholesale extends BaseController
             if (!$so) continue;
             
             $soIdsToUpdate[] = $so['id'];
+
+            $isMat = (strpos($item['fg_sku'], 'MAT-') === 0);
+            $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+            $skuCol = $isMat ? 'sku_material' : 'sku';
             
-            $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
+            $stock = $this->db->table($table)->where($skuCol, $item['fg_sku'])->get()->getRowArray();
             if (!$stock || (int)$stock['physical_stock'] < $shipQty) {
                 throw new \Exception("Gagal: Stok Gudang untuk {$item['fg_sku']} kurang dari {$shipQty}!");
             }
 
-            $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$shipQty, $item['fg_sku']]);
+            $this->db->query("UPDATE {$table} SET physical_stock = physical_stock - ? WHERE {$skuCol} = ?", [$shipQty, $item['fg_sku']]);
             $totalHppCost += ($shipQty * (float)$stock['hpp']);
             
             $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$shipQty, $itemId]);
@@ -885,15 +1056,10 @@ class Wholesale extends BaseController
         }
 
         $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            return redirect()->back()->with('error', 'Gagal memproses pengiriman gabungan.');
-        }
+        if ($this->db->transStatus() === false) return redirect()->back()->with('error', 'Gagal memproses pengiriman gabungan.');
 
         $soIdsString = implode('-', $soIdsToUpdate);
-        return redirect()->back()
-            ->with('success', 'Pengiriman gabungan berhasil diproses dan stok telah dipotong!')
-            ->with('print_gabungan', $soIdsString);
+        return redirect()->back()->with('success', 'Pengiriman gabungan berhasil diproses dan stok telah dipotong!')->with('print_gabungan', $soIdsString);
     }
 
     public function print_sj_gabungan($soIdsStr)
@@ -907,20 +1073,16 @@ class Wholesale extends BaseController
         $customer = $this->db->table('b2b_customers')->where('id', $sos[0]['customer_id'])->get()->getRowArray();
         
         $items = $this->db->table('b2b_sales_order_items')
-            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name, b2b_sales_orders.so_number')
-            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
+            ->select('b2b_sales_order_items.*, b2b_sales_orders.so_number')
             ->join('b2b_sales_orders', 'b2b_sales_orders.id = b2b_sales_order_items.so_id')
             ->whereIn('b2b_sales_order_items.so_id', $soIds)
             ->get()->getResultArray();
+        
+        $this->enrichItemsWithNames($items);
             
         $company = $this->db->tableExists('company_settings') ? $this->db->table('company_settings')->get()->getRowArray() : [];
         
-        return view('wholesale/print_sj_gabungan', [
-            'sos' => $sos,
-            'customer' => $customer,
-            'items' => $items,
-            'company' => $company
-        ]);
+        return view('wholesale/print_sj_gabungan', ['sos' => $sos, 'customer' => $customer, 'items' => $items, 'company' => $company]);
     }
     
     public function get_so(string $id)
@@ -930,18 +1092,11 @@ class Wholesale extends BaseController
         $so = $this->db->table('b2b_sales_orders')->where('id', $id)->get()->getRowArray();
         if (!$so) return $this->response->setJSON(['status' => 'error', 'message' => 'SO tidak ditemukan']);
 
-        $items = $this->db->table('b2b_sales_order_items')
-            ->select('b2b_sales_order_items.*, warehouse_inventory.item_name')
-            ->join('warehouse_inventory', 'warehouse_inventory.sku = b2b_sales_order_items.fg_sku', 'left')
-            ->where('so_id', $id)
-            ->get()->getResultArray();
-
+        $items = $this->db->table('b2b_sales_order_items')->where('so_id', $id)->get()->getResultArray();
+        $this->enrichItemsWithNames($items);
+        
         $so['items'] = $items;
-
-        return $this->response->setJSON([
-            'status' => 'success',
-            'data'   => $so
-        ]);
+        return $this->response->setJSON(['status' => 'success', 'data' => $so]);
     }
 
     public function add_item_to_so()
@@ -950,28 +1105,35 @@ class Wholesale extends BaseController
             $this->db->transStart();
 
             $soId = $this->request->getPost('so_id');
-            $fgSkus = $this->request->getPost('fg_sku'); 
-            $qtys = $this->request->getPost('qty');     
-            $prices = $this->request->getPost('unit_price'); 
-            $addFees = $this->request->getPost('additional_fee');
-            $addNotes = $this->request->getPost('additional_note');
+            $fgSkus = $this->request->getPost('fg_sku') ?? []; 
+            $qtys = $this->request->getPost('qty') ?? [];     
+            $prices = $this->request->getPost('unit_price') ?? []; 
+            $addFees = $this->request->getPost('additional_fee') ?? [];
+            $addNotes = $this->request->getPost('additional_note') ?? [];
+
+            // TANGKAP DATA BONUS DARI MODAL EDIT ITEM
+            $bonusSkus = $this->request->getPost('bonus_sku') ?? [];
+            $bonusQtys = $this->request->getPost('bonus_qty') ?? [];
+            
+            for ($i = 0; $i < count($bonusSkus); $i++) {
+                if (!empty($bonusSkus[$i]) && (int)$bonusQtys[$i] > 0) {
+                    $fgSkus[]   = $bonusSkus[$i];
+                    $qtys[]     = $bonusQtys[$i];
+                    $prices[]   = 0;
+                    $addFees[]  = 0;
+                    $addNotes[] = 'BONUS GRATIS';
+                }
+            }
 
             if (empty($soId)) throw new \Exception("ID SO tidak valid.");
             if (empty($fgSkus) || count($fgSkus) === 0) throw new \Exception("Anda harus memilih minimal 1 produk.");
 
             $so = $this->db->table('b2b_sales_orders')->where('id', $soId)->get()->getRowArray();
             if (!$so) throw new \Exception("Pesanan (SO) tidak ditemukan.");
-            
-            if ($so['shipping_status'] === 'SHIPPED') {
-                throw new \Exception("Gagal: Semua barang pada Pesanan ini telah terkirim 100% (SHIPPED). Silakan buat SO baru.");
-            }
-            if ($so['status'] === 'RETURNED') {
-                throw new \Exception("Gagal: Pesanan ini sudah berstatus Diretur (RETURNED).");
-            }
+            if ($so['shipping_status'] === 'SHIPPED') throw new \Exception("Gagal: Pesanan ini telah terkirim 100%.");
+            if ($so['status'] === 'RETURNED') throw new \Exception("Gagal: Pesanan ini sudah berstatus Diretur.");
 
-            // PERBAIKAN LOGIKA: Semua yang bisa diedit di sini PASTI pesanan PREORDER.
-            // Karena jika READY, statusnya langsung SHIPPED, dan sudah diblokir di atas.
-            $orderType = 'PREORDER';
+            $orderType = 'PREORDER'; // Default edit behavior
 
             $totalAdditionalAmount = 0;
             $totalHppCost = 0;
@@ -981,62 +1143,46 @@ class Wholesale extends BaseController
                 if (!empty($fgSkus[$i])) {
                     $sku     = $fgSkus[$i]; 
                     $qty     = (int)$qtys[$i]; 
-                    $price   = $this->cleanRupiah($prices[$i]);
-                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah($addFees[$i]) : 0;
+                    $price   = isset($prices[$i]) ? $this->cleanRupiah((string)$prices[$i]) : 0;
+                    $addFee  = isset($addFees[$i]) ? $this->cleanRupiah((string)$addFees[$i]) : 0;
                     $addNote = $addNotes[$i] ?? '';
 
-                    if ($qty <= 0 || ($price + $addFee) <= 0) continue;
+                    if ($qty <= 0) continue;
 
-                    $stock = $this->db->table('warehouse_inventory')->where('sku', $sku)->get()->getRowArray();
+                    $isMat = (strpos($sku, 'MAT-') === 0);
+                    $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                    $skuCol = $isMat ? 'sku_material' : 'sku';
+
+                    $stock = $this->db->table($table)->where($skuCol, $sku)->get()->getRowArray();
                     
-                    if ($orderType === 'READY') {
-                        if (!$stock || $stock['physical_stock'] < $qty) {
-                            throw new \Exception("GAGAL! Pesanan ini bersifat Ready Stock, sisa {$sku} di gudang tidak mencukupi untuk tambahan ini.");
-                        }
-                        $totalHppCost += ($qty * ($stock['hpp'] ?? 0));
-                    }
-
                     $subtotal = $qty * ($price + $addFee);
                     $totalAdditionalAmount += $subtotal;
                     
                     $shippedQty = ($orderType === 'READY') ? $qty : 0;
                     
                     $this->db->table('b2b_sales_order_items')->insert([
-                        'so_id' => $soId, 
-                        'fg_sku' => $sku, 
-                        'qty' => $qty,
-                        'shipped_qty' => $shippedQty, 
-                        'price' => $price, 
-                        'additional_fee' => $addFee,
-                        'additional_note' => $addNote, 
-                        'subtotal' => $subtotal
+                        'so_id' => $soId, 'fg_sku' => $sku, 'qty' => $qty, 'shipped_qty' => $shippedQty, 
+                        'price' => $price, 'additional_fee' => $addFee, 'additional_note' => $addNote, 'subtotal' => $subtotal
                     ]);
 
-                    if ($orderType === 'READY') {
-                        $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$qty, $sku]);
-                    } 
-                    else if ($orderType === 'PREORDER') {
+                    if ($orderType === 'PREORDER' && !$isMat) {
                         $bom = $this->db->table('bom_headers')->where('fg_sku', $sku)->orderBy('id', 'DESC')->get()->getRowArray();
                         if ($bom) {
                             $dateStr = date('Ymd');
                             $lastSpk = $this->db->table('work_orders')->like('spk_number', "SPK-$dateStr", 'after')->orderBy('id', 'DESC')->get()->getRowArray();
+                            
+                            // PERBAIKAN PADA ADD ITEM SO (MENCEGAH ERROR "ONLY VARIABLES SHOULD BE PASSED BY REFERENCE")
+                            $seq = 1;
                             if ($lastSpk) {
-                                $parts = explode('-', $lastSpk['spk_number']);
-                                $seq = intval(end($parts)) + 1;
-                            } else {
-                                $seq = 1;
+                                $spkParts = explode('-', $lastSpk['spk_number']);
+                                $seq = intval(end($spkParts)) + 1;
                             }
+                            
                             $spkNumber = "SPK-" . $dateStr . "-" . str_pad($seq, 3, '0', STR_PAD_LEFT);
 
                             $this->db->table('work_orders')->insert([
-                                'so_id'            => $soId,
-                                'spk_number'       => $spkNumber,
-                                'bom_id'           => $bom['id'],
-                                'planned_qty'      => $qty, 
-                                'production_notes' => $addNote,
-                                'status'           => 'IN_PROGRESS',
-                                'start_date'       => date('Y-m-d'),
-                                'source'           => 'PREORDER'
+                                'so_id' => $soId, 'spk_number' => $spkNumber, 'bom_id' => $bom['id'], 'planned_qty' => $qty, 
+                                'production_notes' => $addNote, 'status' => 'IN_PROGRESS', 'start_date' => date('Y-m-d'), 'source' => 'PREORDER'
                             ]);
                             $autoSpkCreated++;
                         }
@@ -1044,9 +1190,7 @@ class Wholesale extends BaseController
                 }
             }
 
-            if ($totalAdditionalAmount == 0) {
-                 throw new \Exception("Tidak ada produk valid yang ditambahkan.");
-            }
+            if ($totalAdditionalAmount == 0 && count($fgSkus) == 0) throw new \Exception("Tidak ada produk valid yang ditambahkan.");
 
             $discPercent = (float)$so['discount_percent'];
             $oldTotalRaw = (float)$so['total_amount'] + (float)$so['discount'];
@@ -1059,9 +1203,7 @@ class Wholesale extends BaseController
             $newStatus = ($paidAmount >= $newGrandTotal) ? 'PAID' : ($paidAmount > 0 ? 'PARTIAL' : 'PENDING');
 
             $this->db->table('b2b_sales_orders')->where('id', $soId)->update([
-                'total_amount' => $newGrandTotal,
-                'discount' => $newDiscAmount,
-                'status' => $newStatus,
+                'total_amount' => $newGrandTotal, 'discount' => $newDiscAmount, 'status' => $newStatus,
                 'shipping_status' => ($so['shipping_status'] === 'SHIPPED' && $orderType === 'PREORDER') ? 'PARTIAL-SHIPPED' : $so['shipping_status'] 
             ]);
 
@@ -1069,27 +1211,17 @@ class Wholesale extends BaseController
 
             $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
             $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
-            $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray(); 
-            $hppAcc = $this->db->table('chart_of_accounts')->where('account_code', '5-1000')->get()->getRowArray();
 
             if ($netAdditionalRevenue > 0) {
                 $this->db->table('journals')->insert([
-                    'journal_number'   => 'JRN-ADD-'.time(), 
-                    'transaction_date' => date('Y-m-d'),
-                    'description'      => "Penambahan Item SO: {$so['so_number']}",
-                    'total_amount'     => $netAdditionalRevenue, 
-                    'created_by'       => session()->get('name') ?? 'System'
+                    'journal_number' => 'JRN-ADD-'.time(), 'transaction_date' => date('Y-m-d'), 'description' => "Penambahan Item SO: {$so['so_number']}",
+                    'total_amount' => $netAdditionalRevenue, 'created_by' => session()->get('name') ?? 'System'
                 ]);
                 $journalId = $this->db->insertID();
 
                 if ($revAcc && $piutangAcc) {
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => 0, 'credit' => $netAdditionalRevenue, 'line_description' => 'Pendapatan B2B Tambahan']);
                     $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $netAdditionalRevenue, 'credit' => 0, 'line_description' => 'Piutang B2B Tambahan']);
-                }
-
-                if ($orderType === 'READY' && $totalHppCost > 0 && $invAcc && $hppAcc) {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $hppAcc['id'], 'debit' => $totalHppCost, 'credit' => 0, 'line_description' => 'HPP B2B Tambahan']);
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $invAcc['id'], 'debit' => 0, 'credit' => $totalHppCost, 'line_description' => 'Persediaan Keluar Tambahan']);
                 }
 
                 $pointsEarned = floor($netAdditionalRevenue / 100000);
@@ -1099,18 +1231,12 @@ class Wholesale extends BaseController
             }
 
             $this->db->transComplete();
-
-            if ($this->db->transStatus() === false) {
-                throw new \Exception("Sistem gagal menyimpan perubahan database.");
-            }
+            if ($this->db->transStatus() === false) throw new \Exception("Sistem gagal menyimpan perubahan database.");
 
             $pesan = "Berhasil menambahkan item ke Pesanan <b>{$so['so_number']}</b>.";
-            if ($orderType === 'PREORDER' && $autoSpkCreated > 0) {
-                $pesan .= "<br>Diterbitkan <b>$autoSpkCreated SPK Pabrik</b> otomatis untuk item baru.";
-            }
+            if ($orderType === 'PREORDER' && $autoSpkCreated > 0) $pesan .= "<br>Diterbitkan <b>$autoSpkCreated SPK Pabrik</b> otomatis untuk item baru.";
 
             return redirect()->back()->with('success', $pesan);
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -1131,7 +1257,10 @@ class Wholesale extends BaseController
 
             $qtyToReturn = (int)$item['shipped_qty'];
             if ($qtyToReturn > 0) {
-                 $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$qtyToReturn, $item['fg_sku']]);
+                 $isMat = (strpos($item['fg_sku'], 'MAT-') === 0);
+                 $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+                 $skuCol = $isMat ? 'sku_material' : 'sku';
+                 $this->db->query("UPDATE {$table} SET physical_stock = physical_stock + ? WHERE {$skuCol} = ?", [$qtyToReturn, $item['fg_sku']]);
             }
 
             $pointsToDeduct = floor($item['subtotal'] / 100000);
@@ -1139,18 +1268,22 @@ class Wholesale extends BaseController
                 $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsToDeduct, $so['customer_id']]);
             }
 
-            if ($so['shipping_status'] !== 'PENDING') {
-                 $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
-                 if($bom) {
-                     $spks = $this->db->table('work_orders')
-                                    ->where('so_id', $so['id'])
-                                    ->where('bom_id', $bom['id'])
-                                    ->where('status !=', 'COMPLETED')
-                                    ->get()->getResultArray();
-                     foreach($spks as $wo) {
-                         $this->db->table('work_orders')->where('id', $wo['id'])->delete();
-                     }
-                 }
+            // PERBAIKAN LOGIKA PENGHAPUSAN SPK PRODUKSI
+            // Hapus SPK terlepas dari status PENDING atau bukan, selama SPK-nya belum COMPLETED
+            $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
+            if($bom) {
+                $spks = $this->db->table('work_orders')
+                    ->where('so_id', $so['id'])
+                    ->where('bom_id', $bom['id'])
+                    ->where('production_notes', $item['additional_note']) // Pencocokan spesifik dengan catatannya (emblem dll)
+                    ->where('status !=', 'COMPLETED')
+                    ->get()->getResultArray();
+                    
+                foreach($spks as $wo) { 
+                    // Bersihkan log setoran jika ada, lalu hapus SPK-nya
+                    $this->db->table('production_logs')->where('spk_number', $wo['spk_number'])->delete();
+                    $this->db->table('work_orders')->where('id', $wo['id'])->delete(); 
+                }
             }
 
             $discPercent = (float)$so['discount_percent'];
@@ -1165,9 +1298,7 @@ class Wholesale extends BaseController
             if ($newGrandTotal <= 0) $newStatus = 'RETURNED';
 
             $this->db->table('b2b_sales_orders')->where('id', $so['id'])->update([
-                'total_amount' => $newGrandTotal,
-                'discount' => $newDiscAmount,
-                'status' => $newStatus
+                'total_amount' => $newGrandTotal, 'discount' => $newDiscAmount, 'status' => $newStatus
             ]);
 
             $this->db->table('b2b_sales_order_items')->where('id', $itemId)->delete();
@@ -1178,24 +1309,21 @@ class Wholesale extends BaseController
                 $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
                 
                 $this->db->table('journals')->insert([
-                    'journal_number'   => 'JRN-DEL-'.time(), 
-                    'transaction_date' => date('Y-m-d'),
-                    'description'      => "Revisi/Hapus Item SO: {$so['so_number']}",
-                    'total_amount'     => $netReduction, 
-                    'created_by'       => session()->get('name') ?? 'System'
+                    'journal_number' => 'JRN-DEL-'.time(), 'transaction_date' => date('Y-m-d'), 'description' => "Revisi/Hapus Item SO: {$so['so_number']}",
+                    'total_amount' => $netReduction, 'created_by' => session()->get('name') ?? 'System'
                 ]);
                 $journalId = $this->db->insertID();
 
                 if ($revAcc && $piutangAcc) {
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => $netReduction, 'credit' => 0, 'line_description' => 'Pembatalan Pendapatan (Hapus Item)']);
-                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $netReduction, 'line_description' => 'Pengurangan Piutang (Hapus Item)']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => $netReduction, 'credit' => 0, 'line_description' => 'Pembatalan Pendapatan']);
+                    $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $netReduction, 'line_description' => 'Pengurangan Piutang']);
                 }
             }
 
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Sistem gagal memproses penghapusan item.");
 
-            return redirect()->back()->with('success', 'Item berhasil dihapus dari orderan. Total tagihan dan jurnal telah disesuaikan.');
+            return redirect()->back()->with('success', 'Item berhasil dihapus dari orderan. Total tagihan dan antrean produksi telah disesuaikan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -1204,9 +1332,7 @@ class Wholesale extends BaseController
     public function update_item_qty($itemId)
     {
         try {
-            if (!session()->get('isLoggedIn')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi habis, silakan login ulang', 'csrf_token' => csrf_hash()]);
-            }
+            if (!session()->get('isLoggedIn')) { return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi habis', 'csrf_token' => csrf_hash()]); }
             $this->db->transStart();
 
             $newQty = (int)$this->request->getPost('new_qty');
@@ -1220,67 +1346,58 @@ class Wholesale extends BaseController
             if ($so['status'] === 'RETURNED') throw new \Exception("Gagal: Orderan sudah Diretur.");
 
             $oldQty = (int)$item['qty'];
-            if ($newQty == $oldQty) {
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Tidak ada perubahan jumlah barang.', 'csrf_token' => csrf_hash()]);
-            }
+            if ($newQty == $oldQty) return $this->response->setJSON(['status' => 'success', 'message' => 'Tidak ada perubahan.', 'csrf_token' => csrf_hash()]);
 
-            $diffQty = $newQty - $oldQty; // Positif = nambah qty, Negatif = ngurangin qty
+            $diffQty = $newQty - $oldQty;
             $shippedQty = (int)$item['shipped_qty'];
 
-            if ($newQty < $shippedQty) {
-                throw new \Exception("Gagal: Qty baru ($newQty) tidak boleh lebih kecil dari barang yang sudah telanjur dikirim ($shippedQty).");
-            }
+            if ($newQty < $shippedQty) throw new \Exception("Gagal: Qty baru tidak boleh lebih kecil dari yang sudah dikirim ($shippedQty).");
 
-            // PERBAIKAN LOGIKA PENTING: Semua yang lolos masuk ke block edit ini adalah PRE-ORDER
-            // Order bertipe READY tidak akan bisa diedit karena sudah 100% SHIPPED (terblokir oleh validasi baris 614)
-            $orderType = 'PREORDER';
-
-            $stock = $this->db->table('warehouse_inventory')->where('sku', $item['fg_sku'])->get()->getRowArray();
+            $isMat = (strpos($item['fg_sku'], 'MAT-') === 0);
+            $table = $isMat ? 'raw_materials' : 'warehouse_inventory';
+            $skuCol = $isMat ? 'sku_material' : 'sku';
+            
+            $stock = $this->db->table($table)->where($skuCol, $item['fg_sku'])->get()->getRowArray();
             $hpp = (float)($stock['hpp'] ?? 0);
 
-            // 1. UPDATE STOK & SPK PABRIK
+            $orderType = 'PREORDER';
+
             if ($orderType === 'READY') {
                 if ($diffQty > 0) {
-                    if (!$stock || $stock['physical_stock'] < $diffQty) {
-                        throw new \Exception("Stok Gudang fisik kurang untuk ditambah. (Hanya sisa " . ($stock['physical_stock']??0) . " di gudang)");
-                    }
-                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock - ? WHERE sku = ?", [$diffQty, $item['fg_sku']]);
+                    if (!$stock || $stock['physical_stock'] < $diffQty) throw new \Exception("Stok Gudang fisik kurang.");
+                    $this->db->query("UPDATE {$table} SET physical_stock = physical_stock - ? WHERE {$skuCol} = ?", [$diffQty, $item['fg_sku']]);
                 } else {
                     $absDiff = abs($diffQty);
-                    $this->db->query("UPDATE warehouse_inventory SET physical_stock = physical_stock + ? WHERE sku = ?", [$absDiff, $item['fg_sku']]);
+                    $this->db->query("UPDATE {$table} SET physical_stock = physical_stock + ? WHERE {$skuCol} = ?", [$absDiff, $item['fg_sku']]);
                 }
                 $this->db->query("UPDATE b2b_sales_order_items SET shipped_qty = shipped_qty + ? WHERE id = ?", [$diffQty, $itemId]);
             } else {
-                // JIKA PRE-ORDER -> UPDATE SPK (Work Orders) PABRIK
-                $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
-                if ($bom) {
-                    $spk = $this->db->table('work_orders')
-                        ->where('so_id', $so['id'])
-                        ->where('bom_id', $bom['id'])
-                        ->where('status !=', 'COMPLETED')
-                        ->get()->getRowArray();
-
-                    if ($spk) {
-                        $newSpkQty = (int)$spk['planned_qty'] + $diffQty;
-                        if ($newSpkQty < (int)$spk['completed_qty']) {
-                            throw new \Exception("Gagal: Target SPK produksi tidak bisa dikurangi jadi $newSpkQty karena barang sudah selesai dirakit sejumlah {$spk['completed_qty']}.");
+                if (!$isMat) {
+                    $bom = $this->db->table('bom_headers')->where('fg_sku', $item['fg_sku'])->orderBy('id', 'DESC')->get()->getRowArray();
+                    if ($bom) {
+                        // SINKRONISASI UPDATE QTY DENGAN SPK (MATCH DENGAN CATATAN PABRIK)
+                        $spk = $this->db->table('work_orders')
+                            ->where('so_id', $so['id'])
+                            ->where('bom_id', $bom['id'])
+                            ->where('production_notes', $item['additional_note'])
+                            ->where('status !=', 'COMPLETED')
+                            ->get()->getRowArray();
+                            
+                        if ($spk) {
+                            $newSpkQty = (int)$spk['planned_qty'] + $diffQty;
+                            if ($newSpkQty < (int)$spk['completed_qty']) throw new \Exception("Gagal: Target SPK tidak bisa lebih kecil dari barang yang disetor.");
+                            $this->db->table('work_orders')->where('id', $spk['id'])->update(['planned_qty' => $newSpkQty]);
                         }
-                        $this->db->table('work_orders')->where('id', $spk['id'])->update(['planned_qty' => $newSpkQty]);
                     }
                 }
             }
 
-            // 2. UPDATE ITEM SUBTOTAL
             $itemPrice = (float)$item['price'] + (float)$item['additional_fee'];
             $newSubtotal = $newQty * $itemPrice;
             $diffAmount = $newSubtotal - (float)$item['subtotal'];
 
-            $this->db->table('b2b_sales_order_items')->where('id', $itemId)->update([
-                'qty' => $newQty,
-                'subtotal' => $newSubtotal
-            ]);
+            $this->db->table('b2b_sales_order_items')->where('id', $itemId)->update(['qty' => $newQty, 'subtotal' => $newSubtotal]);
 
-            // 3. UPDATE SO HEADER
             $discPercent = (float)$so['discount_percent'];
             $oldTotalRaw = (float)$so['total_amount'] + (float)$so['discount'];
             $newTotalRaw = max(0, $oldTotalRaw + $diffAmount);
@@ -1291,26 +1408,16 @@ class Wholesale extends BaseController
             $paidAmount = (float)$so['paid_amount'];
             $newStatus = ($paidAmount >= $newGrandTotal) ? 'PAID' : ($paidAmount > 0 ? 'PARTIAL' : 'PENDING');
 
-            $this->db->table('b2b_sales_orders')->where('id', $so['id'])->update([
-                'total_amount' => $newGrandTotal,
-                'discount' => $newDiscAmount,
-                'status' => $newStatus
-            ]);
+            $this->db->table('b2b_sales_orders')->where('id', $so['id'])->update(['total_amount' => $newGrandTotal, 'discount' => $newDiscAmount, 'status' => $newStatus]);
 
-            // 4. JURNAL AKUNTANSI & POIN REWARD
             $netDiff = $newGrandTotal - (float)$so['total_amount'];
             if ($netDiff != 0) {
-                // Poin
                 $pointsDiff = floor(abs($netDiff) / 100000);
                 if ($pointsDiff > 0) {
-                    if ($netDiff > 0) {
-                        $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsDiff, $so['customer_id']]);
-                    } else {
-                        $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsDiff, $so['customer_id']]);
-                    }
+                    if ($netDiff > 0) $this->db->query("UPDATE b2b_customers SET reward_points = reward_points + ? WHERE id = ?", [$pointsDiff, $so['customer_id']]);
+                    else $this->db->query("UPDATE b2b_customers SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?", [$pointsDiff, $so['customer_id']]);
                 }
 
-                // Jurnal Akuntansi
                 $piutangAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-4000')->get()->getRowArray();
                 $revAcc = $this->db->table('chart_of_accounts')->where('account_code', '4-1000')->get()->getRowArray();
                 $invAcc = $this->db->table('chart_of_accounts')->where('account_code', '1-3000')->get()->getRowArray();
@@ -1319,11 +1426,8 @@ class Wholesale extends BaseController
                 $jurnalDesc = ($netDiff > 0) ? "Penambahan Qty Item SO: {$so['so_number']}" : "Pengurangan Qty Item SO: {$so['so_number']}";
 
                 $this->db->table('journals')->insert([
-                    'journal_number'   => 'JRN-QTY-'.time(),
-                    'transaction_date' => date('Y-m-d'),
-                    'description'      => $jurnalDesc,
-                    'total_amount'     => abs($netDiff),
-                    'created_by'       => session()->get('name') ?? 'System'
+                    'journal_number' => 'JRN-QTY-'.time(), 'transaction_date' => date('Y-m-d'), 'description' => $jurnalDesc,
+                    'total_amount' => abs($netDiff), 'created_by' => session()->get('name') ?? 'System'
                 ]);
                 $journalId = $this->db->insertID();
 
@@ -1332,9 +1436,8 @@ class Wholesale extends BaseController
                         $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => 0, 'credit' => $netDiff, 'line_description' => 'Revisi Qty (Pendapatan Naik)']);
                         $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => $netDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (Piutang Naik)']);
                     } else {
-                        $absNetDiff = abs($netDiff);
-                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => $absNetDiff, 'credit' => 0, 'line_description' => 'Revisi Qty (Pendapatan Turun)']);
-                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => $absNetDiff, 'line_description' => 'Revisi Qty (Piutang Turun)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $revAcc['id'], 'debit' => abs($netDiff), 'credit' => 0, 'line_description' => 'Revisi Qty (Pendapatan Turun)']);
+                        $this->db->table('journal_items')->insert(['journal_id' => $journalId, 'account_id' => $piutangAcc['id'], 'debit' => 0, 'credit' => abs($netDiff), 'line_description' => 'Revisi Qty (Piutang Turun)']);
                     }
                 }
 
@@ -1353,18 +1456,10 @@ class Wholesale extends BaseController
             $this->db->transComplete();
             if ($this->db->transStatus() === false) throw new \Exception("Gagal menyimpan ke database.");
 
-            return $this->response->setJSON([
-                'status' => 'success', 
-                'message' => 'Qty berhasil diperbarui. Tagihan & SPK pabrik telah disesuaikan otomatis!', 
-                'csrf_token' => csrf_hash()
-            ]);
-
+            return $this->response->setJSON(['status' => 'success', 'message' => 'Qty berhasil diperbarui.', 'csrf_token' => csrf_hash()]);
         } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'status' => 'error', 
-                'message' => $e->getMessage(), 
-                'csrf_token' => csrf_hash()
-            ]);
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage(), 'csrf_token' => csrf_hash()]);
         }
     }
 }
+?>

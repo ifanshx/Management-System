@@ -189,41 +189,34 @@
 <body>
 
     <?php
-        // ====================================================================
         // LOGIKA LINK WHATSAPP DENGAN DAFTAR BARANG YANG SUPER RAPI & PROFESIONAL
-        // ====================================================================
         $cleanPhone = preg_replace('/[^0-9]/', '', $po['supplier_phone'] ?? '');
         if (!empty($cleanPhone) && substr($cleanPhone, 0, 1) === '0') {
             $cleanPhone = '62' . substr($cleanPhone, 1);
         }
         $isPhoneValid = (strlen($cleanPhone) >= 10);
         
-        // 1. Susun Sapaan
         $compName = esc($company['company_name'] ?? 'Perusahaan Kami');
         $waText = "Halo *" . esc($po['supplier_name']) . "*,\n\n";
         $waText .= "Kami dari *" . $compName . "* ingin melakukan pemesanan barang dengan rincian sebagai berikut:\n\n";
         $waText .= "📄 *[ No. PO: " . esc($po['po_number']) . " ]*\n";
         $waText .= "--------------------------------------\n";
         
-        // 2. Looping (Ulang) Daftar Barang dari Database
         $num = 1;
         foreach($items as $itm) {
             $qty = floatval($itm['qty']);
             $unit = esc($itm['unit'] ?: 'Unit');
             $matName = esc($itm['material_name'] ?: '-');
             
-            // Format: 1. NAMA MATERIAL (10 Batang)
             $waText .= "{$num}. {$matName} ({$qty} {$unit})\n";
             $num++;
         }
         
-        // 3. Susun Total Tagihan & Penutup
         $waText .= "--------------------------------------\n";
         $waText .= "💰 *Total Estimasi:* Rp " . number_format($totalAmt, 0, ',', '.') . "\n";
         $waText .= "💳 *Sistem Bayar:* " . esc($po['payment_term'] ?? 'Cash') . "\n\n";
         $waText .= "Mohon bantuannya untuk segera diproses dan diinformasikan ketersediaannya.\nTerima kasih 🙏";
         
-        // 4. Encode Pesan menjadi URL
         $waLink = $isPhoneValid ? "https://wa.me/{$cleanPhone}?text=" . urlencode($waText) : "#";
     ?>
 
@@ -390,61 +383,60 @@
             </div>
 
             <div class="table-wrap">
-    <table class="item-table">
-        <thead>
-            <tr>
-                <th width="5%">No</th>
-                <th width="35%">Material / Barang</th>
-                <th width="13%">Dipesan</th>
-                <th width="13%">Diterima</th>
-                <th width="14%">Harga Sat.</th>
-                <th width="20%">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if(!empty($items)): ?>
-                <?php $no=1; foreach($items as $item): 
-                    // SINKRONISASI: Menggunakan purchase_uom
-                    $unitBeli = esc($item['purchase_uom'] ?? $item['unit'] ?? 'PCS');
-                ?>
-                <tr>
-                    <td class="text-center no-cell"><?= $no++ ?></td>
-                    <td>
-                        <div class="product-inline">
-                            <span class="desc-text"><?= esc($item['material_name'] ?: '-') ?></span><br>
-                            <span class="sku-badge"><?= esc($item['rm_sku']) ?></span>
-                        </div>
-                    </td>
-                    <td class="text-center qty-val">
-                        <?= floatval($item['qty']) ?> <?= $unitBeli ?>
-                    </td>
-                    <td class="text-center qty-val">
-                        <?php 
-                            $rcvPurchase = floatval($item['qty_received']) / floatval($item['conversion_factor']);
-                            $isComplete = ($rcvPurchase >= floatval($item['qty']));
-                        ?>
-                        <span style="color: <?= $isComplete ? '#16a34a' : ($rcvPurchase > 0 ? '#d97706' : '#dc2626') ?>;">
-                            <?= floatval($rcvPurchase) ?> <?= $unitBeli ?>
-                        </span>
-                    </td>
-                    <td class="text-right qty-val">
-                        Rp <?= number_format($item['unit_price'], 0, ',', '.') ?>
-                    </td>
-                    <td class="text-right qty-val" style="font-weight:900;">
-                        Rp <?= number_format($item['subtotal'], 0, ',', '.') ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6" class="text-center" style="font-style: italic; color: var(--muted);">
-                        Tidak ada item pembelian.
-                    </td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+                <table class="item-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="35%">Material / Barang</th>
+                            <th width="13%">Dipesan</th>
+                            <th width="13%">Diterima</th>
+                            <th width="14%">Harga Sat.</th>
+                            <th width="20%">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(!empty($items)): ?>
+                            <?php $no=1; foreach($items as $item): 
+                                $unitBeli = esc($item['purchase_uom'] ?? $item['unit'] ?? 'PCS');
+                            ?>
+                            <tr>
+                                <td class="text-center no-cell"><?= $no++ ?></td>
+                                <td>
+                                    <div class="product-inline">
+                                        <span class="desc-text"><?= esc($item['material_name'] ?: '-') ?></span><br>
+                                        <span class="sku-badge"><?= esc($item['rm_sku']) ?></span>
+                                    </div>
+                                </td>
+                                <td class="text-center qty-val">
+                                    <?= floatval($item['qty']) ?> <?= $unitBeli ?>
+                                </td>
+                                <td class="text-center qty-val">
+                                    <?php 
+                                        $rcvPurchase = floatval($item['qty_received']) / floatval($item['conversion_factor']);
+                                        $isComplete = ($rcvPurchase >= floatval($item['qty']));
+                                    ?>
+                                    <span style="color: <?= $isComplete ? '#16a34a' : ($rcvPurchase > 0 ? '#d97706' : '#dc2626') ?>;">
+                                        <?= floatval($rcvPurchase) ?> <?= $unitBeli ?>
+                                    </span>
+                                </td>
+                                <td class="text-right qty-val">
+                                    Rp <?= number_format($item['unit_price'], 0, ',', '.') ?>
+                                </td>
+                                <td class="text-right qty-val" style="font-weight:900;">
+                                    Rp <?= number_format($item['subtotal'], 0, ',', '.') ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6" class="text-center" style="font-style: italic; color: var(--muted);">
+                                    Tidak ada item pembelian.
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
 
             <div class="bottom-grid">
                 <div class="notes-section">
